@@ -210,46 +210,9 @@ class ValorantClient:
         ]
 
         diagnostics: List[str] = [f"token_info=[{jwt_diag}]"]
-
-        # If the JWT is from authenticate.riotgames.com (contains loginToken / seriesToken)
-        if jwt_payload and ("loginToken" in jwt_payload or "seriesToken" in jwt_payload):
-            raw_tok = (self.riot_ssid or self.riot_cookies).strip()
-            if raw_tok.startswith("ssid="):
-                raw_tok = raw_tok[5:].strip()
-            # Set ssid specifically on authenticate.riotgames.com in the session cookie jar
-            self.session.cookies.set("ssid", raw_tok, domain="authenticate.riotgames.com")
-            try:
-                curr_url = auth_attempts[0][2]
-                for hop in range(1, 8):
-                    parsed_curr = urlparse(curr_url)
-                    req_headers = {
-                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                    }
-                    r_hop = self.session.get(
-                        curr_url,
-                        headers=req_headers,
-                        allow_redirects=False,
-                        timeout=self.timeout,
-                    )
-                    next_loc = r_hop.headers.get("Location", "")
-                    if "access_token=" in next_loc:
-                        logger.info("透過 authenticate.riotgames.com Cookie 跳轉成功取得 access_token (hop=%d)", hop)
-                        return self._parse_tokens_from_uri(next_loc)
-                    if not next_loc:
-                        diagnostics.append(
-                            f"hop{hop}({parsed_curr.netloc}{parsed_curr.path})={r_hop.status_code}"
-                        )
-                        break
-                    if next_loc.startswith("/"):
-                        next_loc = f"{parsed_curr.scheme}://{parsed_curr.netloc}{next_loc}"
-                    parsed_next = urlparse(next_loc)
-                    q_keys = list(parse_qs(parsed_next.query).keys())
-                    diagnostics.append(
-                        f"hop{hop}:{r_hop.status_code}->{parsed_next.netloc}{parsed_next.path}(q={q_keys})"
-                    )
-                    curr_url = next_loc
-            except Exception as ex:
-                diagnostics.append(f"auth_exchange_err={ex}")
+        is_authenticate_domain_cookie = bool(
+            jwt_payload and ("loginToken" in jwt_payload or "seriesToken" in jwt_payload)
+        )
 
         redirected_to_login = False
         for label, method, url, json_body in auth_attempts:
@@ -322,6 +285,12 @@ class ValorantClient:
         if any("HTTP 403" in d for d in diagnostics):
             raise RiotAuthError(
                 f"Riot 驗證遭到防火牆阻擋 (HTTP 403 Forbidden)，雲端機房 IP 可能被 Cloudflare 攔截。診斷資訊：{diag_str}"
+            )
+        if is_authenticate_domain_cookie:
+            raise RiotAuthError(
+                "偵測到您複製成了 `authenticate.riotgames.com` 的 ssid Cookie（長度 363，含 loginToken），而非 `auth.riotgames.com` 的 ssid！\n"
+                "👉 請在同一個已登入的瀏覽器分頁打開：https://auth.riotgames.com/.well-known/openid-configuration\n"
+                "然後按 F12 -> Application -> Cookies -> 點選 `https://auth.riotgames.com`，複製裡面的 `ssid` 更新至 Secrets。"
             )
         if redirected_to_login:
             raise RiotAuthError(

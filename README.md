@@ -38,9 +38,10 @@
 1. 使用電腦瀏覽器（建議開無痕視窗）前往 Riot 登入網址：
    👉 [https://auth.riotgames.com/authorize?redirect_uri=https%3A%2F%2Fplayvalorant.com%2Fopt_in&client_id=play-valorant-web-prod&response_type=token%20id_token&nonce=1&scope=account%20openid](https://auth.riotgames.com/authorize?redirect_uri=https%3A%2F%2Fplayvalorant.com%2Fopt_in&client_id=play-valorant-web-prod&response_type=token%20id_token&nonce=1&scope=account%20openid)
 2. 登入特戰英豪 Riot 帳號（登入時請務必勾選 **保持登入 / Stay signed in**，可延長 Cookie 效期）。
-3. 登入後按下鍵盤 **`F12`** 開啟開發者工具：
-   - 前往 **Application（應用程式）** 分頁 -> 左側展開 **Cookies**。
-   - 若網址已跳轉至 `playvalorant.com`，請在網址列重新輸入 `https://auth.riotgames.com`，並在左側 Cookies 點選 `https://auth.riotgames.com`。
+3. 登入完成（畫面跳轉）後，在**同一個瀏覽器分頁**打開以下網址（此網址不會自動跳轉，方便查看正確網域的 Cookie）：
+   👉 [https://auth.riotgames.com/.well-known/openid-configuration](https://auth.riotgames.com/.well-known/openid-configuration)
+4. 按下鍵盤 **`F12`** 開啟開發者工具：
+   - 前往 **Application（應用程式）** 分頁 -> 左側展開 **Cookies** -> 點選 **`https://auth.riotgames.com`**（⚠️ 注意：請勿選成 `authenticate.riotgames.com`）。
    - 找到名稱為 **`ssid`** 的項目，複製它的 **Value（值）**（以 `eyJ...` 開頭的一長串字串）。
 
 ---
