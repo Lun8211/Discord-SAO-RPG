@@ -78,6 +78,8 @@ class DailyStoreReport:
     remaining_seconds: int
     items: List[StoreSkinItem] = field(default_factory=list)
     wallet: Optional[WalletBalance] = None
+    account_label: str = ""
+    discord_user_id: str = ""
 
 
 class ValorantClient:
@@ -248,7 +250,11 @@ class ValorantClient:
                     if live_region in REGION_TO_SHARD:
                         return REGION_TO_SHARD[live_region]
             except Exception as exc:
-                logger.warning("Riot Geo 自動偵測分區失敗，改用預設分區 (%s): %s", self.default_region, exc)
+                logger.warning(
+                    "Riot Geo 自動偵測分區失敗，改用預設分區 (%s): %s",
+                    self.default_region,
+                    exc,
+                )
 
         return REGION_TO_SHARD.get(self.default_region, "ap")
 
@@ -373,7 +379,6 @@ class ValorantClient:
             chromas = skin.get("chromas") or []
             levels = skin.get("levels") or []
 
-            # Best display image: level 1 icon -> chroma 0 fullRender -> skin displayIcon
             base_icon = ""
             if levels and levels[0].get("displayIcon"):
                 base_icon = levels[0]["displayIcon"]
@@ -382,7 +387,6 @@ class ValorantClient:
             elif skin.get("displayIcon"):
                 base_icon = skin["displayIcon"]
 
-            # Best preview video: highest level with streamedVideo
             video_url = None
             for lvl in reversed(levels):
                 if lvl.get("streamedVideo"):
@@ -411,6 +415,8 @@ class ValorantClient:
         puuid: str,
         shard: str,
         wallet: Optional[WalletBalance] = None,
+        account_label: str = "",
+        discord_user_id: str = "",
     ) -> DailyStoreReport:
         panel = storefront.get("SkinsPanelLayout") or {}
         remaining_seconds = int(
@@ -453,6 +459,8 @@ class ValorantClient:
             remaining_seconds=remaining_seconds,
             items=parsed_items,
             wallet=wallet,
+            account_label=account_label,
+            discord_user_id=discord_user_id,
         )
 
     @staticmethod
@@ -477,29 +485,38 @@ class ValorantClient:
             video_url=skin_meta.get("video_url"),
         )
 
-    def fetch_daily_store_report(self) -> DailyStoreReport:
+    def fetch_daily_store_report(
+        self,
+        account_label: str = "",
+        discord_user_id: str = "",
+        skin_catalog: Optional[Tuple[Dict[str, dict], Dict[str, dict]]] = None,
+        client_version: Optional[str] = None,
+    ) -> DailyStoreReport:
         """Full end-to-end workflow to authenticate and retrieve the 4 daily store items."""
         access_token, id_token = self.authenticate()
         entitlements_token = self.get_entitlements_token(access_token)
         puuid, player_name = self.get_user_info(access_token)
         shard = self.get_shard(access_token, id_token)
-        client_version = self.get_client_version()
+        resolved_version = client_version or self.get_client_version()
 
         storefront = self.get_storefront_raw(
             shard=shard,
             puuid=puuid,
             access_token=access_token,
             entitlements_token=entitlements_token,
-            client_version=client_version,
+            client_version=resolved_version,
         )
         wallet = self.get_wallet(
             shard=shard,
             puuid=puuid,
             access_token=access_token,
             entitlements_token=entitlements_token,
-            client_version=client_version,
+            client_version=resolved_version,
         )
-        skins_by_level_uuid, tiers_by_uuid = self.fetch_skin_catalog()
+        if skin_catalog is not None:
+            skins_by_level_uuid, tiers_by_uuid = skin_catalog
+        else:
+            skins_by_level_uuid, tiers_by_uuid = self.fetch_skin_catalog()
 
         return self.parse_daily_store(
             storefront=storefront,
@@ -509,16 +526,24 @@ class ValorantClient:
             puuid=puuid,
             shard=shard,
             wallet=wallet,
+            account_label=account_label,
+            discord_user_id=discord_user_id,
         )
 
 
-def build_mock_store_report() -> DailyStoreReport:
+def build_mock_store_report(
+    player_name: str = "DemoPlayer#TW1",
+    account_label: str = "",
+    discord_user_id: str = "",
+) -> DailyStoreReport:
     """Generate a realistic 4-item mock daily store report for testing Discord embeds."""
     return DailyStoreReport(
-        player_name="DemoPlayer#TW1",
+        player_name=player_name,
         puuid="00000000-0000-0000-0000-000000000000",
         shard="ap",
         remaining_seconds=43200,
+        account_label=account_label,
+        discord_user_id=discord_user_id,
         wallet=WalletBalance(vp=2450, radianite=160, kingdom_credits=8500),
         items=[
             StoreSkinItem(

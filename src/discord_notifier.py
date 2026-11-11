@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 import requests
 
 from src.config import Settings
-from src.valorant_client import DailyStoreReport, StoreSkinItem
+from src.valorant_client import DailyStoreReport
 
 
 class DiscordNotifyError(Exception):
@@ -21,8 +21,14 @@ def build_store_message_payload(
 
     reset_ts = now_ts + max(0, report.remaining_seconds)
 
+    label_prefix = f"【{report.account_label}】" if report.account_label else ""
+    mention_suffix = (
+        f" (<@{report.discord_user_id}>)" if report.discord_user_id else ""
+    )
+    display_identity = f"**{label_prefix}{report.player_name}**{mention_suffix}"
+
     header_lines = [
-        f"🛒 **{report.player_name}** 的 **VALORANT 每日商店** 已刷新！",
+        f"🛒 {display_identity} 的 **VALORANT 每日商店** 已刷新！",
         f"⏳ 距離下次刷新：<t:{reset_ts}:R>（<t:{reset_ts}:t>）",
     ]
     if report.wallet is not None:
@@ -34,6 +40,11 @@ def build_store_message_payload(
 
     embeds: List[Dict] = []
     total_items = len(report.items)
+    footer_owner = (
+        f"{report.account_label} ({report.player_name})"
+        if report.account_label
+        else report.player_name
+    )
 
     for idx, item in enumerate(report.items[:4], start=1):
         embed: Dict = {
@@ -42,7 +53,9 @@ def build_store_message_payload(
             "fields": [
                 {
                     "name": "💎 造型價格",
-                    "value": f"**`{item.price_vp:,} VP`**" if item.price_vp > 0 else "`未知`",
+                    "value": f"**`{item.price_vp:,} VP`**"
+                    if item.price_vp > 0
+                    else "`未知`",
                     "inline": True,
                 },
                 {
@@ -52,7 +65,7 @@ def build_store_message_payload(
                 },
             ],
             "footer": {
-                "text": f"VALORANT 每日商店 • {report.player_name} • 欄位 {idx}/{total_items}"
+                "text": f"VALORANT 每日商店 • {footer_owner} • 欄位 {idx}/{total_items}"
             },
             "timestamp": datetime.fromtimestamp(now_ts, tz=timezone.utc).isoformat(),
         }
@@ -83,17 +96,23 @@ def build_store_message_payload(
     }
 
 
-def build_error_message_payload(error_message: str) -> dict:
-    """Build an alert embed payload when Riot authentication or API fails."""
+def build_error_message_payload(
+    error_message: str,
+    account_label: str = "",
+    discord_user_id: str = "",
+) -> dict:
+    """Build an alert embed payload when Riot authentication or API fails for an account."""
+    target_title = f"（{account_label}）" if account_label else ""
+    mention_str = f" <@{discord_user_id}>" if discord_user_id else ""
     return {
-        "content": "⚠️ **VALORANT 每日商店機器人執行提醒**",
+        "content": f"⚠️ **VALORANT 每日商店機器人執行提醒{target_title}**{mention_str}",
         "embeds": [
             {
-                "title": "❌ 無法取得今日特戰英豪商店",
+                "title": f"❌ 無法取得{target_title}今日特戰英豪商店",
                 "description": (
                     f"{error_message}\n\n"
                     "💡 **解決方式：**\n"
-                    "若為 `RIOT_SSID` Cookie 過期，請重新在瀏覽器登入 Riot 帳號取得最新的 `ssid` Cookie，"
+                    "若為 `ssid` Cookie 過期，請該帳號重新在瀏覽器登入 Riot 帳號取得最新的 `ssid` Cookie，"
                     "並更新至 `.env` 或 GitHub Repository Secrets。"
                 ),
                 "color": 0xE74C3C,
@@ -134,12 +153,13 @@ def send_via_webhook(
     return resp.json() if resp.text else {}
 
 
-def send_discord_payload(settings: Settings, payload: dict) -> None:
+def send_discord_payload(
+    settings: Settings, payload: dict, target_channel_id: Optional[str] = None
+) -> None:
     """Send payload using configured Discord Bot Token + Channel ID, or Webhook URL."""
-    settings.validate_discord()
-    if settings.discord_bot_token and settings.discord_channel_id:
-        send_via_bot_token(
-            settings.discord_bot_token, settings.discord_channel_id, payload
-        )
+    channel_id = target_channel_id or settings.discord_channel_id
+    settings.validate_discord(target_channel_id=channel_id)
+    if settings.discord_bot_token and channel_id:
+        send_via_bot_token(settings.discord_bot_token, channel_id, payload)
     elif settings.discord_webhook_url:
         send_via_webhook(settings.discord_webhook_url, payload)

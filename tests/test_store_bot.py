@@ -1,5 +1,6 @@
 import pytest
 
+from src.config import Settings
 from src.discord_notifier import (
     build_error_message_payload,
     build_store_message_payload,
@@ -110,9 +111,13 @@ def test_parse_daily_store_four_items() -> None:
         puuid="test-puuid",
         shard="ap",
         wallet=WalletBalance(vp=3000, radianite=100, kingdom_credits=5000),
+        account_label="小明",
+        discord_user_id="123456789",
     )
 
     assert report.player_name == "Lun#TW1"
+    assert report.account_label == "小明"
+    assert report.discord_user_id == "123456789"
     assert report.remaining_seconds == 28800
     assert len(report.items) == 4
     assert report.items[0].name == "掠奪印象 暴徒"
@@ -123,10 +128,15 @@ def test_parse_daily_store_four_items() -> None:
 
 
 def test_build_store_message_payload_creates_four_embeds() -> None:
-    report = build_mock_store_report()
+    report = build_mock_store_report(
+        player_name="DemoPlayer#TW1",
+        account_label="小明",
+        discord_user_id="99887766",
+    )
     payload = build_store_message_payload(report, now_ts=1700000000)
 
-    assert "DemoPlayer#TW1" in payload["content"]
+    assert "【小明】DemoPlayer#TW1" in payload["content"]
+    assert "<@99887766>" in payload["content"]
     assert "<t:1700043200:R>" in payload["content"]
     assert len(payload["embeds"]) == 4
 
@@ -137,6 +147,52 @@ def test_build_store_message_payload_creates_four_embeds() -> None:
 
 
 def test_build_error_message_payload() -> None:
-    payload = build_error_message_payload("Cookie 已過期")
+    payload = build_error_message_payload(
+        "Cookie 已過期", account_label="阿華", discord_user_id="112233"
+    )
+    assert "（阿華）" in payload["content"]
+    assert "<@112233>" in payload["content"]
     assert len(payload["embeds"]) == 1
     assert "Cookie 已過期" in payload["embeds"][0]["description"]
+
+
+def test_multi_account_parsing_multiline_and_numbered(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("DISCORD_BOT_TOKEN", "bot_tok")
+    monkeypatch.setenv("DISCORD_CHANNEL_ID", "default_chan")
+    monkeypatch.setenv(
+        "RIOT_ACCOUNTS",
+        "小明|ssid_ming|11111\n阿華|ssid_hua|22222|custom_chan\n",
+    )
+    monkeypatch.setenv("ACCOUNT_NAME_3", "小美")
+    monkeypatch.setenv("RIOT_SSID_3", "ssid_mei")
+    monkeypatch.setenv("RIOT_SSID", "")
+
+    settings = Settings.from_env()
+    assert len(settings.accounts) == 3
+
+    assert settings.accounts[0].label == "小明"
+    assert settings.accounts[0].riot_ssid == "ssid_ming"
+    assert settings.accounts[0].discord_user_id == "11111"
+    assert settings.accounts[0].discord_channel_id == "default_chan"
+
+    assert settings.accounts[1].label == "阿華"
+    assert settings.accounts[1].riot_ssid == "ssid_hua"
+    assert settings.accounts[1].discord_user_id == "22222"
+    assert settings.accounts[1].discord_channel_id == "custom_chan"
+
+    assert settings.accounts[2].label == "小美"
+    assert settings.accounts[2].riot_ssid == "ssid_mei"
+
+
+def test_multi_account_parsing_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(
+        "RIOT_ACCOUNTS",
+        '[{"name": "P1", "ssid": "s1", "discord_user_id": "u1"}, {"name": "P2", "ssid": "s2"}]',
+    )
+    monkeypatch.setenv("RIOT_SSID", "")
+    settings = Settings.from_env()
+    assert len(settings.accounts) == 2
+    assert settings.accounts[0].label == "P1"
+    assert settings.accounts[0].riot_ssid == "s1"
+    assert settings.accounts[1].label == "P2"
+    assert settings.accounts[1].riot_ssid == "s2"

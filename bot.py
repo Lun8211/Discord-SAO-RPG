@@ -1,12 +1,13 @@
 import asyncio
 import datetime
 import logging
+from typing import List, Optional, Tuple
 
 import discord
 from discord import app_commands
 from discord.ext import tasks
 
-from src.config import Settings
+from src.config import AccountConfig, Settings
 from src.discord_notifier import (
     build_error_message_payload,
     build_store_message_payload,
@@ -31,8 +32,7 @@ def _get_daily_time() -> datetime.time:
 
 
 def _dict_to_discord_embed(embed_dict: dict) -> discord.Embed:
-    embed = discord.Embed.from_dict(embed_dict)
-    return embed
+    return discord.Embed.from_dict(embed_dict)
 
 
 class ValorantStoreBot(discord.Client):
@@ -46,39 +46,74 @@ class ValorantStoreBot(discord.Client):
         self.daily_store_task.start()
 
     async def on_ready(self) -> None:
-        logger.info("🤖 機器人已上線：%s (ID: %s)", self.user, self.user.id if self.user else "")
+        logger.info(
+            "🤖 機器人已上線：%s (ID: %s)，共載入 %d 個帳號",
+            self.user,
+            self.user.id if self.user else "",
+            len(settings.accounts),
+        )
 
-    async def fetch_payload_async(self) -> dict:
-        def _fetch() -> dict:
-            client = ValorantClient(
-                riot_ssid=settings.riot_ssid,
-                riot_cookies=settings.riot_cookies,
+    async def fetch_all_payloads_async(
+        self, target_filter: Optional[str] = None
+    ) -> List[Tuple[AccountConfig, dict]]:
+        def _fetch_all() -> List[Tuple[AccountConfig, dict]]:
+            shared_client = ValorantClient(
                 region=settings.riot_region,
                 language=settings.valorant_lang,
             )
-            report = client.fetch_daily_store_report()
-            return build_store_message_payload(report)
+            client_version = shared_client.get_client_version()
+            skin_catalog = shared_client.fetch_skin_catalog()
 
-        return await asyncio.to_thread(_fetch)
+            results: List[Tuple[AccountConfig, dict]] = []
+            for acc in settings.accounts:
+                if target_filter:
+                    q = target_filter.strip().lower()
+                    if (
+                        q != str(acc.index)
+                        and q not in acc.label.lower()
+                        and q not in acc.display_label.lower()
+                    ):
+                        continue
+                try:
+                    client = ValorantClient(
+                        riot_ssid=acc.riot_ssid,
+                        riot_cookies=acc.riot_cookies,
+                        region=acc.riot_region or settings.riot_region,
+                        language=settings.valorant_lang,
+                    )
+                    report = client.fetch_daily_store_report(
+                        account_label=acc.label,
+                        discord_user_id=acc.discord_user_id,
+                        skin_catalog=skin_catalog,
+                        client_version=client_version,
+                    )
+                    payload = build_store_message_payload(report)
+                except Exception as exc:
+                    payload = build_error_message_payload(
+                        str(exc),
+                        account_label=acc.display_label,
+                        discord_user_id=acc.discord_user_id,
+                    )
+                results.append((acc, payload))
+            return results
+
+        return await asyncio.to_thread(_fetch_all)
 
     @tasks.loop(time=_get_daily_time())
     async def daily_store_task(self) -> None:
-        if not settings.discord_channel_id:
-            return
-        channel = self.get_channel(int(settings.discord_channel_id))
-        if channel is None:
-            channel = await self.fetch_channel(int(settings.discord_channel_id))
+        results = await self.fetch_all_payloads_async()
+        for acc, payload in results:
+            channel_id_str = acc.discord_channel_id or settings.discord_channel_id
+            if not channel_id_str:
+                continue
+            channel = self.get_channel(int(channel_id_str))
+            if channel is None:
+                channel = await self.fetch_channel(int(channel_id_str))
 
-        try:
-            payload = await self.fetch_payload_async()
             embeds = [_dict_to_discord_embed(e) for e in payload.get("embeds", [])]
             await channel.send(content=payload.get("content", ""), embeds=embeds)
-            logger.info("✅ 每日定時商店已發送至頻道 %s", settings.discord_channel_id)
-        except Exception as exc:
-            logger.error("❌ 每日定時發送失敗: %s", exc)
-            err_payload = build_error_message_payload(str(exc))
-            embeds = [_dict_to_discord_embed(e) for e in err_payload.get("embeds", [])]
-            await channel.send(content=err_payload.get("content", ""), embeds=embeds)
+            logger.info("✅ 每日定時商店已發送 [%s] 至頻道 %s", acc.display_label, channel_id_str)
+            await asyncio.sleep(1.0)
 
     @daily_store_task.before_loop
     async def before_daily_store(self) -> None:
@@ -88,20 +123,23 @@ class ValorantStoreBot(discord.Client):
 bot = ValorantStoreBot()
 
 
-@bot.tree.command(name="shop", description="立即查看今日的特戰英豪 (VALORANT) 每日商店 4 個刷新物品")
-async def shop_command(interaction: discord.Interaction) -> None:
+@bot.tree.command(
+    name="shop", description="立即查看特戰英豪 (VALORANT) 每日商店刷新的 4 個物品（支援多帳號）"
+)
+@app_commands.describe(account="（選填）指定要查詢的帳號名稱或編號（例如：小明 或 1），不填則顯示全部帳號")
+async def shop_command(
+    interaction: discord.Interaction, account: Optional[str] = None
+) -> None:
     await interaction.response.defer()
-    try:
-        payload = await bot.fetch_payload_async()
+    results = await bot.fetch_all_payloads_async(target_filter=account)
+    if not results:
+        await interaction.followup.send("⚠️ 找不到符合條件的特戰英豪帳號設定。")
+        return
+
+    for _, payload in results:
         embeds = [_dict_to_discord_embed(e) for e in payload.get("embeds", [])]
         await interaction.followup.send(
             content=payload.get("content", ""), embeds=embeds
-        )
-    except Exception as exc:
-        err_payload = build_error_message_payload(str(exc))
-        embeds = [_dict_to_discord_embed(e) for e in err_payload.get("embeds", [])]
-        await interaction.followup.send(
-            content=err_payload.get("content", ""), embeds=embeds
         )
 
 
