@@ -163,11 +163,14 @@ class ValorantClient:
             sub_val = cmap.get("sub", "")
             ssid_val = cmap.get("ssid", "")
             csid_val = cmap.get("csid", "")
+            sec_id_tok = cmap.get("__Secure-id_token", "")
             payload = {}
             if ssid_val and ssid_val.startswith("eyJ"):
                 payload, _ = cls._inspect_jwt_info(ssid_val)
             elif csid_val and csid_val.startswith("eyJ"):
                 payload, _ = cls._inspect_jwt_info(csid_val)
+            elif sec_id_tok and sec_id_tok.startswith("eyJ"):
+                payload, _ = cls._inspect_jwt_info(sec_id_tok)
             if not sub_val and payload.get("sub"):
                 sub_val = str(payload.get("sub"))
             sub_short = sub_val[:8] if sub_val else "None"
@@ -207,17 +210,22 @@ class ValorantClient:
         cookie_headers_to_try = []
         cmap = self._parse_cookie_map(base_cookie_header)
         if cmap:
-            # 1. Clean 5 Riot auth cookies (strip ephemeral asid, ccid, __cf_bm, _cfuvid)
+            # 1. Original full Cookie header first (proven working in Run #43020085118)
+            cookie_headers_to_try.append(base_cookie_header)
+            # 2. Strip ephemeral login-flow / consent cookies (asid, ccid, osano_*, __cf_bm) while keeping __Secure-* & ssid
+            ephemeral_keys = {"asid", "ccid", "osano_consentmanager", "osano_consentmanager_uuid", "__cf_bm", "_cfuvid"}
+            core_parts = [f"{k}={v}" for k, v in cmap.items() if k not in ephemeral_keys and v]
+            if core_parts:
+                core_header = "; ".join(core_parts)
+                if core_header not in cookie_headers_to_try:
+                    cookie_headers_to_try.append(core_header)
+            # 3. Classic 5 Riot auth cookies fallback
             clean5_keys = ["tdid", "clid", "sub", "csid", "ssid"]
             clean5_parts = [f"{k}={cmap[k]}" for k in clean5_keys if k in cmap and cmap[k]]
             if clean5_parts:
-                cookie_headers_to_try.append("; ".join(clean5_parts))
-            # 2. Without csid (in case csid expired and blocks ssid reauth)
-            no_csid_keys = ["tdid", "clid", "sub", "ssid"]
-            no_csid_parts = [f"{k}={cmap[k]}" for k in no_csid_keys if k in cmap and cmap[k]]
-            if no_csid_parts and no_csid_parts != clean5_parts:
-                cookie_headers_to_try.append("; ".join(no_csid_parts))
-            cookie_headers_to_try.append(base_cookie_header)
+                clean5_header = "; ".join(clean5_parts)
+                if clean5_header not in cookie_headers_to_try:
+                    cookie_headers_to_try.append(clean5_header)
         else:
             cookie_headers_to_try.append(base_cookie_header)
             if clean_tok and ";" not in base_cookie_header:
