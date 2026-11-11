@@ -216,63 +216,38 @@ class ValorantClient:
             raw_tok = (self.riot_ssid or self.riot_cookies).strip()
             if raw_tok.startswith("ssid="):
                 raw_tok = raw_tok[5:].strip()
-            inner_ssid = str(jwt_payload.get("ssid") or "")
-            login_tok = str(jwt_payload.get("loginToken") or "")
-            diagnostics.append(
-                f"auth_jwt(inner_ssid_len={len(inner_ssid)}, loginToken_len={len(login_tok)})"
-            )
+            # Set ssid specifically on authenticate.riotgames.com in the session cookie jar
+            self.session.cookies.set("ssid", raw_tok, domain="authenticate.riotgames.com")
             try:
-                r1 = self.session.get(
-                    auth_attempts[0][2],
-                    headers={"Accept": "text/html,application/xhtml+xml,*/*;q=0.8"},
-                    allow_redirects=False,
-                    timeout=self.timeout,
-                )
-                loc1 = r1.headers.get("Location", "")
-                if loc1 and "authenticate.riotgames.com" in loc1:
-                    r2 = self.session.get(
-                        loc1,
-                        headers={
-                            "Cookie": f"ssid={raw_tok}",
-                            "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
-                        },
+                curr_url = auth_attempts[0][2]
+                for hop in range(1, 8):
+                    parsed_curr = urlparse(curr_url)
+                    req_headers = {
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    }
+                    r_hop = self.session.get(
+                        curr_url,
+                        headers=req_headers,
                         allow_redirects=False,
                         timeout=self.timeout,
                     )
-                    diagnostics.append(f"auth_login_get={r2.status_code}")
-                    r3 = self.session.get(
-                        "https://authenticate.riotgames.com/api/v1/login",
-                        headers={
-                            "Cookie": f"ssid={raw_tok}",
-                            "Accept": "application/json",
-                        },
-                        timeout=self.timeout,
+                    next_loc = r_hop.headers.get("Location", "")
+                    if "access_token=" in next_loc:
+                        logger.info("透過 authenticate.riotgames.com Cookie 跳轉成功取得 access_token (hop=%d)", hop)
+                        return self._parse_tokens_from_uri(next_loc)
+                    if not next_loc:
+                        diagnostics.append(
+                            f"hop{hop}({parsed_curr.netloc}{parsed_curr.path})={r_hop.status_code}"
+                        )
+                        break
+                    if next_loc.startswith("/"):
+                        next_loc = f"{parsed_curr.scheme}://{parsed_curr.netloc}{next_loc}"
+                    parsed_next = urlparse(next_loc)
+                    q_keys = list(parse_qs(parsed_next.query).keys())
+                    diagnostics.append(
+                        f"hop{hop}:{r_hop.status_code}->{parsed_next.netloc}{parsed_next.path}(q={q_keys})"
                     )
-                    diagnostics.append(f"auth_api_get={r3.status_code}:{r3.text[:120]}")
-                    if r3.status_code == 200:
-                        r3_data = r3.json()
-                        new_lt = (r3_data.get("success") or {}).get("login_token")
-                        if new_lt:
-                            r4 = self.session.post(
-                                "https://auth.riotgames.com/api/v1/login-token",
-                                json={
-                                    "authentication_type": "RiotAuth",
-                                    "code_verifier": "",
-                                    "login_token": new_lt,
-                                    "persist_login": True,
-                                },
-                                timeout=self.timeout,
-                            )
-                            diagnostics.append(f"login_tok_post={r4.status_code}")
-                            r5 = self.session.get(
-                                auth_attempts[0][2],
-                                headers={"Accept": "text/html,application/xhtml+xml,*/*;q=0.8"},
-                                allow_redirects=False,
-                                timeout=self.timeout,
-                            )
-                            loc5 = r5.headers.get("Location", "")
-                            if "access_token=" in loc5:
-                                return self._parse_tokens_from_uri(loc5)
+                    curr_url = next_loc
             except Exception as ex:
                 diagnostics.append(f"auth_exchange_err={ex}")
 
