@@ -134,57 +134,121 @@ class ValorantClient:
 
     def authenticate(self) -> Tuple[str, Optional[str]]:
         """Perform Riot Cookie Reauth and return (access_token, id_token)."""
+        raw_input = f"{self.riot_ssid} {self.riot_cookies}".strip()
+        if "access_token=" in raw_input:
+            return self._parse_tokens_from_uri(raw_input)
+
         cookie_header = self._build_cookie_header()
-        auth_urls = [
+        auth_attempts = [
             (
-                "https://auth.riotgames.com/authorize"
-                "?redirect_uri=https%3A%2F%2Fplayvalorant.com%2Fopt_in"
-                "&client_id=play-valorant-web-prod"
-                "&response_type=token%20id_token"
-                "&nonce=1"
-                "&scope=account%20openid"
+                "GET",
+                (
+                    "https://auth.riotgames.com/authorize"
+                    "?redirect_uri=https%3A%2F%2Fplayvalorant.com%2Fopt_in"
+                    "&client_id=play-valorant-web-prod"
+                    "&response_type=token%20id_token"
+                    "&nonce=1"
+                    "&scope=account%20openid"
+                ),
+                None,
             ),
             (
-                "https://auth.riotgames.com/authorize"
-                "?redirect_uri=http%3A%2F%2Flocalhost%2Fredirect"
-                "&client_id=riot-client"
-                "&response_type=token%20id_token"
-                "&nonce=1"
-                "&scope=account%20openid"
+                "GET",
+                (
+                    "https://auth.riotgames.com/authorize"
+                    "?redirect_uri=http%3A%2F%2Flocalhost%2Fredirect"
+                    "&client_id=riot-client"
+                    "&response_type=token%20id_token"
+                    "&nonce=1"
+                    "&scope=account%20openid"
+                ),
+                None,
+            ),
+            (
+                "POST",
+                "https://auth.riotgames.com/api/v1/authorization",
+                {
+                    "client_id": "play-valorant-web-prod",
+                    "nonce": "1",
+                    "redirect_uri": "https://playvalorant.com/opt_in",
+                    "response_type": "token id_token",
+                    "scope": "account openid",
+                },
             ),
         ]
 
-        last_err: Optional[Exception] = None
-        for url in auth_urls:
+        diagnostics: List[str] = []
+        for method, url, json_body in auth_attempts:
             try:
-                resp = self.session.get(
-                    url,
-                    headers={"Cookie": cookie_header},
-                    allow_redirects=False,
-                    timeout=self.timeout,
-                )
+                if method == "POST":
+                    resp = self.session.post(
+                        url,
+                        headers={"Cookie": cookie_header},
+                        json=json_body,
+                        allow_redirects=False,
+                        timeout=self.timeout,
+                    )
+                else:
+                    resp = self.session.get(
+                        url,
+                        headers={"Cookie": cookie_header},
+                        allow_redirects=False,
+                        timeout=self.timeout,
+                    )
+
                 location = resp.headers.get("Location", "")
                 if not location and resp.status_code == 200:
-                    data = resp.json()
-                    location = data.get("response", {}).get("parameters", {}).get("uri", "")
+                    try:
+                        data = resp.json()
+                        location = (
+                            data.get("response", {})
+                            .get("parameters", {})
+                            .get("uri", "")
+                        )
+                        if not location and data.get("type"):
+                            diagnostics.append(
+                                f"{method} HTTP 200 type={data.get('type')} error={data.get('error', '')}"
+                            )
+                    except Exception:
+                        pass
 
                 if "access_token=" in location:
                     return self._parse_tokens_from_uri(location)
 
-                if "authenticate.riotgames.com" in location or "/login" in location:
+                if location:
+                    parsed_loc = urlparse(location)
+                    safe_loc = f"{parsed_loc.scheme}://{parsed_loc.netloc}{parsed_loc.path}"
+                    if parsed_loc.query:
+                        q_params = parse_qs(parsed_loc.query)
+                        if "error" in q_params:
+                            safe_loc += f"?error={q_params['error'][0]}"
+                    diagnostics.append(f"{method} HTTP {resp.status_code} -> {safe_loc}")
+                else:
+                    body_preview = resp.text[:120].replace("\n", " ").strip()
+                    diagnostics.append(
+                        f"{method} HTTP {resp.status_code} ({body_preview})"
+                    )
+
+                if (
+                    "authenticate.riotgames.com" in location
+                    or "xsso.riotgames.com" in location
+                    or "/login" in location
+                ):
                     raise RiotAuthError(
-                        "Riot Cookie (RIOT_SSID) 已過期或無效，請重新登入 Riot 網頁取得最新的 ssid Cookie。"
+                        f"Riot Cookie (RIOT_SSID) 已過期、無效或取錯網域（伺服器跳轉回登入頁: {diagnostics[-1]}），請重新登入 https://auth.riotgames.com 取得最新的 ssid Cookie。"
                     )
             except RiotAuthError as exc:
-                last_err = exc
-                break
+                raise exc
             except Exception as exc:
-                last_err = exc
+                diagnostics.append(f"{method} 例外: {exc}")
 
-        if isinstance(last_err, RiotAuthError):
-            raise last_err
+        diag_str = " | ".join(diagnostics) if diagnostics else "無回應"
+        if any("HTTP 403" in d for d in diagnostics):
+            raise RiotAuthError(
+                f"Riot 驗證遭到防火牆阻擋 (HTTP 403 Forbidden)，雲端機房 IP 可能被 Cloudflare 攔截。診斷資訊：{diag_str}"
+            )
         raise RiotAuthError(
-            f"Riot 驗證失敗，請確認 RIOT_SSID 是否正確且未過期。詳細資訊：{last_err}"
+            f"Riot 驗證失敗，請確認 RIOT_SSID 是否正確且未過期。診斷資訊：{diag_str}"
         )
 
     def get_entitlements_token(self, access_token: str) -> str:
