@@ -132,15 +132,46 @@ class ValorantClient:
             )
         return access_tokens[0], (id_tokens[0] if id_tokens else None)
 
+    @staticmethod
+    def _inspect_jwt_info(token_str: str) -> Tuple[dict, str]:
+        """Return (decoded_payload_dict, diagnostic_summary) for a JWT or raw token string safely."""
+        clean = token_str.strip()
+        if clean.startswith("ssid="):
+            clean = clean[5:].strip()
+        if ";" in clean:
+            return {}, f"cookie_pairs(len={len(clean)})"
+        parts = clean.split(".")
+        if len(parts) != 3 or not clean.startswith("eyJ"):
+            return {}, f"non_jwt(len={len(clean)}, prefix={clean[:4]!r})"
+        try:
+            padded = parts[1] + "=" * (-len(parts[1]) % 4)
+            payload = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
+            keys = sorted(list(payload.keys()))
+            exp = payload.get("exp")
+            sub_Info = f"keys={keys}, len={len(clean)}, exp={exp}"
+            return payload, sub_Info
+        except Exception as exc:
+            return {}, f"jwt_decode_err(len={len(clean)}, err={exc})"
+
     def authenticate(self) -> Tuple[str, Optional[str]]:
         """Perform Riot Cookie Reauth and return (access_token, id_token)."""
         raw_input = f"{self.riot_ssid} {self.riot_cookies}".strip()
         if "access_token=" in raw_input:
             return self._parse_tokens_from_uri(raw_input)
 
+        jwt_payload, jwt_diag = self._inspect_jwt_info(self.riot_ssid or self.riot_cookies)
+        # If the user pasted a raw OAuth access_token (contains 'scp' or 'cid' without 'ssid' session structure)
+        if jwt_payload and ("scp" in jwt_payload or jwt_payload.get("cid") == "play-valorant-web-prod"):
+            clean_tok = (self.riot_ssid or self.riot_cookies).strip()
+            if clean_tok.startswith("ssid="):
+                clean_tok = clean_tok[5:].strip()
+            logger.info("偵測到直接傳入的 access_token (%s)，直接使用該 Token 進行查詢", jwt_diag)
+            return clean_tok, None
+
         cookie_header = self._build_cookie_header()
         auth_attempts = [
             (
+                "GET(web)",
                 "GET",
                 (
                     "https://auth.riotgames.com/authorize"
@@ -153,18 +184,19 @@ class ValorantClient:
                 None,
             ),
             (
+                "GET(riot-client)",
                 "GET",
                 (
                     "https://auth.riotgames.com/authorize"
-                    "?redirect_uri=http%3A%2F%2Flocalhost%2Fredirect"
-                    "&client_id=riot-client"
-                    "&response_type=token%20id_token"
-                    "&nonce=1"
-                    "&scope=account%20openid"
+                    "?client_id=riot-client"
+                    "&response_type=id_token%20token"
+                    "&redirect_uri=http%3A%2F%2Flocalhost%2Fredirect"
+                    "&scope=read"
                 ),
                 None,
             ),
             (
+                "POST(v1)",
                 "POST",
                 "https://auth.riotgames.com/api/v1/authorization",
                 {
@@ -177,8 +209,9 @@ class ValorantClient:
             ),
         ]
 
-        diagnostics: List[str] = []
-        for method, url, json_body in auth_attempts:
+        diagnostics: List[str] = [f"token_info=[{jwt_diag}]"]
+        redirected_to_login = False
+        for label, method, url, json_body in auth_attempts:
             try:
                 if method == "POST":
                     resp = self.session.post(
@@ -213,7 +246,7 @@ class ValorantClient:
                         )
                         if not location and data.get("type"):
                             diagnostics.append(
-                                f"{method} HTTP 200 type={data.get('type')} error={data.get('error', '')}"
+                                f"{label}: HTTP 200 type={data.get('type')} error={data.get('error', '')}"
                             )
                     except Exception:
                         pass
@@ -228,11 +261,11 @@ class ValorantClient:
                         q_params = parse_qs(parsed_loc.query)
                         if "error" in q_params:
                             safe_loc += f"?error={q_params['error'][0]}"
-                    diagnostics.append(f"{method} HTTP {resp.status_code} -> {safe_loc}")
-                else:
-                    body_preview = resp.text[:120].replace("\n", " ").strip()
+                    diagnostics.append(f"{label}: HTTP {resp.status_code} -> {safe_loc}")
+                elif not (resp.status_code == 200 and "type=" in diagnostics[-1]):
+                    body_preview = resp.text[:100].replace("\n", " ").strip()
                     diagnostics.append(
-                        f"{method} HTTP {resp.status_code} ({body_preview})"
+                        f"{label}: HTTP {resp.status_code} ({body_preview})"
                     )
 
                 if (
@@ -240,18 +273,18 @@ class ValorantClient:
                     or "xsso.riotgames.com" in location
                     or "/login" in location
                 ):
-                    raise RiotAuthError(
-                        f"Riot Cookie (RIOT_SSID) 已過期、無效或取錯網域（伺服器跳轉回登入頁: {diagnostics[-1]}），請重新登入 https://auth.riotgames.com 取得最新的 ssid Cookie。"
-                    )
-            except RiotAuthError as exc:
-                raise exc
+                    redirected_to_login = True
             except Exception as exc:
-                diagnostics.append(f"{method} 例外: {exc}")
+                diagnostics.append(f"{label} 例外: {exc}")
 
-        diag_str = " | ".join(diagnostics) if diagnostics else "無回應"
+        diag_str = " | ".join(diagnostics)
         if any("HTTP 403" in d for d in diagnostics):
             raise RiotAuthError(
                 f"Riot 驗證遭到防火牆阻擋 (HTTP 403 Forbidden)，雲端機房 IP 可能被 Cloudflare 攔截。診斷資訊：{diag_str}"
+            )
+        if redirected_to_login:
+            raise RiotAuthError(
+                f"Riot Cookie (RIOT_SSID) 已過期、無效或取錯網域（伺服器跳轉回登入頁）。診斷資訊：{diag_str}"
             )
         raise RiotAuthError(
             f"Riot 驗證失敗，請確認 RIOT_SSID 是否正確且未過期。診斷資訊：{diag_str}"
