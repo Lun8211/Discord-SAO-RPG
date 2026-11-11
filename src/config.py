@@ -223,10 +223,25 @@ class Settings:
         #   名稱|ssid
         #   名稱|ssid|discord_user_id
         #   名稱|ssid|discord_user_id|channel_id|region
+        merged_lines: List[str] = []
         for raw_line in stripped.splitlines():
             line = raw_line.strip()
             if not line or line.startswith("#"):
                 continue
+            # If user pasted a cookie that had a trailing newline before '|discord_user_id'
+            # or a bare 17-20 digit Discord ID on the next line, merge it with the previous line.
+            if merged_lines and (
+                line.startswith("|")
+                or (line.isdigit() and 16 <= len(line) <= 21)
+            ):
+                if line.startswith("|"):
+                    merged_lines[-1] = merged_lines[-1] + line
+                else:
+                    merged_lines[-1] = merged_lines[-1] + "|" + line
+            else:
+                merged_lines.append(line)
+
+        for line in merged_lines:
             if "|" in line:
                 parts = [p.strip() for p in line.split("|")]
                 label = parts[0] if len(parts) > 0 else ""

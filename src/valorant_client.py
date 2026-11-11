@@ -304,6 +304,14 @@ class ValorantClient:
             logger.info("Cookie Reauth 未跳轉 (%s)，改用直接 Token (%s) 進行查詢", diag_str, jwt_diag)
             return clean_tok, None
 
+        if jwt_payload and "acct" in jwt_payload and "aud" in jwt_payload and "scp" not in jwt_payload:
+            raise RiotAuthError(
+                f"偵測到此帳號貼的是單獨的 `csid` Cookie 或 `id_token`（長度 {len(clean_tok)} 字元，含 acct/aud 但不含 scp），無法單獨換取商店權限！\n"
+                "👉 解決方式（二選一）：\n"
+                "1. 在 `https://auth.riotgames.com` 的 Cookies 中，將多個欄位用分號串起來貼上：`ssid=值; csid=值; tdid=值; sub=值; clid=ap1`\n"
+                "2. 或直接貼上登入完成跳轉後網址列整串 `https://playvalorant.com/opt_in#access_token=eyJ...`（或裡面的 `access_token`，約 1,037 字元）。"
+            )
+
         if any("HTTP 403" in d for d in diagnostics):
             raise RiotAuthError(
                 f"Riot 驗證遭到防火牆阻擋 (HTTP 403 Forbidden)，雲端機房 IP 可能被 Cloudflare 攔截。診斷資訊：{diag_str}"
