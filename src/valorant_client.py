@@ -210,6 +210,72 @@ class ValorantClient:
         ]
 
         diagnostics: List[str] = [f"token_info=[{jwt_diag}]"]
+
+        # If the JWT is from authenticate.riotgames.com (contains loginToken / seriesToken)
+        if jwt_payload and ("loginToken" in jwt_payload or "seriesToken" in jwt_payload):
+            raw_tok = (self.riot_ssid or self.riot_cookies).strip()
+            if raw_tok.startswith("ssid="):
+                raw_tok = raw_tok[5:].strip()
+            inner_ssid = str(jwt_payload.get("ssid") or "")
+            login_tok = str(jwt_payload.get("loginToken") or "")
+            diagnostics.append(
+                f"auth_jwt(inner_ssid_len={len(inner_ssid)}, loginToken_len={len(login_tok)})"
+            )
+            try:
+                r1 = self.session.get(
+                    auth_attempts[0][2],
+                    headers={"Accept": "text/html,application/xhtml+xml,*/*;q=0.8"},
+                    allow_redirects=False,
+                    timeout=self.timeout,
+                )
+                loc1 = r1.headers.get("Location", "")
+                if loc1 and "authenticate.riotgames.com" in loc1:
+                    r2 = self.session.get(
+                        loc1,
+                        headers={
+                            "Cookie": f"ssid={raw_tok}",
+                            "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+                        },
+                        allow_redirects=False,
+                        timeout=self.timeout,
+                    )
+                    diagnostics.append(f"auth_login_get={r2.status_code}")
+                    r3 = self.session.get(
+                        "https://authenticate.riotgames.com/api/v1/login",
+                        headers={
+                            "Cookie": f"ssid={raw_tok}",
+                            "Accept": "application/json",
+                        },
+                        timeout=self.timeout,
+                    )
+                    diagnostics.append(f"auth_api_get={r3.status_code}:{r3.text[:120]}")
+                    if r3.status_code == 200:
+                        r3_data = r3.json()
+                        new_lt = (r3_data.get("success") or {}).get("login_token")
+                        if new_lt:
+                            r4 = self.session.post(
+                                "https://auth.riotgames.com/api/v1/login-token",
+                                json={
+                                    "authentication_type": "RiotAuth",
+                                    "code_verifier": "",
+                                    "login_token": new_lt,
+                                    "persist_login": True,
+                                },
+                                timeout=self.timeout,
+                            )
+                            diagnostics.append(f"login_tok_post={r4.status_code}")
+                            r5 = self.session.get(
+                                auth_attempts[0][2],
+                                headers={"Accept": "text/html,application/xhtml+xml,*/*;q=0.8"},
+                                allow_redirects=False,
+                                timeout=self.timeout,
+                            )
+                            loc5 = r5.headers.get("Location", "")
+                            if "access_token=" in loc5:
+                                return self._parse_tokens_from_uri(loc5)
+            except Exception as ex:
+                diagnostics.append(f"auth_exchange_err={ex}")
+
         redirected_to_login = False
         for label, method, url, json_body in auth_attempts:
             try:
