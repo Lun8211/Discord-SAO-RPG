@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
@@ -129,6 +130,19 @@ class ValorantClient:
         )
         id_tokens = fragment_params.get("id_token") or query_params.get("id_token")
         if not access_tokens:
+            m_acc = re.search(
+                r"access_token=(eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+)",
+                uri,
+            )
+            if m_acc:
+                access_tokens = [m_acc.group(1)]
+            m_id = re.search(
+                r"id_token=(eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+)",
+                uri,
+            )
+            if m_id and not id_tokens:
+                id_tokens = [m_id.group(1)]
+        if not access_tokens:
             raise RiotAuthError(
                 "無法從 Riot 回應取得 access_token。您的 RIOT_SSID Cookie 可能已過期，請重新取得。"
             )
@@ -194,10 +208,13 @@ class ValorantClient:
     def authenticate(self) -> Tuple[str, Optional[str]]:
         """Perform Riot Cookie Reauth and return (access_token, id_token)."""
         raw_input = f"{self.riot_ssid} {self.riot_cookies}".strip()
-        if "access_token=" in raw_input:
-            access_tok, id_tok = self._parse_tokens_from_uri(raw_input)
-            self._jwt_payload, _ = self._inspect_jwt_info(access_tok)
-            return access_tok, id_tok
+        if "access_token=" in raw_input and "ssid=" not in raw_input:
+            try:
+                access_tok, id_tok = self._parse_tokens_from_uri(raw_input)
+                self._jwt_payload, _ = self._inspect_jwt_info(access_tok)
+                return access_tok, id_tok
+            except RiotAuthError:
+                pass
 
         jwt_payload, jwt_diag = self._inspect_jwt_info(self.riot_ssid or self.riot_cookies)
         self._jwt_payload = jwt_payload
@@ -355,6 +372,15 @@ class ValorantClient:
                         diagnostics.append(f"{attempt_label} 例外: {exc}")
 
         diag_str = " | ".join(diagnostics)
+
+        if "access_token=" in raw_input:
+            try:
+                access_tok, id_tok = self._parse_tokens_from_uri(raw_input)
+                self._jwt_payload, _ = self._inspect_jwt_info(access_tok)
+                logger.info("Cookie Reauth 未跳轉 (%s)，改用輸入字串內含的 access_token 進行查詢", diag_str)
+                return access_tok, id_tok
+            except RiotAuthError:
+                pass
 
         # Fallback: if the token itself carries OAuth claims ('scp' or 'cid'), try using it as an access_token
         if jwt_payload and ("scp" in jwt_payload or jwt_payload.get("cid") == "play-valorant-web-prod"):
