@@ -135,13 +135,46 @@ class ValorantClient:
         return access_tokens[0], (id_tokens[0] if id_tokens else None)
 
     @staticmethod
-    def _inspect_jwt_info(token_str: str) -> Tuple[dict, str]:
+    def _parse_cookie_map(raw_cookie_str: str) -> Dict[str, str]:
+        clean = raw_cookie_str.strip()
+        if clean.lower().startswith("cookie:"):
+            clean = clean[7:].strip()
+        if ";" not in clean:
+            return {}
+        result: Dict[str, str] = {}
+        for part in clean.split(";"):
+            part = part.strip()
+            if "=" in part:
+                k, v = part.split("=", 1)
+                result[k.strip()] = v.strip()
+        return result
+
+    @classmethod
+    def _inspect_jwt_info(cls, token_str: str) -> Tuple[dict, str]:
         """Return (decoded_payload_dict, diagnostic_summary) for a JWT or raw token string safely."""
         clean = token_str.strip()
+        if clean.lower().startswith("cookie:"):
+            clean = clean[7:].strip()
         if clean.startswith("ssid="):
             clean = clean[5:].strip()
         if ";" in clean:
-            return {}, f"cookie_pairs(len={len(clean)})"
+            cmap = cls._parse_cookie_map(clean)
+            names = sorted(list(cmap.keys()))
+            sub_val = cmap.get("sub", "")
+            ssid_val = cmap.get("ssid", "")
+            csid_val = cmap.get("csid", "")
+            payload = {}
+            if ssid_val and ssid_val.startswith("eyJ"):
+                payload, _ = cls._inspect_jwt_info(ssid_val)
+            elif csid_val and csid_val.startswith("eyJ"):
+                payload, _ = cls._inspect_jwt_info(csid_val)
+            if not sub_val and payload.get("sub"):
+                sub_val = str(payload.get("sub"))
+            sub_short = sub_val[:8] if sub_val else "None"
+            return (
+                payload,
+                f"cookie_pairs(len={len(clean)}, names={names}, sub={sub_short}, ssid_len={len(ssid_val)}, csid_len={len(csid_val)})",
+            )
         parts = clean.split(".")
         if len(parts) != 3 or not clean.startswith("eyJ"):
             return {}, f"non_jwt(len={len(clean)}, prefix={clean[:4]!r})"
@@ -171,14 +204,29 @@ class ValorantClient:
         if clean_tok.startswith("ssid="):
             clean_tok = clean_tok[5:].strip()
 
-        cookie_headers_to_try = [base_cookie_header]
-        if clean_tok and ";" not in base_cookie_header:
-            sub_val = jwt_payload.get("sub", "")
-            extra_parts = [f"ssid={clean_tok}", f"csid={clean_tok}"]
-            if sub_val:
-                extra_parts.append(f"sub={sub_val}")
-            extra_parts.append("clid=ap1")
-            cookie_headers_to_try.insert(0, "; ".join(extra_parts))
+        cookie_headers_to_try = []
+        cmap = self._parse_cookie_map(base_cookie_header)
+        if cmap:
+            # 1. Clean 5 Riot auth cookies (strip ephemeral asid, ccid, __cf_bm, _cfuvid)
+            clean5_keys = ["tdid", "clid", "sub", "csid", "ssid"]
+            clean5_parts = [f"{k}={cmap[k]}" for k in clean5_keys if k in cmap and cmap[k]]
+            if clean5_parts:
+                cookie_headers_to_try.append("; ".join(clean5_parts))
+            # 2. Without csid (in case csid expired and blocks ssid reauth)
+            no_csid_keys = ["tdid", "clid", "sub", "ssid"]
+            no_csid_parts = [f"{k}={cmap[k]}" for k in no_csid_keys if k in cmap and cmap[k]]
+            if no_csid_parts and no_csid_parts != clean5_parts:
+                cookie_headers_to_try.append("; ".join(no_csid_parts))
+            cookie_headers_to_try.append(base_cookie_header)
+        else:
+            cookie_headers_to_try.append(base_cookie_header)
+            if clean_tok and ";" not in base_cookie_header:
+                sub_val = jwt_payload.get("sub", "")
+                extra_parts = [f"ssid={clean_tok}", f"csid={clean_tok}"]
+                if sub_val:
+                    extra_parts.append(f"sub={sub_val}")
+                extra_parts.append("clid=ap1")
+                cookie_headers_to_try.insert(0, "; ".join(extra_parts))
 
         auth_attempts = [
             (
