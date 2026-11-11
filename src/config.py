@@ -153,15 +153,20 @@ class Settings:
             ssid_i = _clean_env(f"RIOT_SSID_{i}")
             cookies_i = _clean_env(f"RIOT_COOKIES_{i}")
             if ssid_i or cookies_i:
-                _add_account(
-                    label=_clean_env(f"ACCOUNT_NAME_{i}"),
-                    ssid=ssid_i,
-                    cookies=cookies_i,
-                    region=_clean_env(f"RIOT_REGION_{i}", default_region),
-                    discord_user_id=_clean_env(f"DISCORD_USER_ID_{i}"),
-                    channel_id=_clean_env(f"DISCORD_CHANNEL_ID_{i}")
-                    or default_channel_id,
-                )
+                if "|" in ssid_i or "\n" in ssid_i:
+                    cls._parse_accounts_blob(
+                        ssid_i, default_region, default_channel_id, _add_account
+                    )
+                else:
+                    _add_account(
+                        label=_clean_env(f"ACCOUNT_NAME_{i}"),
+                        ssid=ssid_i,
+                        cookies=cookies_i,
+                        region=_clean_env(f"RIOT_REGION_{i}", default_region),
+                        discord_user_id=_clean_env(f"DISCORD_USER_ID_{i}"),
+                        channel_id=_clean_env(f"DISCORD_CHANNEL_ID_{i}")
+                        or default_channel_id,
+                    )
 
         return accounts
 
