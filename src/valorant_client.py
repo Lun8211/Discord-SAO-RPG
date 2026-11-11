@@ -110,13 +110,14 @@ class ValorantClient:
         )
 
     def _build_cookie_header(self) -> str:
-        if self.riot_cookies:
-            return self.riot_cookies
-        if not self.riot_ssid:
+        raw = (self.riot_cookies or self.riot_ssid or "").strip()
+        if not raw:
             raise RiotAuthError("未提供 RIOT_SSID 或 RIOT_COOKIES。")
-        if self.riot_ssid.startswith("ssid="):
-            return self.riot_ssid
-        return f"ssid={self.riot_ssid}"
+        if raw.lower().startswith("cookie:"):
+            raw = raw[7:].strip()
+        if ";" in raw or "=" in raw:
+            return raw
+        return f"ssid={raw}"
 
     @staticmethod
     def _parse_tokens_from_uri(uri: str) -> Tuple[str, Optional[str]]:
