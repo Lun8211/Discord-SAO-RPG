@@ -98,6 +98,7 @@ class ValorantClient:
         self.default_region = (region or "ap").lower().strip()
         self.language = language or "zh-TW"
         self.timeout = timeout
+        self._jwt_payload: dict = {}
         self.session = requests.Session()
         self.session.headers.update(
             {
@@ -157,18 +158,27 @@ class ValorantClient:
         """Perform Riot Cookie Reauth and return (access_token, id_token)."""
         raw_input = f"{self.riot_ssid} {self.riot_cookies}".strip()
         if "access_token=" in raw_input:
-            return self._parse_tokens_from_uri(raw_input)
+            access_tok, id_tok = self._parse_tokens_from_uri(raw_input)
+            self._jwt_payload, _ = self._inspect_jwt_info(access_tok)
+            return access_tok, id_tok
 
         jwt_payload, jwt_diag = self._inspect_jwt_info(self.riot_ssid or self.riot_cookies)
-        # If the user pasted a raw OAuth access_token (contains 'scp' or 'cid' without 'ssid' session structure)
-        if jwt_payload and ("scp" in jwt_payload or jwt_payload.get("cid") == "play-valorant-web-prod"):
-            clean_tok = (self.riot_ssid or self.riot_cookies).strip()
-            if clean_tok.startswith("ssid="):
-                clean_tok = clean_tok[5:].strip()
-            logger.info("偵測到直接傳入的 access_token (%s)，直接使用該 Token 進行查詢", jwt_diag)
-            return clean_tok, None
+        self._jwt_payload = jwt_payload
 
-        cookie_header = self._build_cookie_header()
+        base_cookie_header = self._build_cookie_header()
+        clean_tok = (self.riot_ssid or "").strip()
+        if clean_tok.startswith("ssid="):
+            clean_tok = clean_tok[5:].strip()
+
+        cookie_headers_to_try = [base_cookie_header]
+        if clean_tok and ";" not in base_cookie_header:
+            sub_val = jwt_payload.get("sub", "")
+            extra_parts = [f"ssid={clean_tok}", f"csid={clean_tok}"]
+            if sub_val:
+                extra_parts.append(f"sub={sub_val}")
+            extra_parts.append("clid=ap1")
+            cookie_headers_to_try.insert(0, "; ".join(extra_parts))
+
         auth_attempts = [
             (
                 "GET(web)",
@@ -210,91 +220,97 @@ class ValorantClient:
         ]
 
         diagnostics: List[str] = [f"token_info=[{jwt_diag}]"]
-        is_authenticate_domain_cookie = bool(
-            jwt_payload and ("loginToken" in jwt_payload or "seriesToken" in jwt_payload)
-        )
-
         redirected_to_login = False
-        for label, method, url, json_body in auth_attempts:
-            try:
-                if method == "POST":
-                    resp = self.session.post(
-                        url,
-                        headers={
-                            "Cookie": cookie_header,
-                            "Accept": "application/json",
-                        },
-                        json=json_body,
-                        allow_redirects=False,
-                        timeout=self.timeout,
-                    )
-                else:
-                    resp = self.session.get(
-                        url,
-                        headers={
-                            "Cookie": cookie_header,
-                            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                        },
-                        allow_redirects=False,
-                        timeout=self.timeout,
-                    )
 
-                location = resp.headers.get("Location", "")
-                if not location and resp.status_code == 200:
-                    try:
-                        data = resp.json()
-                        location = (
-                            data.get("response", {})
-                            .get("parameters", {})
-                            .get("uri", "")
+        for c_idx, cookie_header in enumerate(cookie_headers_to_try):
+            for label, method, url, json_body in auth_attempts:
+                attempt_label = label if c_idx == 0 else f"{label}#base"
+                try:
+                    if method == "POST":
+                        resp = self.session.post(
+                            url,
+                            headers={
+                                "Cookie": cookie_header,
+                                "Accept": "application/json",
+                            },
+                            json=json_body,
+                            allow_redirects=False,
+                            timeout=self.timeout,
                         )
-                        if not location and data.get("type"):
-                            diagnostics.append(
-                                f"{label}: HTTP 200 type={data.get('type')} error={data.get('error', '')}"
+                    else:
+                        resp = self.session.get(
+                            url,
+                            headers={
+                                "Cookie": cookie_header,
+                                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                            },
+                            allow_redirects=False,
+                            timeout=self.timeout,
+                        )
+
+                    location = resp.headers.get("Location", "")
+                    if not location and resp.status_code == 200:
+                        try:
+                            data = resp.json()
+                            location = (
+                                data.get("response", {})
+                                .get("parameters", {})
+                                .get("uri", "")
                             )
-                    except Exception:
-                        pass
+                            if not location and data.get("type"):
+                                diagnostics.append(
+                                    f"{attempt_label}: HTTP 200 type={data.get('type')} error={data.get('error', '')}"
+                                )
+                        except Exception:
+                            pass
 
-                if "access_token=" in location:
-                    return self._parse_tokens_from_uri(location)
+                    if "access_token=" in location:
+                        logger.info("透過 %s 成功交換取得最新 access_token", attempt_label)
+                        access_tok, id_tok = self._parse_tokens_from_uri(location)
+                        parsed_payload, _ = self._inspect_jwt_info(access_tok)
+                        if parsed_payload:
+                            self._jwt_payload = parsed_payload
+                        return access_tok, id_tok
 
-                if location:
-                    parsed_loc = urlparse(location)
-                    safe_loc = f"{parsed_loc.scheme}://{parsed_loc.netloc}{parsed_loc.path}"
-                    if parsed_loc.query:
-                        q_params = parse_qs(parsed_loc.query)
-                        if "error" in q_params:
-                            safe_loc += f"?error={q_params['error'][0]}"
-                    diagnostics.append(f"{label}: HTTP {resp.status_code} -> {safe_loc}")
-                elif not (resp.status_code == 200 and "type=" in diagnostics[-1]):
-                    body_preview = resp.text[:100].replace("\n", " ").strip()
-                    diagnostics.append(
-                        f"{label}: HTTP {resp.status_code} ({body_preview})"
-                    )
+                    if c_idx == 0:
+                        if location:
+                            parsed_loc = urlparse(location)
+                            safe_loc = f"{parsed_loc.scheme}://{parsed_loc.netloc}{parsed_loc.path}"
+                            if parsed_loc.query:
+                                q_params = parse_qs(parsed_loc.query)
+                                if "error" in q_params:
+                                    safe_loc += f"?error={q_params['error'][0]}"
+                            diagnostics.append(f"{attempt_label}: HTTP {resp.status_code} -> {safe_loc}")
+                        elif not (resp.status_code == 200 and "type=" in diagnostics[-1]):
+                            body_preview = resp.text[:100].replace("\n", " ").strip()
+                            diagnostics.append(
+                                f"{attempt_label}: HTTP {resp.status_code} ({body_preview})"
+                            )
 
-                if (
-                    "authenticate.riotgames.com" in location
-                    or "xsso.riotgames.com" in location
-                    or "/login" in location
-                ):
-                    redirected_to_login = True
-            except Exception as exc:
-                diagnostics.append(f"{label} 例外: {exc}")
+                    if (
+                        "authenticate.riotgames.com" in location
+                        or "xsso.riotgames.com" in location
+                        or "/login" in location
+                    ):
+                        redirected_to_login = True
+                except Exception as exc:
+                    if c_idx == 0:
+                        diagnostics.append(f"{attempt_label} 例外: {exc}")
 
         diag_str = " | ".join(diagnostics)
+
+        # Fallback: if the token itself carries OAuth claims ('scp' or 'cid'), try using it as an access_token
+        if jwt_payload and ("scp" in jwt_payload or jwt_payload.get("cid") == "play-valorant-web-prod"):
+            logger.info("Cookie Reauth 未跳轉 (%s)，改用直接 Token (%s) 進行查詢", diag_str, jwt_diag)
+            return clean_tok, None
+
         if any("HTTP 403" in d for d in diagnostics):
             raise RiotAuthError(
                 f"Riot 驗證遭到防火牆阻擋 (HTTP 403 Forbidden)，雲端機房 IP 可能被 Cloudflare 攔截。診斷資訊：{diag_str}"
             )
-        if is_authenticate_domain_cookie:
-            raise RiotAuthError(
-                "偵測到您複製成了 `authenticate.riotgames.com` 的 ssid Cookie（長度 363，含 loginToken），而非 `auth.riotgames.com` 的 ssid！\n"
-                "👉 請在同一個已登入的瀏覽器分頁打開：https://auth.riotgames.com/.well-known/openid-configuration\n"
-                "然後按 F12 -> Application -> Cookies -> 點選 `https://auth.riotgames.com`，複製裡面的 `ssid` 更新至 Secrets。"
-            )
         if redirected_to_login:
             raise RiotAuthError(
-                f"Riot Cookie (RIOT_SSID) 已過期、無效或取錯網域（伺服器跳轉回登入頁）。診斷資訊：{diag_str}"
+                f"Riot Cookie (RIOT_SSID) 已過期、無效或缺少關聯 Cookie（伺服器跳轉回登入頁）。診斷資訊：{diag_str}"
             )
         raise RiotAuthError(
             f"Riot 驗證失敗，請確認 RIOT_SSID 是否正確且未過期。診斷資訊：{diag_str}"
@@ -310,13 +326,20 @@ class ValorantClient:
             json={},
             timeout=self.timeout,
         )
-        if resp.status_code != 200:
+        if resp.status_code != 200 or not resp.text.strip():
             raise RiotAuthError(
-                f"無法取得 Riot Entitlements Token (HTTP {resp.status_code}): {resp.text[:200]}"
+                f"無法取得 Riot Entitlements Token (HTTP {resp.status_code}, len={len(resp.text)}): {resp.text[:200]}"
             )
-        token = resp.json().get("entitlements_token")
+        try:
+            data = resp.json()
+        except Exception as exc:
+            raise RiotAuthError(
+                f"解析 Riot Entitlements 回應失敗 (HTTP {resp.status_code}): {exc}"
+            ) from exc
+        token = data.get("entitlements_token")
         if not token:
             raise RiotAuthError("Riot Entitlements 回應缺少 entitlements_token。")
+        logger.info("成功取得 Riot Entitlements Token (len=%d)", len(token))
         return token
 
     def get_user_info(self, access_token: str) -> Tuple[str, str]:
@@ -326,19 +349,38 @@ class ValorantClient:
             headers={"Authorization": f"Bearer {access_token}"},
             timeout=self.timeout,
         )
-        if resp.status_code != 200:
-            raise RiotAuthError(
-                f"無法取得 Riot 玩家資訊 (HTTP {resp.status_code}): {resp.text[:200]}"
+        if resp.status_code == 200 and resp.text.strip():
+            try:
+                data = resp.json()
+                puuid = data.get("sub", "")
+                if puuid:
+                    acct = data.get("acct") or {}
+                    game_name = acct.get("game_name") or "特戰英豪玩家"
+                    tag_line = acct.get("tag_line") or ""
+                    full_name = f"{game_name}#{tag_line}" if tag_line else game_name
+                    return puuid, full_name
+            except Exception as exc:
+                logger.warning("解析 userinfo JSON 失敗，嘗試從 JWT payload 讀取: %s", exc)
+        else:
+            logger.warning(
+                "userinfo 回應 HTTP %s (len=%d)，改從 JWT payload 讀取玩家 PUUID",
+                resp.status_code,
+                len(resp.text),
             )
-        data = resp.json()
-        puuid = data.get("sub", "")
+
+        puuid = (self._jwt_payload or {}).get("sub", "")
         if not puuid:
-            raise RiotAuthError("Riot userinfo 回應缺少玩家 PUUID (sub)。")
-        acct = data.get("acct") or {}
-        game_name = acct.get("game_name") or "特戰英豪玩家"
-        tag_line = acct.get("tag_line") or ""
-        full_name = f"{game_name}#{tag_line}" if tag_line else game_name
-        return puuid, full_name
+            raise RiotAuthError(
+                f"無法取得 Riot 玩家資訊 (userinfo HTTP {resp.status_code}, len={len(resp.text)}): {resp.text[:200]}"
+            )
+        acct = (self._jwt_payload or {}).get("acct") or (self._jwt_payload or {}).get("dat") or {}
+        if isinstance(acct, dict):
+            game_name = acct.get("game_name") or acct.get("gn") or ""
+            tag_line = acct.get("tag_line") or acct.get("tl") or ""
+            if game_name:
+                full_name = f"{game_name}#{tag_line}" if tag_line else game_name
+                return puuid, full_name
+        return puuid, "特戰英豪玩家"
 
     def get_shard(self, access_token: str, id_token: Optional[str]) -> str:
         if id_token:
@@ -352,7 +394,7 @@ class ValorantClient:
                     json={"id_token": id_token},
                     timeout=self.timeout,
                 )
-                if resp.status_code == 200:
+                if resp.status_code == 200 and resp.text.strip():
                     live_region = (
                         resp.json()
                         .get("affinities", {})
@@ -408,16 +450,28 @@ class ValorantClient:
         )
         v3_url = f"https://pd.{shard}.a.pvp.net/store/v3/storefront/{puuid}"
         resp = self.session.post(v3_url, headers=headers, json={}, timeout=self.timeout)
+        v3_status = resp.status_code
+        v3_len = len(resp.text)
 
-        if resp.status_code in (404, 405):
+        if resp.status_code in (404, 405) or not resp.text.strip():
+            logger.info(
+                "storefront v3 回應 HTTP %s (len=%d)，嘗試改用 v2 GET...",
+                v3_status,
+                v3_len,
+            )
             v2_url = f"https://pd.{shard}.a.pvp.net/store/v2/storefront/{puuid}"
             resp = self.session.get(v2_url, headers=headers, timeout=self.timeout)
 
-        if resp.status_code != 200:
+        if resp.status_code != 200 or not resp.text.strip():
             raise ValorantAPIError(
-                f"查詢每日商店失敗 (HTTP {resp.status_code}): {resp.text[:250]}"
+                f"查詢每日商店失敗 (v3 HTTP {v3_status} len={v3_len}, v2 HTTP {resp.status_code} len={len(resp.text)}): {resp.text[:250]}"
             )
-        return resp.json()
+        try:
+            return resp.json()
+        except Exception as exc:
+            raise ValorantAPIError(
+                f"解析每日商店 JSON 失敗 (HTTP {resp.status_code}, len={len(resp.text)}): {exc}"
+            ) from exc
 
     def get_wallet(
         self,
