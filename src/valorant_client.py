@@ -104,7 +104,7 @@ class ValorantClient:
                 "User-Agent": (
                     "RiotClient/91.0.2.1870.3774 rso-auth (Windows;10;;Professional, x64)"
                 ),
-                "Accept": "application/json",
+                "Accept": "*/*",
             }
         )
 
@@ -183,7 +183,10 @@ class ValorantClient:
                 if method == "POST":
                     resp = self.session.post(
                         url,
-                        headers={"Cookie": cookie_header},
+                        headers={
+                            "Cookie": cookie_header,
+                            "Accept": "application/json",
+                        },
                         json=json_body,
                         allow_redirects=False,
                         timeout=self.timeout,
@@ -191,7 +194,10 @@ class ValorantClient:
                 else:
                     resp = self.session.get(
                         url,
-                        headers={"Cookie": cookie_header},
+                        headers={
+                            "Cookie": cookie_header,
+                            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                        },
                         allow_redirects=False,
                         timeout=self.timeout,
                     )
