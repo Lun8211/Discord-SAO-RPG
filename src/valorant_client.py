@@ -666,6 +666,26 @@ class ValorantClient:
         shard = self.get_shard(access_token, id_token)
         resolved_version = client_version or self.get_client_version()
 
+        if player_name == "特戰英豪玩家":
+            try:
+                name_resp = self.session.put(
+                    f"https://pd.{shard}.a.pvp.net/name-service/v2/players",
+                    headers=self._build_riot_headers(
+                        access_token, entitlements_token, resolved_version
+                    ),
+                    json=[puuid],
+                    timeout=self.timeout,
+                )
+                if name_resp.status_code == 200 and name_resp.text.strip():
+                    entries = name_resp.json()
+                    if isinstance(entries, list) and entries:
+                        gn = entries[0].get("GameName") or ""
+                        tl = entries[0].get("TagLine") or ""
+                        if gn:
+                            player_name = f"{gn}#{tl}" if tl else gn
+            except Exception as exc:
+                logger.warning("從 Name Service 查詢玩家名稱失敗 (略過): %s", exc)
+
         storefront = self.get_storefront_raw(
             shard=shard,
             puuid=puuid,
