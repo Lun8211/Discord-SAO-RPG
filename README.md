@@ -79,11 +79,11 @@
 
 | Secret 名稱 | 內容填寫格式 | 範例 |
 | :--- | :--- | :--- |
-| **`RIOT_SSID_1`** | `暱稱\|Cookie內容\|Discord用戶ID` | `Lun\|ssid=eyJ...; csid=...\|123456789012345678` |
-| **`RIOT_SSID_2`** | `暱稱\|Cookie內容\|Discord用戶ID` | `Mahiru\|ssid=eyJ...; csid=...\|234567890123456789` |
-| **`RIOT_SSID_3`** | `暱稱\|Cookie內容\|Discord用戶ID` | `Bliz\|ssid=eyJ...; csid=...\|345678901234567890` |
-| **`RIOT_SSID_4`** | `暱稱\|Cookie內容\|Discord用戶ID` | `Nakka\|ssid=eyJ...; csid=...\|456789012345678901` |
-| **`RIOT_SSID_5`** | `暱稱\|Cookie內容\|Discord用戶ID` | `john\|ssid=eyJ...; csid=...\|567890123456789012` |
+| **`RIOT_SSID_1`** | `暱稱\|Cookie內容\|Discord用戶ID` | `aaa\|ssid=eyJ...; csid=...\|123456789012345678` |
+| **`RIOT_SSID_2`** | `暱稱\|Cookie內容\|Discord用戶ID` | `bbb\|ssid=eyJ...; csid=...\|234567890123456789` |
+| **`RIOT_SSID_3`** | `暱稱\|Cookie內容\|Discord用戶ID` | `ccc\|ssid=eyJ...; csid=...\|345678901234567890` |
+| **`RIOT_SSID_4`** | `暱稱\|Cookie內容\|Discord用戶ID` | `ddd\|ssid=eyJ...; csid=...\|456789012345678901` |
+| **`RIOT_SSID_5`** | `暱稱\|Cookie內容\|Discord用戶ID` | `eee\|ssid=eyJ...; csid=...\|567890123456789012` |
 
 > 📌 **欄位格式說明**：`暱稱|Cookie|Discord用戶ID|指定發送頻道ID(選填)`
 > - 如果不需要 `@標註` 該成員，第 3 欄可留空，例如：`小明|貼上整串Cookie`。
