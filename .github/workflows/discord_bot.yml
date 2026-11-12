@@ -1,0 +1,86 @@
+name: 啟動 Discord /shop 指令機器人 (Interactive Slash Command Bot)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_minutes:
+        description: "機器人維持上線的分鐘數（最長可填 350 分鐘）"
+        required: false
+        default: "30"
+        type: string
+
+jobs:
+  run-discord-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Start Discord Slash Command Bot (/shop)
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          RIOT_REGION: ${{ secrets.RIOT_REGION || 'ap' }}
+          VALORANT_LANG: ${{ secrets.VALORANT_LANG || 'zh-TW' }}
+          RIOT_ACCOUNTS: ${{ secrets.RIOT_ACCOUNTS }}
+          RIOT_ACCOUNTS_JSON: ${{ secrets.RIOT_ACCOUNTS_JSON }}
+          RIOT_SSID: ${{ secrets.RIOT_SSID }}
+          RIOT_COOKIES: ${{ secrets.RIOT_COOKIES }}
+          ACCOUNT_NAME: ${{ secrets.ACCOUNT_NAME }}
+          DISCORD_USER_ID: ${{ secrets.DISCORD_USER_ID }}
+          ACCOUNT_NAME_1: ${{ secrets.ACCOUNT_NAME_1 }}
+          RIOT_SSID_1: ${{ secrets.RIOT_SSID_1 }}
+          DISCORD_USER_ID_1: ${{ secrets.DISCORD_USER_ID_1 }}
+          DISCORD_CHANNEL_ID_1: ${{ secrets.DISCORD_CHANNEL_ID_1 }}
+          ACCOUNT_NAME_2: ${{ secrets.ACCOUNT_NAME_2 }}
+          RIOT_SSID_2: ${{ secrets.RIOT_SSID_2 }}
+          DISCORD_USER_ID_2: ${{ secrets.DISCORD_USER_ID_2 }}
+          DISCORD_CHANNEL_ID_2: ${{ secrets.DISCORD_CHANNEL_ID_2 }}
+          ACCOUNT_NAME_3: ${{ secrets.ACCOUNT_NAME_3 }}
+          RIOT_SSID_3: ${{ secrets.RIOT_SSID_3 }}
+          DISCORD_USER_ID_3: ${{ secrets.DISCORD_USER_ID_3 }}
+          DISCORD_CHANNEL_ID_3: ${{ secrets.DISCORD_CHANNEL_ID_3 }}
+          ACCOUNT_NAME_4: ${{ secrets.ACCOUNT_NAME_4 }}
+          RIOT_SSID_4: ${{ secrets.RIOT_SSID_4 }}
+          DISCORD_USER_ID_4: ${{ secrets.DISCORD_USER_ID_4 }}
+          DISCORD_CHANNEL_ID_4: ${{ secrets.DISCORD_CHANNEL_ID_4 }}
+          ACCOUNT_NAME_5: ${{ secrets.ACCOUNT_NAME_5 }}
+          RIOT_SSID_5: ${{ secrets.RIOT_SSID_5 }}
+          DISCORD_USER_ID_5: ${{ secrets.DISCORD_USER_ID_5 }}
+          DISCORD_CHANNEL_ID_5: ${{ secrets.DISCORD_CHANNEL_ID_5 }}
+          ACCOUNT_NAME_6: ${{ secrets.ACCOUNT_NAME_6 }}
+          RIOT_SSID_6: ${{ secrets.RIOT_SSID_6 }}
+          DISCORD_USER_ID_6: ${{ secrets.DISCORD_USER_ID_6 }}
+          DISCORD_CHANNEL_ID_6: ${{ secrets.DISCORD_CHANNEL_ID_6 }}
+          ACCOUNT_NAME_7: ${{ secrets.ACCOUNT_NAME_7 }}
+          RIOT_SSID_7: ${{ secrets.RIOT_SSID_7 }}
+          DISCORD_USER_ID_7: ${{ secrets.DISCORD_USER_ID_7 }}
+          DISCORD_CHANNEL_ID_7: ${{ secrets.DISCORD_CHANNEL_ID_7 }}
+          ACCOUNT_NAME_8: ${{ secrets.ACCOUNT_NAME_8 }}
+          RIOT_SSID_8: ${{ secrets.RIOT_SSID_8 }}
+          DISCORD_USER_ID_8: ${{ secrets.DISCORD_USER_ID_8 }}
+          DISCORD_CHANNEL_ID_8: ${{ secrets.DISCORD_CHANNEL_ID_8 }}
+          ACCOUNT_NAME_9: ${{ secrets.ACCOUNT_NAME_9 }}
+          RIOT_SSID_9: ${{ secrets.RIOT_SSID_9 }}
+          DISCORD_USER_ID_9: ${{ secrets.DISCORD_USER_ID_9 }}
+          DISCORD_CHANNEL_ID_9: ${{ secrets.DISCORD_CHANNEL_ID_9 }}
+          ACCOUNT_NAME_10: ${{ secrets.ACCOUNT_NAME_10 }}
+          RIOT_SSID_10: ${{ secrets.RIOT_SSID_10 }}
+          DISCORD_USER_ID_10: ${{ secrets.DISCORD_USER_ID_10 }}
+          DISCORD_CHANNEL_ID_10: ${{ secrets.DISCORD_CHANNEL_ID_10 }}
+        run: |
+          python bot.py --run-minutes "${{ github.event.inputs.run_minutes || '30' }}"

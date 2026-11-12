@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import datetime
 import logging
@@ -36,14 +37,25 @@ def _dict_to_discord_embed(embed_dict: dict) -> discord.Embed:
 
 
 class ValorantStoreBot(discord.Client):
-    def __init__(self) -> None:
+    def __init__(self, run_minutes: int = 0) -> None:
         intents = discord.Intents.default()
         super().__init__(intents=intents)
         self.tree = app_commands.CommandTree(self)
+        self.run_minutes = run_minutes
+        self._synced_guilds = False
 
     async def setup_hook(self) -> None:
         await self.tree.sync()
         self.daily_store_task.start()
+        if self.run_minutes > 0:
+            asyncio.create_task(self._auto_shutdown_after(self.run_minutes))
+
+    async def _auto_shutdown_after(self, minutes: int) -> None:
+        await self.wait_until_ready()
+        logger.info("⏳ 機器人將於 %d 分鐘後自動安全下線...", minutes)
+        await asyncio.sleep(minutes * 60)
+        logger.info("⏹️ 已達設定執行時間 (%d 分鐘)，正在安全關閉機器人...", minutes)
+        await self.close()
 
     async def on_ready(self) -> None:
         logger.info(
@@ -52,9 +64,20 @@ class ValorantStoreBot(discord.Client):
             self.user.id if self.user else "",
             len(settings.accounts),
         )
+        if not self._synced_guilds:
+            self._synced_guilds = True
+            for guild in self.guilds:
+                try:
+                    self.tree.copy_global_to(guild=guild)
+                    await self.tree.sync(guild=guild)
+                    logger.info("✅ 已即時同步 /shop 斜線指令至伺服器：%s (%s)", guild.name, guild.id)
+                except Exception as exc:
+                    logger.warning("同步斜線指令至伺服器 %s 失敗: %s", guild.id, exc)
 
     async def fetch_all_payloads_async(
-        self, target_filter: Optional[str] = None
+        self,
+        target_filter: Optional[str] = None,
+        caller_discord_id: Optional[str] = None,
     ) -> List[Tuple[AccountConfig, dict]]:
         def _fetch_all() -> List[Tuple[AccountConfig, dict]]:
             shared_client = ValorantClient(
@@ -65,13 +88,17 @@ class ValorantStoreBot(discord.Client):
             skin_catalog = shared_client.fetch_skin_catalog()
 
             results: List[Tuple[AccountConfig, dict]] = []
+            q = (target_filter or "").strip().lower()
             for acc in settings.accounts:
-                if target_filter:
-                    q = target_filter.strip().lower()
-                    if (
+                if q and q not in ("all", "全部", "全部帳號"):
+                    if q in ("me", "我自己", "自己"):
+                        if not caller_discord_id or acc.discord_user_id != caller_discord_id:
+                            continue
+                    elif (
                         q != str(acc.index)
                         and q not in acc.label.lower()
                         and q not in acc.display_label.lower()
+                        and q.strip("<@!>") != acc.discord_user_id
                     ):
                         continue
                 try:
@@ -124,26 +151,63 @@ bot = ValorantStoreBot()
 
 
 @bot.tree.command(
-    name="shop", description="立即查看特戰英豪 (VALORANT) 每日商店刷新的 4 個物品（支援多帳號）"
+    name="shop", description="立即手動執行一次特戰英豪 (VALORANT) 每日商店查詢與推送"
 )
-@app_commands.describe(account="（選填）指定要查詢的帳號名稱或編號（例如：小明 或 1），不填則顯示全部帳號")
+@app_commands.describe(account="（選填）選擇要查詢的帳號（不填則一次執行全部帳號）")
 async def shop_command(
     interaction: discord.Interaction, account: Optional[str] = None
 ) -> None:
     await interaction.response.defer()
-    results = await bot.fetch_all_payloads_async(target_filter=account)
+    caller_id = str(interaction.user.id) if interaction.user else None
+    results = await bot.fetch_all_payloads_async(
+        target_filter=account, caller_discord_id=caller_id
+    )
     if not results:
         await interaction.followup.send("⚠️ 找不到符合條件的特戰英豪帳號設定。")
         return
 
-    for _, payload in results:
+    for idx, (_, payload) in enumerate(results):
         embeds = [_dict_to_discord_embed(e) for e in payload.get("embeds", [])]
         await interaction.followup.send(
             content=payload.get("content", ""), embeds=embeds
         )
+        if idx + 1 < len(results):
+            await asyncio.sleep(0.5)
+
+
+@shop_command.autocomplete("account")
+async def shop_account_autocomplete(
+    interaction: discord.Interaction,
+    current: str,
+) -> List[app_commands.Choice[str]]:
+    choices: List[app_commands.Choice[str]] = [
+        app_commands.Choice(name="📋 全部帳號 (執行所有人)", value="all"),
+        app_commands.Choice(name="🙋 我自己 (依 Discord ID 對應)", value="me"),
+    ]
+    for acc in settings.accounts:
+        display = f"[{acc.index}] {acc.display_label}"
+        choices.append(app_commands.Choice(name=display[:100], value=str(acc.index)))
+    if not current:
+        return choices[:25]
+    q = current.lower()
+    return [c for c in choices if q in c.name.lower() or q in c.value.lower()][:25]
+
+
+def parse_bot_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="VALORANT 每日商店常駐型 Discord Bot")
+    parser.add_argument(
+        "--run-minutes",
+        type=int,
+        default=0,
+        help="設定機器人執行幾分鐘後自動下線（0 代表持續常駐不關閉）",
+    )
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
+    args = parse_bot_args()
     if not settings.discord_bot_token:
         raise SystemExit("請先設定 DISCORD_BOT_TOKEN 環境變數。")
+    bot.run_minutes = args.run_minutes
     bot.run(settings.discord_bot_token)
+
