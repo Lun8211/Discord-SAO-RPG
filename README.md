@@ -63,7 +63,7 @@
 
 ### 第三步：在 GitHub 專案設定 Secrets
 
-1. 打開您 GitHub 上的這個專案（`Lun8211/val-dc`）。
+1. 打開您 GitHub 上的這個專案。
 2. 點選上方選單 **Settings** ➔ 左側 **Secrets and variables** ➔ **Actions** ➔ **New repository secret**。
 3. 首先新增 **Discord 基本設定**：
 
@@ -93,9 +93,9 @@
 #### 💡 方式 B：使用單一 `RIOT_ACCOUNTS` Secret（一行一個人）
 建立一個名為 **`RIOT_ACCOUNTS`** 的 Secret，每一行代表一位玩家：
 ```text
-Lun|貼上整串Cookie|123456789012345678
-Mahiru|貼上整串Cookie|234567890123456789
-Bliz|貼上整串Cookie|345678901234567890
+aaa|貼上整串Cookie|123456789012345678
+ccc|貼上整串Cookie|234567890123456789
+sss|貼上整串Cookie|345678901234567890
 ```
 
 ---
