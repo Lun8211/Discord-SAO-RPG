@@ -1,10 +1,12 @@
 name: VALORANT 每日商店推送 (Daily Store Notifier)
 
 on:
-  schedule:
-    # 特戰英豪每日商店於 UTC 00:00 (台灣時間 08:00) 刷新
-    # 設定於每日 UTC 00:17 (台灣時間 08:17) 自動執行，避開 GitHub 整點尖峰掉單時段
-    - cron: "17 0 * * *"
+  # 暫停 GitHub Actions 定時排程自動推送（近期 GitHub schedule 延遲較嚴重）
+  # 日後若要恢復每日自動推送，移除下方 schedule 與 cron 前面的「# 」註解即可：
+  # schedule:
+  #   # 特戰英豪每日商店於 UTC 00:00 (台灣時間 08:00) 刷新
+  #   # 設定於每日 UTC 00:17 (台灣時間 08:17) 自動執行，避開 GitHub 整點尖峰掉單時段
+  #   - cron: "17 0 * * *"
   workflow_dispatch:
     inputs:
       mock_mode:
