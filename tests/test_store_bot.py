@@ -1,11 +1,18 @@
+import base64
+import json
+
 import pytest
 
-from src.config import Settings
+import bot as bot_module
+from src.config import AccountConfig, Settings
 from src.discord_notifier import (
+    build_cookie_status_payload,
     build_error_message_payload,
     build_store_message_payload,
+    format_remaining_duration,
 )
 from src.valorant_client import (
+    CookieCheckResult,
     RiotAuthError,
     ValorantClient,
     VP_CURRENCY_ID,
@@ -199,9 +206,6 @@ def test_multi_account_parsing_json(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_expired_embedded_access_token_is_not_returned(monkeypatch: pytest.MonkeyPatch) -> None:
-    import base64
-    import json
-
     header = base64.urlsafe_b64encode(b'{"alg":"RS256"}').decode().rstrip("=")
     payload = base64.urlsafe_b64encode(
         json.dumps({"sub": "12345678-1234-1234-1234-123456789012", "exp": 1000000}).encode()
@@ -237,4 +241,165 @@ def test_expired_embedded_access_token_is_not_returned(monkeypatch: pytest.Monke
 
     assert "embedded_access_token_expired" in str(exc_info.value)
     assert "已過期" in str(exc_info.value)
+
+
+def _make_jwt(payload: dict) -> str:
+    header = (
+        base64.urlsafe_b64encode(json.dumps({"alg": "ES256", "typ": "JWT"}).encode())
+        .decode()
+        .rstrip("=")
+    )
+    body = (
+        base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
+    )
+    return f"{header}.{body}.sig"
+
+
+def test_inspect_cookie_metadata_prefers_ssid_exp_over_id_token() -> None:
+    now_ts = 1794500000
+    ssid_jwt = _make_jwt({"sub": "puuid-1", "iat": now_ts - 86400, "exp": now_ts + 20 * 86400})
+    short_id_token = _make_jwt({"sub": "puuid-1", "acct": {"game_name": "Lun"}, "aud": "play", "exp": now_ts - 3600})
+    raw_cookie = f"__Secure-id_token={short_id_token}; csid=abc; tdid=def; ssid={ssid_jwt}"
+
+    client = ValorantClient(riot_cookies=raw_cookie)
+    meta = client.inspect_cookie_metadata()
+
+    assert meta["token_source"] == "full_cookies"
+    assert meta["has_ssid"] is True
+    assert meta["has_csid"] is True
+    assert meta["has_tdid"] is True
+    assert meta["issued_at"] == now_ts - 86400
+    assert meta["expires_at"] == now_ts + 20 * 86400
+    assert meta["expires_source"] == "ssid_jwt"
+
+
+def test_inspect_cookie_metadata_detects_access_token_and_missing_ssid() -> None:
+    now_ts = 1794500000
+    acc_jwt = _make_jwt({"sub": "puuid-1", "scp": ["openid"], "exp": now_ts + 1800})
+    client_acc = ValorantClient(riot_ssid=acc_jwt)
+    meta_acc = client_acc.inspect_cookie_metadata()
+    assert meta_acc["token_source"] == "access_token"
+    assert meta_acc["expires_at"] == now_ts + 1800
+
+    client_missing = ValorantClient(riot_cookies="csid=abc; tdid=def; clid=ap1")
+    meta_missing = client_missing.inspect_cookie_metadata()
+    assert meta_missing["token_source"] == "missing_ssid"
+    assert meta_missing["has_ssid"] is False
+
+
+def test_check_cookie_status_live_and_set_cookie_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    now_ts = 1794500000
+    ssid_jwt = _make_jwt({"sub": "puuid-1", "iat": now_ts - 86400, "exp": now_ts + 2 * 86400})
+    client = ValorantClient(riot_cookies=f"ssid={ssid_jwt}; csid=c1; tdid=t1")
+
+    monkeypatch.setattr(client, "authenticate", lambda: ("acc_tok", "id_tok"))
+    monkeypatch.setattr(client, "get_user_info", lambda _tok: ("puuid-1", "Lun#TW1"))
+
+    res = client.check_cookie_status(
+        account_label="Lun",
+        discord_user_id="12345",
+        now_ts=now_ts,
+        verify_live=True,
+    )
+    assert res.is_valid is True
+    assert res.status_code == "expiring_soon"
+    assert res.player_name == "Lun#TW1"
+    assert res.remaining_seconds == 2 * 86400
+    assert res.expires_source == "ssid_jwt"
+
+    # Opaque ssid fallback to Set-Cookie expiration captured during authenticate()
+    client_opaque = ValorantClient(riot_cookies="ssid=opaque_token; csid=c1")
+
+    def _fake_auth() -> tuple[str, str]:
+        client_opaque._last_auth_method = "GET(web)"
+        client_opaque._last_set_cookie_ssid_expires = now_ts + 15 * 86400
+        return "acc_tok", "id_tok"
+
+    monkeypatch.setattr(client_opaque, "authenticate", _fake_auth)
+    monkeypatch.setattr(client_opaque, "get_user_info", lambda _tok: ("puuid-2", "Mahiru#0830"))
+
+    res_opaque = client_opaque.check_cookie_status(
+        account_label="Mahiru",
+        now_ts=now_ts,
+        verify_live=True,
+    )
+    assert res_opaque.is_valid is True
+    assert res_opaque.status_code == "valid"
+    assert res_opaque.expires_at == now_ts + 15 * 86400
+    assert res_opaque.expires_source == "set_cookie"
+
+
+def test_check_cookie_status_revoked_before_exp(monkeypatch: pytest.MonkeyPatch) -> None:
+    now_ts = 1794500000
+    ssid_jwt = _make_jwt({"sub": "puuid-1", "exp": now_ts + 10 * 86400})
+    client = ValorantClient(riot_cookies=f"ssid={ssid_jwt}; csid=c1")
+
+    def _fail_auth() -> tuple[str, None]:
+        raise RiotAuthError("Riot Cookie (RIOT_SSID) 已過期、無效或缺少關聯 Cookie（伺服器跳轉回登入頁）。診斷資訊：test")
+
+    monkeypatch.setattr(client, "authenticate", _fail_auth)
+    res = client.check_cookie_status(account_label="john", now_ts=now_ts, verify_live=True)
+    assert res.is_valid is False
+    assert res.status_code == "expired"
+    assert res.expires_at == now_ts + 10 * 86400
+
+
+def test_build_cookie_status_payload_formats_summary_and_timestamps() -> None:
+    now_ts = 1794500000
+    assert format_remaining_duration(10 * 86400 + 5 * 3600) == "10 天 5 小時"
+    assert format_remaining_duration(3 * 3600 + 25 * 60) == "3 小時 25 分鐘"
+    assert format_remaining_duration(45) == "1 分鐘"
+
+    acc1 = AccountConfig(index=1, label="Lun", discord_user_id="111")
+    res1 = CookieCheckResult(
+        account_label="Lun",
+        discord_user_id="111",
+        player_name="Lun#TW1",
+        is_valid=True,
+        status_code="valid",
+        token_source="full_cookies",
+        issued_at=now_ts - 86400,
+        expires_at=now_ts + 10 * 86400,
+        expires_source="ssid_jwt",
+        remaining_seconds=10 * 86400,
+    )
+    acc2 = AccountConfig(index=2, label="john", discord_user_id="222")
+    res2 = CookieCheckResult(
+        account_label="john",
+        discord_user_id="222",
+        is_valid=False,
+        status_code="expired",
+        message="Riot Cookie (RIOT_SSID) 已過期。診斷資訊：hidden",
+        token_source="full_cookies",
+        expires_at=now_ts - 7200,
+        expires_source="ssid_jwt",
+        remaining_seconds=-7200,
+    )
+
+    payload = build_cookie_status_payload([(acc1, res1), (acc2, res2)], now_ts=now_ts)
+    assert "提醒" in payload["content"]
+    assert len(payload["embeds"]) == 1
+    embed = payload["embeds"][0]
+    assert embed["color"] == 0xE74C3C
+    assert "🟢 **1** 正常" in embed["description"]
+    assert "🔴 **1** 已失效" in embed["description"]
+    assert len(embed["fields"]) == 2
+    assert "10 天 0 小時" in embed["fields"][0]["value"]
+    assert f"<t:{now_ts + 10 * 86400}:R>" in embed["fields"][0]["value"]
+    assert "診斷資訊" not in embed["fields"][1]["value"]
+    assert "2 小時 0 分鐘前" in embed["fields"][1]["value"]
+
+
+def test_bot_registers_shop_and_cookie_commands() -> None:
+    cmd_names = {cmd.name for cmd in bot_module.bot.tree.get_commands()}
+    assert "shop" in cmd_names
+    assert "cookie" in cmd_names
+
+    acc = AccountConfig(index=1, label="Lun", discord_user_id="123456")
+    assert bot_module._match_account_filter(acc, None, None) is True
+    assert bot_module._match_account_filter(acc, "all", None) is True
+    assert bot_module._match_account_filter(acc, "me", "123456") is True
+    assert bot_module._match_account_filter(acc, "me", "999999") is False
+    assert bot_module._match_account_filter(acc, "1", None) is True
+    assert bot_module._match_account_filter(acc, "lun", None) is True
 

@@ -2,7 +2,7 @@
 
 自動擷取您與朋友們的多個 **VALORANT（特戰英豪）** 帳號每日商店刷新的 **4 個武器造型**，並透過您的 **Discord 機器人** 在指定聊天頻道內，依序為每個人的帳號發送 **4 張精美 Embed 圖卡**（包含自訂暱稱、自動 `@標註` 對應朋友、造型名稱、高清圖片、VP 價格、稀有度顏色與等級圖示、特效預覽影片連結，以及特務幣/輻能點數餘額）。
 
-支援透過 **GitHub Actions 免費每日自動排程執行**（不需開著電腦或租用伺服器），也支援本地常駐或在 Discord 內使用 **`/shop`** 指令手動即時查詢！
+支援透過 **GitHub Actions 免費每日自動排程執行**（不需開著電腦或租用伺服器），也支援本地常駐或在 Discord 內使用 **`/shop`** 與 **`/cookie`** 指令即時查詢商店或 Cookie 效期！
 
 ---
 
@@ -13,7 +13,7 @@
 - **🃏 4 張獨立 Discord Embed 圖卡**：每個帳號發送一則包含 4 張 Embed 的訊息，完整呈現每日刷新的 4 把槍枝造型高清圖片、VP 售價、稀有度分級與對應色條。
 - **🎬 支援特效影片預覽**：若造型具備升級特效影片，點擊標題或欄位連結即可直接預覽。
 - **⏰ GitHub Actions 全自動排程**：預設於每日 **台灣時間早上 08:17（UTC 00:17）**（特戰英豪每日 08:00 商店刷新後，完美避開整點尖峰塞車）自動發送至您的 Discord 頻道。
-- **⚡ 互動式 `/shop` 斜線指令**：支援在 Discord 隨時輸入 `/shop` 即時手動查詢，可選擇「查詢所有人」、「只查我自己」或「指定隊友」。
+- **⚡ 互動式 `/shop` 與 `/cookie` 斜線指令**：支援在 Discord 隨時輸入 `/shop` 即時查詢每日商店，或輸入 `/cookie` 檢查各帳號 Riot Cookie 是否有效與剩餘有效期限。
 
 ---
 
@@ -25,7 +25,7 @@
 2. 點選左側 **Bot** 頁面：
    - 點擊 **Reset Token** 複製您的機器人 Token（即 `DISCORD_BOT_TOKEN`）。
 3. 點選左側 **OAuth2 -> URL Generator**：
-   - **Scopes** 勾選 `bot` 與 **`applications.commands`**（使用 `/shop` 指令必勾）。
+   - **Scopes** 勾選 `bot` 與 **`applications.commands`**（使用 `/shop`、`/cookie` 指令必勾）。
    - **Bot Permissions** 勾選 `Send Messages`、`Embed Links`、`View Channels`。
    - 複製下方產生的網址並邀請機器人進入您的 Discord 伺服器。
 4. 在 Discord 中開啟「使用者設定 -> 進階 -> **開發者模式**」：
@@ -105,18 +105,17 @@ sss|貼上整串Cookie|345678901234567890
 
 ---
 
-## ⚡ 在 Discord 使用 `/shop` 斜線指令即時查詢
+## ⚡ 在 Discord 使用 `/shop` 與 `/cookie` 斜線指令即時查詢
 
-除了每天早上 08:17 的自動推送外，如果你想隨時在 Discord 手動執行一次：
+除了每天早上 08:17 的自動推送外，如果你想隨時在 Discord 手動執行查詢或檢查 Cookie 效期：
 
 ### 方式一：透過 GitHub Actions 臨時啟動機器人（不需開電腦）
 1. 點選專案上方的 **Actions** 分頁。
 2. 左側點選 **啟動 Discord /shop 指令機器人 (Interactive Slash Command Bot)**。
 3. 點擊右側 **Run workflow**（可填寫要維持在線的分鐘數，例如 `30`）並送出。
-4. 機器人上線後，任何伺服器成員即可在 Discord 輸入 **`/shop`**：
-   - `/shop`：直接送出，依序查詢並推送所有人今天的商店。
-   - `/shop account:🙋 我自己`：只顯示打指令者自己的商店（依 Discord ID 自動對應）。
-   - `/shop account:[1] Lun`：點選自動完成選單，單獨查詢指定隊友的商店。
+4. 機器人上線後，任何伺服器成員即可在 Discord 輸入斜線指令：
+   - **`/shop`**：直接送出查詢全部帳號商店，或選擇 `🙋 我自己` / `[1] Lun` 單獨查詢。
+   - **`/cookie`**：即時驗證帳號 Riot Cookie 是否仍有效，並顯示距離到期的剩餘天數與小時（同樣支援 `🙋 我自己` 或指定隊友）。
 
 ### 方式二：在自己的電腦或 VPS 上常駐執行
 只要在電腦終端機啟動：
@@ -127,7 +126,7 @@ pip install -r requirements.txt
 # 複製環境變數範本並填入 DISCORD_BOT_TOKEN 等
 cp .env.example .env
 
-# 啟動常駐型機器人（支援 24 小時隨時回應 /shop 指令 + 每日定時推送）
+# 啟動常駐型機器人（支援 24 小時隨時回應 /shop、/cookie 指令 + 每日定時推送）
 python bot.py
 ```
 
@@ -151,9 +150,9 @@ python main.py --dry-run
 ## 📁 專案結構
 
 - [`main.py`](main.py)：多人單次執行入口（供 GitHub Actions 每日排程或本地命令列呼叫，具備單帳號獨立容錯）。
-- [`bot.py`](bot.py)：Discord 機器人入口（支援即時伺服器同步、`/shop` 選單自動補全與可自訂下線時間）。
-- [`src/valorant_client.py`](src/valorant_client.py)：Riot Cookie Reauth 換證邏輯、Storefront v3 API 與 `valorant-api.com` 繁體中文造型資料整合。
-- [`src/discord_notifier.py`](src/discord_notifier.py)：建構 4 張 Discord Embed 圖卡並支援自訂暱稱、`@標註` 成員與錯誤提醒。
+- [`bot.py`](bot.py)：Discord 機器人入口（支援即時伺服器同步、`/shop` 與 `/cookie` 選單自動補全與可自訂下線時間）。
+- [`src/valorant_client.py`](src/valorant_client.py)：Riot Cookie Reauth 換證、Cookie 效期檢查、Storefront v3 API 與 `valorant-api.com` 繁體中文造型資料整合。
+- [`src/discord_notifier.py`](src/discord_notifier.py)：建構每日商店 Embed 圖卡、Cookie 效期檢查摘要與錯誤提醒。
 - [`src/config.py`](src/config.py)：支援多行 `RIOT_ACCOUNTS`、JSON 陣列與編號 `RIOT_SSID_1..20` 的多帳號設定解析器。
 - [`.github/workflows/daily_store.yml`](.github/workflows/daily_store.yml)：GitHub Actions 每日定時排程（08:17）。
-- [`.github/workflows/discord_bot.yml`](.github/workflows/discord_bot.yml)：GitHub Actions 隨選啟動 `/shop` 機器人工作流程。
+- [`.github/workflows/discord_bot.yml`](.github/workflows/discord_bot.yml)：GitHub Actions 隨選啟動機器人工作流程。
