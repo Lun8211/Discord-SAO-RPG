@@ -84,6 +84,24 @@ class DailyStoreReport:
     discord_user_id: str = ""
 
 
+@dataclass
+class CookieCheckResult:
+    account_label: str = ""
+    discord_user_id: str = ""
+    player_name: str = ""
+    is_valid: bool = False
+    status_code: str = "unknown"
+    message: str = ""
+    token_source: str = "unknown"
+    has_ssid: bool = False
+    has_csid: bool = False
+    has_tdid: bool = False
+    issued_at: Optional[int] = None
+    expires_at: Optional[int] = None
+    expires_source: str = ""
+    remaining_seconds: Optional[int] = None
+
+
 class ValorantClient:
     """Client for Riot Cookie Reauth, Valorant Storefront v3 API, and Valorant-API.com."""
 
@@ -101,6 +119,8 @@ class ValorantClient:
         self.language = language or "zh-TW"
         self.timeout = timeout
         self._jwt_payload: dict = {}
+        self._last_auth_method: str = ""
+        self._last_set_cookie_ssid_expires: Optional[int] = None
         self.session = requests.Session()
         self.session.headers.update(
             {
@@ -164,6 +184,173 @@ class ValorantClient:
                 result[k.strip()] = v.strip()
         return result
 
+    @staticmethod
+    def _decode_jwt_payload(token_str: str) -> dict:
+        clean = token_str.strip()
+        parts = clean.split(".")
+        if len(parts) != 3 or not clean.startswith("eyJ"):
+            return {}
+        try:
+            padded = parts[1] + "=" * (-len(parts[1]) % 4)
+            payload = json.loads(base64.urlsafe_b64decode(padded).decode("utf-8"))
+            return payload if isinstance(payload, dict) else {}
+        except Exception:
+            return {}
+
+    @staticmethod
+    def _normalize_unix_timestamp(val: object) -> Optional[int]:
+        if isinstance(val, bool) or val is None:
+            return None
+        try:
+            ts = int(float(val))
+        except (TypeError, ValueError):
+            return None
+        if ts <= 0:
+            return None
+        if ts > 10_000_000_000:
+            ts //= 1000
+        return ts
+
+    def inspect_cookie_metadata(self) -> dict:
+        """Inspect local cookie/token structure and embedded JWT timestamps without network calls."""
+        raw = (self.riot_cookies or self.riot_ssid or "").strip()
+        if raw.lower().startswith("cookie:"):
+            raw = raw[7:].strip()
+        if not raw:
+            return {
+                "token_source": "missing",
+                "has_ssid": False,
+                "has_csid": False,
+                "has_tdid": False,
+                "issued_at": None,
+                "expires_at": None,
+                "expires_source": "",
+            }
+
+        if "access_token=" in raw and "ssid=" not in raw:
+            try:
+                access_tok, _ = self._parse_tokens_from_uri(raw)
+                payload = self._decode_jwt_payload(access_tok)
+                return {
+                    "token_source": "access_token",
+                    "has_ssid": False,
+                    "has_csid": False,
+                    "has_tdid": False,
+                    "issued_at": self._normalize_unix_timestamp(payload.get("iat")),
+                    "expires_at": self._normalize_unix_timestamp(payload.get("exp")),
+                    "expires_source": "access_token_jwt" if payload.get("exp") else "",
+                }
+            except RiotAuthError:
+                pass
+
+        if ";" in raw:
+            cmap = self._parse_cookie_map(raw)
+            ssid_val = cmap.get("ssid", "")
+            has_ssid = bool(ssid_val)
+            has_csid = bool(cmap.get("csid"))
+            has_tdid = bool(cmap.get("tdid"))
+            ssid_payload = self._decode_jwt_payload(ssid_val) if ssid_val else {}
+            if ssid_payload and (
+                "scp" in ssid_payload
+                or ssid_payload.get("cid") == "play-valorant-web-prod"
+            ):
+                token_source = "access_token"
+                exp_source = "access_token_jwt" if ssid_payload.get("exp") else ""
+            else:
+                token_source = (
+                    "full_cookies"
+                    if (has_ssid and (has_csid or has_tdid))
+                    else ("ssid_only" if has_ssid else "missing_ssid")
+                )
+                exp_source = "ssid_jwt" if ssid_payload.get("exp") else ""
+            return {
+                "token_source": token_source,
+                "has_ssid": has_ssid,
+                "has_csid": has_csid,
+                "has_tdid": has_tdid,
+                "issued_at": self._normalize_unix_timestamp(ssid_payload.get("iat")),
+                "expires_at": self._normalize_unix_timestamp(ssid_payload.get("exp")),
+                "expires_source": exp_source,
+            }
+
+        if "=" in raw:
+            k, v = raw.split("=", 1)
+            key = k.strip()
+            val = v.strip()
+            if key == "ssid":
+                payload = self._decode_jwt_payload(val)
+                if payload and (
+                    "scp" in payload
+                    or payload.get("cid") == "play-valorant-web-prod"
+                ):
+                    return {
+                        "token_source": "access_token",
+                        "has_ssid": False,
+                        "has_csid": False,
+                        "has_tdid": False,
+                        "issued_at": self._normalize_unix_timestamp(payload.get("iat")),
+                        "expires_at": self._normalize_unix_timestamp(payload.get("exp")),
+                        "expires_source": "access_token_jwt"
+                        if payload.get("exp")
+                        else "",
+                    }
+                return {
+                    "token_source": "ssid_only",
+                    "has_ssid": bool(val),
+                    "has_csid": False,
+                    "has_tdid": False,
+                    "issued_at": self._normalize_unix_timestamp(payload.get("iat")),
+                    "expires_at": self._normalize_unix_timestamp(payload.get("exp")),
+                    "expires_source": "ssid_jwt" if payload.get("exp") else "",
+                }
+            return {
+                "token_source": "id_token_or_csid",
+                "has_ssid": False,
+                "has_csid": key == "csid",
+                "has_tdid": key == "tdid",
+                "issued_at": None,
+                "expires_at": None,
+                "expires_source": "",
+            }
+
+        payload = self._decode_jwt_payload(raw)
+        if payload and (
+            "scp" in payload or payload.get("cid") == "play-valorant-web-prod"
+        ):
+            return {
+                "token_source": "access_token",
+                "has_ssid": False,
+                "has_csid": False,
+                "has_tdid": False,
+                "issued_at": self._normalize_unix_timestamp(payload.get("iat")),
+                "expires_at": self._normalize_unix_timestamp(payload.get("exp")),
+                "expires_source": "access_token_jwt" if payload.get("exp") else "",
+            }
+        if (
+            payload
+            and "acct" in payload
+            and "aud" in payload
+            and "scp" not in payload
+        ):
+            return {
+                "token_source": "id_token_or_csid",
+                "has_ssid": False,
+                "has_csid": True,
+                "has_tdid": False,
+                "issued_at": None,
+                "expires_at": None,
+                "expires_source": "",
+            }
+        return {
+            "token_source": "ssid_only",
+            "has_ssid": True,
+            "has_csid": False,
+            "has_tdid": False,
+            "issued_at": self._normalize_unix_timestamp(payload.get("iat")),
+            "expires_at": self._normalize_unix_timestamp(payload.get("exp")),
+            "expires_source": "ssid_jwt" if payload.get("exp") else "",
+        }
+
     @classmethod
     def _inspect_jwt_info(cls, token_str: str) -> Tuple[dict, str]:
         """Return (decoded_payload_dict, diagnostic_summary) for a JWT or raw token string safely."""
@@ -210,6 +397,9 @@ class ValorantClient:
 
     def authenticate(self) -> Tuple[str, Optional[str]]:
         """Perform Riot Cookie Reauth and return (access_token, id_token)."""
+        self._last_auth_method = ""
+        self._last_set_cookie_ssid_expires = None
+
         raw_input = f"{self.riot_ssid} {self.riot_cookies}".strip()
         if "access_token=" in raw_input and "ssid=" not in raw_input:
             try:
@@ -218,6 +408,7 @@ class ValorantClient:
                 tok_exp = parsed_tok.get("exp")
                 if not (isinstance(tok_exp, (int, float)) and tok_exp <= time.time() + 30):
                     self._jwt_payload = parsed_tok
+                    self._last_auth_method = "direct_access_token"
                     return access_tok, id_tok
             except RiotAuthError:
                 pass
@@ -374,6 +565,13 @@ class ValorantClient:
 
                     if "access_token=" in location:
                         logger.info("透過 %s 成功交換取得最新 access_token", attempt_label)
+                        self._last_auth_method = attempt_label
+                        for cookie in getattr(resp, "cookies", ()) or ():
+                            if getattr(cookie, "name", None) == "ssid" and getattr(cookie, "expires", None):
+                                self._last_set_cookie_ssid_expires = (
+                                    self._normalize_unix_timestamp(cookie.expires)
+                                )
+                                break
                         access_tok, id_tok = self._parse_tokens_from_uri(location)
                         parsed_payload, _ = self._inspect_jwt_info(access_tok)
                         if parsed_payload:
@@ -412,6 +610,7 @@ class ValorantClient:
                 tok_exp = parsed_tok.get("exp")
                 if not (isinstance(tok_exp, (int, float)) and tok_exp <= time.time() + 30):
                     self._jwt_payload = parsed_tok
+                    self._last_auth_method = "direct_access_token"
                     logger.info(
                         "Cookie Reauth 未跳轉 (%s)，改用輸入字串內含的 access_token 進行查詢",
                         " | ".join(diagnostics),
@@ -425,6 +624,7 @@ class ValorantClient:
         if jwt_payload and ("scp" in jwt_payload or jwt_payload.get("cid") == "play-valorant-web-prod"):
             tok_exp = jwt_payload.get("exp")
             if not (isinstance(tok_exp, (int, float)) and tok_exp <= time.time() + 30):
+                self._last_auth_method = "direct_token"
                 logger.info(
                     "Cookie Reauth 未跳轉 (%s)，改用直接 Token (%s) 進行查詢",
                     " | ".join(diagnostics),
@@ -854,6 +1054,158 @@ class ValorantClient:
             wallet=wallet,
             account_label=account_label,
             discord_user_id=discord_user_id,
+        )
+
+    def check_cookie_status(
+        self,
+        account_label: str = "",
+        discord_user_id: str = "",
+        now_ts: Optional[int] = None,
+        verify_live: bool = True,
+    ) -> CookieCheckResult:
+        """Check whether the configured Riot cookie is valid and compute remaining lifetime."""
+        if now_ts is None:
+            now_ts = int(time.time())
+
+        meta = self.inspect_cookie_metadata()
+        token_source = meta["token_source"]
+        expires_at = meta["expires_at"]
+        expires_source = meta["expires_source"]
+        issued_at = meta["issued_at"]
+
+        if token_source == "missing":
+            return CookieCheckResult(
+                account_label=account_label,
+                discord_user_id=discord_user_id,
+                is_valid=False,
+                status_code="expired",
+                message="未設定 RIOT_SSID 或 RIOT_COOKIES。",
+                token_source=token_source,
+                has_ssid=False,
+                has_csid=False,
+                has_tdid=False,
+            )
+
+        if not verify_live:
+            remaining = (expires_at - now_ts) if expires_at is not None else None
+            if token_source in ("missing_ssid", "id_token_or_csid"):
+                status_code = "invalid_format"
+                is_valid = False
+                msg = "Cookie 中缺少 `ssid` 欄位，無法換取商店權限。"
+            elif remaining is not None and remaining <= 0:
+                status_code = "expired"
+                is_valid = False
+                msg = "Token 已超過有效期限。"
+            elif token_source == "access_token":
+                status_code = "access_token"
+                is_valid = True
+                msg = "僅為短期 Access Token（未含長期 ssid）。"
+            elif remaining is not None and remaining <= 3 * 86400:
+                status_code = "expiring_soon"
+                is_valid = True
+                msg = "即將過期，建議盡快更新 Cookie。"
+            else:
+                status_code = "valid"
+                is_valid = True
+                msg = "本地格式檢查正常。"
+            return CookieCheckResult(
+                account_label=account_label,
+                discord_user_id=discord_user_id,
+                is_valid=is_valid,
+                status_code=status_code,
+                message=msg,
+                token_source=token_source,
+                has_ssid=meta["has_ssid"],
+                has_csid=meta["has_csid"],
+                has_tdid=meta["has_tdid"],
+                issued_at=issued_at,
+                expires_at=expires_at,
+                expires_source=expires_source,
+                remaining_seconds=remaining,
+            )
+
+        player_name = ""
+        try:
+            access_token, _ = self.authenticate()
+            if self._last_auth_method in ("direct_access_token", "direct_token"):
+                self.get_entitlements_token(access_token)
+            try:
+                _, player_name = self.get_user_info(access_token)
+            except Exception as exc:
+                logger.warning("查詢帳號名稱失敗 (略過): %s", exc)
+        except RiotAuthError as exc:
+            err_msg = str(exc)
+            remaining = (expires_at - now_ts) if expires_at is not None else None
+            if "HTTP 403" in err_msg:
+                status_code = "blocked"
+            elif token_source in ("missing_ssid", "id_token_or_csid"):
+                status_code = "invalid_format"
+            else:
+                status_code = "expired"
+            return CookieCheckResult(
+                account_label=account_label,
+                discord_user_id=discord_user_id,
+                player_name=player_name,
+                is_valid=False,
+                status_code=status_code,
+                message=err_msg,
+                token_source=token_source,
+                has_ssid=meta["has_ssid"],
+                has_csid=meta["has_csid"],
+                has_tdid=meta["has_tdid"],
+                issued_at=issued_at,
+                expires_at=expires_at,
+                expires_source=expires_source,
+                remaining_seconds=remaining,
+            )
+        except Exception as exc:
+            remaining = (expires_at - now_ts) if expires_at is not None else None
+            return CookieCheckResult(
+                account_label=account_label,
+                discord_user_id=discord_user_id,
+                is_valid=False,
+                status_code="error",
+                message=f"連線驗證時發生未預期錯誤: {exc}",
+                token_source=token_source,
+                has_ssid=meta["has_ssid"],
+                has_csid=meta["has_csid"],
+                has_tdid=meta["has_tdid"],
+                issued_at=issued_at,
+                expires_at=expires_at,
+                expires_source=expires_source,
+                remaining_seconds=remaining,
+            )
+
+        if expires_at is None and self._last_set_cookie_ssid_expires is not None:
+            expires_at = self._last_set_cookie_ssid_expires
+            expires_source = "set_cookie"
+
+        remaining = (expires_at - now_ts) if expires_at is not None else None
+        if token_source == "access_token":
+            status_code = "access_token"
+            msg = "目前仍可使用，但僅為短期 Access Token（約 1 小時後失效）。"
+        elif remaining is not None and remaining <= 3 * 86400:
+            status_code = "expiring_soon"
+            msg = "Cookie 目前有效，但距離到期不足 3 天，建議盡快更新。"
+        else:
+            status_code = "valid"
+            msg = "Cookie 有效，可正常向 Riot 換取權杖。"
+
+        return CookieCheckResult(
+            account_label=account_label,
+            discord_user_id=discord_user_id,
+            player_name=player_name,
+            is_valid=True,
+            status_code=status_code,
+            message=msg,
+            token_source=token_source,
+            has_ssid=meta["has_ssid"],
+            has_csid=meta["has_csid"],
+            has_tdid=meta["has_tdid"],
+            issued_at=issued_at,
+            expires_at=expires_at,
+            expires_source=expires_source,
+            remaining_seconds=remaining,
         )
 
 

@@ -10,10 +10,11 @@ from discord.ext import tasks
 
 from src.config import AccountConfig, Settings
 from src.discord_notifier import (
+    build_cookie_status_payload,
     build_error_message_payload,
     build_store_message_payload,
 )
-from src.valorant_client import ValorantClient
+from src.valorant_client import CookieCheckResult, ValorantClient
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,6 +35,41 @@ def _get_daily_time() -> datetime.time:
 
 def _dict_to_discord_embed(embed_dict: dict) -> discord.Embed:
     return discord.Embed.from_dict(embed_dict)
+
+
+def _match_account_filter(
+    acc: AccountConfig,
+    target_filter: Optional[str] = None,
+    caller_discord_id: Optional[str] = None,
+) -> bool:
+    q = (target_filter or "").strip().lower()
+    if not q or q in ("all", "全部", "全部帳號"):
+        return True
+    if q in ("me", "我自己", "自己"):
+        return bool(caller_discord_id and acc.discord_user_id == caller_discord_id)
+    return (
+        q == str(acc.index)
+        or q in acc.label.lower()
+        or q in acc.display_label.lower()
+        or q.strip("<@!>") == acc.discord_user_id
+    )
+
+
+def _build_account_autocomplete_choices(
+    current: str,
+    all_label: str = "📋 全部帳號 (執行所有人)",
+) -> List[app_commands.Choice[str]]:
+    choices: List[app_commands.Choice[str]] = [
+        app_commands.Choice(name=all_label, value="all"),
+        app_commands.Choice(name="🙋 我自己 (依 Discord ID 對應)", value="me"),
+    ]
+    for acc in settings.accounts:
+        display = f"[{acc.index}] {acc.display_label}"
+        choices.append(app_commands.Choice(name=display[:100], value=str(acc.index)))
+    if not current:
+        return choices[:25]
+    q = current.lower()
+    return [c for c in choices if q in c.name.lower() or q in c.value.lower()][:25]
 
 
 class ValorantStoreBot(discord.Client):
@@ -70,7 +106,11 @@ class ValorantStoreBot(discord.Client):
                 try:
                     self.tree.copy_global_to(guild=guild)
                     await self.tree.sync(guild=guild)
-                    logger.info("✅ 已即時同步 /shop 斜線指令至伺服器：%s (%s)", guild.name, guild.id)
+                    logger.info(
+                        "✅ 已即時同步斜線指令（/shop、/cookie）至伺服器：%s (%s)",
+                        guild.name,
+                        guild.id,
+                    )
                 except Exception as exc:
                     logger.warning("同步斜線指令至伺服器 %s 失敗: %s", guild.id, exc)
 
@@ -88,19 +128,9 @@ class ValorantStoreBot(discord.Client):
             skin_catalog = shared_client.fetch_skin_catalog()
 
             results: List[Tuple[AccountConfig, dict]] = []
-            q = (target_filter or "").strip().lower()
             for acc in settings.accounts:
-                if q and q not in ("all", "全部", "全部帳號"):
-                    if q in ("me", "我自己", "自己"):
-                        if not caller_discord_id or acc.discord_user_id != caller_discord_id:
-                            continue
-                    elif (
-                        q != str(acc.index)
-                        and q not in acc.label.lower()
-                        and q not in acc.display_label.lower()
-                        and q.strip("<@!>") != acc.discord_user_id
-                    ):
-                        continue
+                if not _match_account_filter(acc, target_filter, caller_discord_id):
+                    continue
                 try:
                     client = ValorantClient(
                         riot_ssid=acc.riot_ssid,
@@ -125,6 +155,31 @@ class ValorantStoreBot(discord.Client):
             return results
 
         return await asyncio.to_thread(_fetch_all)
+
+    async def fetch_cookie_statuses_async(
+        self,
+        target_filter: Optional[str] = None,
+        caller_discord_id: Optional[str] = None,
+    ) -> List[Tuple[AccountConfig, CookieCheckResult]]:
+        def _check_all() -> List[Tuple[AccountConfig, CookieCheckResult]]:
+            results: List[Tuple[AccountConfig, CookieCheckResult]] = []
+            for acc in settings.accounts:
+                if not _match_account_filter(acc, target_filter, caller_discord_id):
+                    continue
+                client = ValorantClient(
+                    riot_ssid=acc.riot_ssid,
+                    riot_cookies=acc.riot_cookies,
+                    region=acc.riot_region or settings.riot_region,
+                    language=settings.valorant_lang,
+                )
+                result = client.check_cookie_status(
+                    account_label=acc.label,
+                    discord_user_id=acc.discord_user_id,
+                )
+                results.append((acc, result))
+            return results
+
+        return await asyncio.to_thread(_check_all)
 
     @tasks.loop(time=_get_daily_time())
     async def daily_store_task(self) -> None:
@@ -180,17 +235,42 @@ async def shop_account_autocomplete(
     interaction: discord.Interaction,
     current: str,
 ) -> List[app_commands.Choice[str]]:
-    choices: List[app_commands.Choice[str]] = [
-        app_commands.Choice(name="📋 全部帳號 (執行所有人)", value="all"),
-        app_commands.Choice(name="🙋 我自己 (依 Discord ID 對應)", value="me"),
-    ]
-    for acc in settings.accounts:
-        display = f"[{acc.index}] {acc.display_label}"
-        choices.append(app_commands.Choice(name=display[:100], value=str(acc.index)))
-    if not current:
-        return choices[:25]
-    q = current.lower()
-    return [c for c in choices if q in c.name.lower() or q in c.value.lower()][:25]
+    return _build_account_autocomplete_choices(
+        current, all_label="📋 全部帳號 (執行所有人)"
+    )
+
+
+@bot.tree.command(
+    name="cookie", description="查詢已設定帳號的 Riot Cookie 狀態與剩餘有效期限"
+)
+@app_commands.describe(account="（選填）選擇要查詢的帳號（不填則一次檢查全部帳號）")
+async def cookie_command(
+    interaction: discord.Interaction, account: Optional[str] = None
+) -> None:
+    await interaction.response.defer()
+    caller_id = str(interaction.user.id) if interaction.user else None
+    results = await bot.fetch_cookie_statuses_async(
+        target_filter=account, caller_discord_id=caller_id
+    )
+    if not results:
+        await interaction.followup.send("⚠️ 找不到符合條件的特戰英豪帳號設定。")
+        return
+
+    payload = build_cookie_status_payload(results)
+    embeds = [_dict_to_discord_embed(e) for e in payload.get("embeds", [])]
+    await interaction.followup.send(
+        content=payload.get("content", ""), embeds=embeds
+    )
+
+
+@cookie_command.autocomplete("account")
+async def cookie_account_autocomplete(
+    interaction: discord.Interaction,
+    current: str,
+) -> List[app_commands.Choice[str]]:
+    return _build_account_autocomplete_choices(
+        current, all_label="📋 全部帳號 (檢查所有人)"
+    )
 
 
 def parse_bot_args() -> argparse.Namespace:
