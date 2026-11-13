@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import re
+import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
@@ -188,9 +189,11 @@ class ValorantClient:
             if not sub_val and payload.get("sub"):
                 sub_val = str(payload.get("sub"))
             sub_short = sub_val[:8] if sub_val else "None"
+            ssid_exp = payload.get("exp")
+            ssid_iat = payload.get("iat")
             return (
                 payload,
-                f"cookie_pairs(len={len(clean)}, names={names}, sub={sub_short}, ssid_len={len(ssid_val)}, csid_len={len(csid_val)})",
+                f"cookie_pairs(len={len(clean)}, names={names}, sub={sub_short}, ssid_len={len(ssid_val)}, csid_len={len(csid_val)}, ssid_iat={ssid_iat}, ssid_exp={ssid_exp})",
             )
         parts = clean.split(".")
         if len(parts) != 3 or not clean.startswith("eyJ"):
@@ -211,8 +214,11 @@ class ValorantClient:
         if "access_token=" in raw_input and "ssid=" not in raw_input:
             try:
                 access_tok, id_tok = self._parse_tokens_from_uri(raw_input)
-                self._jwt_payload, _ = self._inspect_jwt_info(access_tok)
-                return access_tok, id_tok
+                parsed_tok, _ = self._inspect_jwt_info(access_tok)
+                tok_exp = parsed_tok.get("exp")
+                if not (isinstance(tok_exp, (int, float)) and tok_exp <= time.time() + 30):
+                    self._jwt_payload = parsed_tok
+                    return access_tok, id_tok
             except RiotAuthError:
                 pass
 
@@ -229,9 +235,24 @@ class ValorantClient:
         if cmap:
             # 1. Original full Cookie header first (proven working in Run #43020085118)
             cookie_headers_to_try.append(base_cookie_header)
-            # 2. Strip ephemeral login-flow / consent cookies (asid, ccid, osano_*, __cf_bm) while keeping __Secure-* & ssid
-            ephemeral_keys = {"asid", "ccid", "osano_consentmanager", "osano_consentmanager_uuid", "__cf_bm", "_cfuvid"}
-            core_parts = [f"{k}={v}" for k, v in cmap.items() if k not in ephemeral_keys and v]
+            # 2. Strip analytics/consent/ephemeral & short-lived access_token while keeping __Secure-* auth cookies & ssid
+            ephemeral_keys = {
+                "asid",
+                "ccid",
+                "osano_consentmanager",
+                "osano_consentmanager_uuid",
+                "__cf_bm",
+                "_cfuvid",
+                "_fbp",
+                "_gid",
+                "_gcl_au",
+                "__Secure-access_token",
+            }
+            core_parts = [
+                f"{k}={v}"
+                for k, v in cmap.items()
+                if k not in ephemeral_keys and not k.startswith("_ga") and v
+            ]
             if core_parts:
                 core_header = "; ".join(core_parts)
                 if core_header not in cookie_headers_to_try:
@@ -243,6 +264,18 @@ class ValorantClient:
                 clean5_header = "; ".join(clean5_parts)
                 if clean5_header not in cookie_headers_to_try:
                     cookie_headers_to_try.append(clean5_header)
+            # 4. Without csid fallback (in case csid expired separately from ssid)
+            no_csid_keys = ["tdid", "clid", "sub", "ssid"]
+            no_csid_parts = [f"{k}={cmap[k]}" for k in no_csid_keys if k in cmap and cmap[k]]
+            if no_csid_parts:
+                no_csid_header = "; ".join(no_csid_parts)
+                if no_csid_header not in cookie_headers_to_try:
+                    cookie_headers_to_try.append(no_csid_header)
+            # 5. Standalone ssid fallback
+            if cmap.get("ssid"):
+                ssid_only_header = f"ssid={cmap['ssid']}"
+                if ssid_only_header not in cookie_headers_to_try:
+                    cookie_headers_to_try.append(ssid_only_header)
         else:
             cookie_headers_to_try.append(base_cookie_header)
             if clean_tok and ";" not in base_cookie_header:
@@ -298,7 +331,8 @@ class ValorantClient:
 
         for c_idx, cookie_header in enumerate(cookie_headers_to_try):
             for label, method, url, json_body in auth_attempts:
-                attempt_label = label if c_idx == 0 else f"{label}#base"
+                self.session.cookies.clear()
+                attempt_label = label if c_idx == 0 else f"{label}#base{c_idx}"
                 try:
                     if method == "POST":
                         resp = self.session.post(
@@ -331,7 +365,7 @@ class ValorantClient:
                                 .get("parameters", {})
                                 .get("uri", "")
                             )
-                            if not location and data.get("type"):
+                            if c_idx == 0 and not location and data.get("type"):
                                 diagnostics.append(
                                     f"{attempt_label}: HTTP 200 type={data.get('type')} error={data.get('error', '')}"
                                 )
@@ -371,21 +405,35 @@ class ValorantClient:
                     if c_idx == 0:
                         diagnostics.append(f"{attempt_label} 例外: {exc}")
 
-        diag_str = " | ".join(diagnostics)
-
         if "access_token=" in raw_input:
             try:
                 access_tok, id_tok = self._parse_tokens_from_uri(raw_input)
-                self._jwt_payload, _ = self._inspect_jwt_info(access_tok)
-                logger.info("Cookie Reauth 未跳轉 (%s)，改用輸入字串內含的 access_token 進行查詢", diag_str)
-                return access_tok, id_tok
+                parsed_tok, _ = self._inspect_jwt_info(access_tok)
+                tok_exp = parsed_tok.get("exp")
+                if not (isinstance(tok_exp, (int, float)) and tok_exp <= time.time() + 30):
+                    self._jwt_payload = parsed_tok
+                    logger.info(
+                        "Cookie Reauth 未跳轉 (%s)，改用輸入字串內含的 access_token 進行查詢",
+                        " | ".join(diagnostics),
+                    )
+                    return access_tok, id_tok
+                diagnostics.append(f"embedded_access_token_expired(exp={tok_exp})")
             except RiotAuthError:
                 pass
 
         # Fallback: if the token itself carries OAuth claims ('scp' or 'cid'), try using it as an access_token
         if jwt_payload and ("scp" in jwt_payload or jwt_payload.get("cid") == "play-valorant-web-prod"):
-            logger.info("Cookie Reauth 未跳轉 (%s)，改用直接 Token (%s) 進行查詢", diag_str, jwt_diag)
-            return clean_tok, None
+            tok_exp = jwt_payload.get("exp")
+            if not (isinstance(tok_exp, (int, float)) and tok_exp <= time.time() + 30):
+                logger.info(
+                    "Cookie Reauth 未跳轉 (%s)，改用直接 Token (%s) 進行查詢",
+                    " | ".join(diagnostics),
+                    jwt_diag,
+                )
+                return clean_tok, None
+            diagnostics.append(f"direct_token_expired(exp={tok_exp})")
+
+        diag_str = " | ".join(diagnostics)
 
         if jwt_payload and "acct" in jwt_payload and "aud" in jwt_payload and "scp" not in jwt_payload:
             raise RiotAuthError(

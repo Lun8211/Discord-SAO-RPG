@@ -196,3 +196,45 @@ def test_multi_account_parsing_json(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.accounts[0].riot_ssid == "s1"
     assert settings.accounts[1].label == "P2"
     assert settings.accounts[1].riot_ssid == "s2"
+
+
+def test_expired_embedded_access_token_is_not_returned(monkeypatch: pytest.MonkeyPatch) -> None:
+    import base64
+    import json
+
+    header = base64.urlsafe_b64encode(b'{"alg":"RS256"}').decode().rstrip("=")
+    payload = base64.urlsafe_b64encode(
+        json.dumps({"sub": "12345678-1234-1234-1234-123456789012", "exp": 1000000}).encode()
+    ).decode().rstrip("=")
+    expired_jwt = f"{header}.{payload}.sig"
+    cookie_str = f"ssid={expired_jwt}; __Secure-access_token={expired_jwt}; tdid=abc"
+
+    client = ValorantClient(riot_cookies=cookie_str)
+
+    class FakeResp:
+        def __init__(self, status_code: int, location: str = "", json_data: dict | None = None) -> None:
+            self.status_code = status_code
+            self.headers = {"Location": location} if location else {}
+            self._json = json_data
+            self.text = json.dumps(json_data) if json_data else ""
+
+        def json(self) -> dict:
+            return self._json or {}
+
+    monkeypatch.setattr(
+        client.session,
+        "get",
+        lambda *args, **kwargs: FakeResp(303, "https://authenticate.riotgames.com/login"),
+    )
+    monkeypatch.setattr(
+        client.session,
+        "post",
+        lambda *args, **kwargs: FakeResp(200, json_data={"type": "auth"}),
+    )
+
+    with pytest.raises(RiotAuthError) as exc_info:
+        client.authenticate()
+
+    assert "embedded_access_token_expired" in str(exc_info.value)
+    assert "已過期" in str(exc_info.value)
+
