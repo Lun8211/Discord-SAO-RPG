@@ -44,19 +44,15 @@
 每位玩家請各自依序執行以下步驟：
 
 1. 按下快捷鍵 **`Ctrl + Shift + N`**（Mac 為 `Cmd + Shift + N`）開啟一個**全新的無痕視窗**。
-2. 在無痕視窗中打開 Riot 登入連結：
-   👉 [https://auth.riotgames.com/authorize?redirect_uri=https%3A%2F%2Fplayvalorant.com%2Fopt_in&client_id=play-valorant-web-prod&response_type=token%20id_token&nonce=1&scope=account%20openid](https://auth.riotgames.com/authorize?redirect_uri=https%3A%2F%2Fplayvalorant.com%2Fopt_in&client_id=play-valorant-web-prod&response_type=token%20id_token&nonce=1&scope=account%20openid)
-3. 登入特戰英豪帳號（⚠️ **務必勾選「保持登入 / Stay signed in」**，Cookie 才能維持數天至數週）。
-4. 登入完成（網址跳轉）後，在**同一個分頁網址列**輸入並前往：
+2. 在無痕視窗中打開 Riot 帳號官網登入：
+   👉 [https://account.riotgames.com/](https://account.riotgames.com/)
+3. 登入特戰英豪帳號（⚠️ **務必勾選「保持登入 / Stay signed in」**，才能取得 30 天效期的長期 Cookie）。
+4. 登入完成並看到帳號管理畫面後，在**同一個分頁網址列**改輸入並前往：
    👉 [https://auth.riotgames.com/.well-known/openid-configuration](https://auth.riotgames.com/.well-known/openid-configuration)
 5. 按下鍵盤 **`F12`** 打開開發者工具：
-   - 切換至 **`Network`（網路）** 分頁。
-   - 按鍵盤 **`F5`** 重新整理網頁。
-   - 在左側清單中點擊第 1 個項目 **`openid-configuration`**。
-   - 在右側 **`Headers`** 面板往下捲動找到 **`Request Headers`** 區塊。
-   - 找到 **`Cookie:`**，複製冒號後面的**整串完整內容**（包含 `ssid=...; csid=...; tdid=...` 等）。
-   *(備註：也可以到 `Application` -> `Cookies` -> `https://auth.riotgames.com` 複製單獨的 `ssid` 欄位值)*。
-6. ⚠️ **最關鍵的一步**：複製好後，**直接按視窗右上角的 `❌` 關閉整個無痕視窗**！（不要點網頁登出）。
+   - **確認效期**：先切到 **`Application`（應用程式）** ➔ 左側展開 **`Cookies`** ➔ 點選 **`https://auth.riotgames.com`**，確認 **`ssid`** 那一列的 `Expires / Max-Age` 顯示為 **約 30 天後的日期**（而不是 `Session`）。
+   - **複製完整 Cookie**：再切至 **`Network`（網路）** 分頁 ➔ 按 **`F5`** 重新整理 ➔ 點擊左側 **`openid-configuration`** ➔ 在右側 **`Request Headers`** 找到 **`Cookie:`**，複製冒號後面的**整串完整內容**（包含 `ssid=...; csid=...; tdid=...` 等）。
+6. ⚠️ **最關鍵的一步**：複製好後，**直接按視窗右上角的 `❌` 關閉整個無痕視窗**！（絕對不要點網頁登出）。
 7. **抓第 2 個人或下一個帳號時**：重新開啟一個新的無痕視窗，重複上述步驟 1~6 即可。
 
 ---
