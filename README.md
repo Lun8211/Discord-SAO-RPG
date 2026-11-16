@@ -147,6 +147,10 @@ python main.py --dry-run
 
 ---
 
+# 非Riot官方，使用風險自負
+
+
+
 ## 📁 專案結構
 
 - [`main.py`](main.py)：多人單次執行入口（供 GitHub Actions 每日排程或本地命令列呼叫，具備單帳號獨立容錯）。
