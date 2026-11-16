@@ -81,6 +81,8 @@ class ValorantStoreBot(discord.Client):
         self._synced_guilds = False
 
     async def setup_hook(self) -> None:
+        # 只註冊全域指令。過去版本會同時做「全域 + 伺服器」兩種註冊，
+        # 導致伺服器內的 /shop、/cookie 出現兩次。
         await self.tree.sync()
         self.daily_store_task.start()
         if self.run_minutes > 0:
@@ -94,25 +96,24 @@ class ValorantStoreBot(discord.Client):
         await self.close()
 
     async def on_ready(self) -> None:
+        # 不在 log 中記錄機器人 / 伺服器名稱與 ID（公開 repo 的 Actions log 任何人都看得到）
         logger.info(
-            "🤖 機器人已上線：%s (ID: %s)，共載入 %d 個帳號",
-            self.user,
-            self.user.id if self.user else "",
+            "🤖 機器人已上線，共載入 %d 個帳號，已加入 %d 個伺服器",
             len(settings.accounts),
+            len(self.guilds),
         )
         if not self._synced_guilds:
             self._synced_guilds = True
+            # 清除舊版本殘留在各伺服器的「伺服器專屬指令」，避免與全域指令重複顯示
+            cleared = 0
             for guild in self.guilds:
                 try:
-                    self.tree.copy_global_to(guild=guild)
+                    self.tree.clear_commands(guild=guild)
                     await self.tree.sync(guild=guild)
-                    logger.info(
-                        "✅ 已即時同步斜線指令（/shop、/cookie）至伺服器：%s (%s)",
-                        guild.name,
-                        guild.id,
-                    )
+                    cleared += 1
                 except Exception as exc:
-                    logger.warning("同步斜線指令至伺服器 %s 失敗: %s", guild.id, exc)
+                    logger.warning("清除伺服器專屬斜線指令失敗: %s", exc)
+            logger.info("✅ 斜線指令（/shop、/cookie）已使用全域註冊（已清理 %d 個伺服器的重複指令）", cleared)
 
     async def fetch_all_payloads_async(
         self,
@@ -183,18 +184,31 @@ class ValorantStoreBot(discord.Client):
 
     @tasks.loop(time=_get_daily_time())
     async def daily_store_task(self) -> None:
-        results = await self.fetch_all_payloads_async()
+        # 注意：tasks.loop 遇到未處理的例外會「永久停止」之後的每日排程，
+        # 因此這裡必須攔截所有錯誤，並讓每個帳號彼此獨立。
+        try:
+            results = await self.fetch_all_payloads_async()
+        except Exception:
+            logger.exception("❌ 每日定時商店：抓取資料失敗，今日略過")
+            return
+
         for acc, payload in results:
-            channel_id_str = acc.discord_channel_id or settings.discord_channel_id
+            channel_id_str = (acc.discord_channel_id or settings.discord_channel_id or "").strip()
             if not channel_id_str:
                 continue
-            channel = self.get_channel(int(channel_id_str))
-            if channel is None:
-                channel = await self.fetch_channel(int(channel_id_str))
+            if not channel_id_str.isdigit():
+                logger.warning("⚠️ [%s] 的頻道 ID 格式不正確，已略過", acc.display_label)
+                continue
+            try:
+                channel = self.get_channel(int(channel_id_str))
+                if channel is None:
+                    channel = await self.fetch_channel(int(channel_id_str))
 
-            embeds = [_dict_to_discord_embed(e) for e in payload.get("embeds", [])]
-            await channel.send(content=payload.get("content", ""), embeds=embeds)
-            logger.info("✅ 每日定時商店已發送 [%s] 至頻道 %s", acc.display_label, channel_id_str)
+                embeds = [_dict_to_discord_embed(e) for e in payload.get("embeds", [])]
+                await channel.send(content=payload.get("content", ""), embeds=embeds)
+                logger.info("✅ 每日定時商店已發送 [%s]", acc.display_label)
+            except Exception as exc:
+                logger.error("❌ 每日定時商店發送 [%s] 失敗: %s", acc.display_label, exc)
             await asyncio.sleep(1.0)
 
     @daily_store_task.before_loop
