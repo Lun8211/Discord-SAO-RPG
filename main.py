@@ -66,12 +66,12 @@ def _process_single_account(
             skin_catalog=skin_catalog,
             client_version=client_version,
         )
-        # 注意：公開 repo 的 GitHub Actions log 任何人都看得到，
-        # 因此這裡不記錄 Riot ID（遊戲名#TAG）與商店內容等個資。
         logger.info(
-            "成功取得 [%s] 的每日商店（共 %d 個物品）",
+            "成功取得 [%s] 玩家 %s 的每日商店（共 %d 個物品）：%s",
             account.display_label,
+            report.player_name,
             len(report.items),
+            ", ".join(f"{item.name} ({item.price_vp} VP)" for item in report.items),
         )
 
         payload = build_store_message_payload(report)
@@ -86,8 +86,9 @@ def _process_single_account(
             target_channel_id=account.discord_channel_id or settings.discord_channel_id,
         )
         logger.info(
-            "✅ 已成功將 [%s] 的每日商店 Embed 圖卡發送至 Discord 頻道！",
+            "✅ 已成功將 [%s] (%s) 的 4 張每日商店 Embed 圖卡發送至 Discord 頻道！",
             account.display_label,
+            report.player_name,
         )
         return True
 

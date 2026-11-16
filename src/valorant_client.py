@@ -375,13 +375,12 @@ class ValorantClient:
                 payload, _ = cls._inspect_jwt_info(sec_id_tok)
             if not sub_val and payload.get("sub"):
                 sub_val = str(payload.get("sub"))
-            # 不輸出 sub（PUUID）內容，只標示是否存在：診斷字串會出現在公開 log 與 Discord 錯誤訊息中
-            has_sub = bool(sub_val)
+            sub_short = sub_val[:8] if sub_val else "None"
             ssid_exp = payload.get("exp")
             ssid_iat = payload.get("iat")
             return (
                 payload,
-                f"cookie_pairs(len={len(clean)}, names={names}, has_sub={has_sub}, ssid_len={len(ssid_val)}, csid_len={len(csid_val)}, ssid_iat={ssid_iat}, ssid_exp={ssid_exp})",
+                f"cookie_pairs(len={len(clean)}, names={names}, sub={sub_short}, ssid_len={len(ssid_val)}, csid_len={len(csid_val)}, ssid_iat={ssid_iat}, ssid_exp={ssid_exp})",
             )
         parts = clean.split(".")
         if len(parts) != 3 or not clean.startswith("eyJ"):
