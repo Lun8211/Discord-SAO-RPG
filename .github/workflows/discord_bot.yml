@@ -9,15 +9,6 @@ on:
         default: "30"
         type: string
 
-# 最小權限：此 workflow 只需要讀取程式碼
-permissions:
-  contents: read
-
-# 同時只允許一個機器人在線，新的執行會取代舊的，避免斜線指令被回應兩次
-concurrency:
-  group: discord-bot
-  cancel-in-progress: true
-
 jobs:
   run-discord-bot:
     runs-on: ubuntu-latest
@@ -91,7 +82,5 @@ jobs:
           RIOT_SSID_10: ${{ secrets.RIOT_SSID_10 }}
           DISCORD_USER_ID_10: ${{ secrets.DISCORD_USER_ID_10 }}
           DISCORD_CHANNEL_ID_10: ${{ secrets.DISCORD_CHANNEL_ID_10 }}
-          # 透過環境變數傳入 workflow 輸入值，避免直接把 ${{ }} 插入 shell 指令（script injection）
-          RUN_MINUTES: ${{ inputs.run_minutes || '30' }}
         run: |
-          python bot.py --run-minutes "$RUN_MINUTES"
+          python bot.py --run-minutes "${{ github.event.inputs.run_minutes || '30' }}"

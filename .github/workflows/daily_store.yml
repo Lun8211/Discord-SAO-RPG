@@ -15,15 +15,6 @@ on:
         default: false
         type: boolean
 
-# 最小權限：此 workflow 只需要讀取程式碼
-permissions:
-  contents: read
-
-# 避免同時執行多次造成重複推送
-concurrency:
-  group: daily-store
-  cancel-in-progress: false
-
 jobs:
   send-daily-store:
     runs-on: ubuntu-latest
@@ -99,10 +90,8 @@ jobs:
           RIOT_SSID_10: ${{ secrets.RIOT_SSID_10 }}
           DISCORD_USER_ID_10: ${{ secrets.DISCORD_USER_ID_10 }}
           DISCORD_CHANNEL_ID_10: ${{ secrets.DISCORD_CHANNEL_ID_10 }}
-          # 透過環境變數傳入 workflow 輸入值，避免直接把 ${{ }} 插入 shell 指令（script injection）
-          MOCK_MODE: ${{ inputs.mock_mode }}
         run: |
-          if [ "$MOCK_MODE" = "true" ]; then
+          if [ "${{ github.event.inputs.mock_mode }}" = "true" ]; then
             python main.py --mock
           else
             python main.py
