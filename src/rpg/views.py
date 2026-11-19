@@ -70,7 +70,7 @@ class OwnerView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.owner_id:
             await interaction.response.send_message(
-                "⚠️ 這是其他冒險者的操作面板，請自行輸入 `/rpg` 指令開啟你的面板！",
+                "⚠️ 這是其他冒險者的操作面板，請自行輸入斜線指令（例如 `/profile`）開啟你的面板！",
                 ephemeral=True,
             )
             return False

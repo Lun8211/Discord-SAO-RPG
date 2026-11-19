@@ -12,7 +12,7 @@
 - **🛡️ 深度裝備、套裝、強化與圖鑑展示**：
   - 6 大部位（武器、頭盔、護甲、手套、戰靴、飾品）、6 階稀有度（普通 ~ 神話）、隨機詞條與 5 大套裝（2 件／4 件套效果）。
   - 鐵匠鋪支援指定部位鍛造與 **`+1 ~ +15` 強化（絕不碎裝，失敗累積保底祝福值，達 100% 必成，並支援保護卷軸防止高階掉階）**。
-  - 支援 `/rpg inspect` 指令與背包下拉選單，隨時檢視與公開展示裝備圖片卡片。
+  - 支援 `/inspect` 指令與背包下拉選單，隨時檢視與公開展示裝備圖片卡片。
 - **🏰 副本、無盡深淵與全服世界王**：
   - **8 大階梯副本 × 普通／困難／地獄 3 種難度**：支援首領立繪即時預覽、回合制互動戰鬥（首領蓄力預警 + 防禦反擊）、自動戰鬥、勝利掉落裝備展示卡，通關後解鎖快速掃蕩。
   - **🗼 無盡深淵**：無限爬塔挑戰，每 5 層守門王豐厚大獎，長線戰力試金石。
@@ -23,28 +23,28 @@
 
 ---
 
-## 📜 `/rpg` 斜線指令一覽
+## 📜 斜線指令一覽（直接輸入 `/` 即可使用）
 
 | 指令 | 說明 |
 | :--- | :--- |
-| `/rpg start` | 建立冒險者檔案、選擇初始職業並領取新手裝備包 |
-| `/rpg profile` | 查看自己或隊友的角色面板、職業立繪、戰力、裝備與主城快捷按鈕 |
-| `/rpg mine` | 進入 6 大階梯礦區挖礦（附礦區橫幅、連挖與快速喝體力劑按鈕） |
-| `/rpg dungeon` | 開啟副本征討大廳（首領立繪預覽）或直接進入指定副本與難度開戰／掃蕩 |
-| `/rpg abyss` | 挑戰無限層數「無盡深淵」爬塔 |
-| `/rpg boss` | 查看並共同討伐全伺服器共享血條的「世界王」 |
-| `/rpg shop` | 開啟冒險商店（常駐物資、6 小時神秘商店、保底抽箱、礦石回收） |
-| `/rpg bag` | 管理裝備與材料背包、鎖定裝備、檢視裝備圖卡、一鍵穿戴最佳裝備 |
-| `/rpg equip` | 穿戴指定裝備（支援自動補全），留空則一鍵自動穿戴各部位最強裝備 |
-| `/rpg inspect` | 公開展示指定或最強裝備的精美圖片卡片、屬性、詞條與套裝加成 |
-| `/rpg forge` | 進入鐵匠鋪（指定部位鍛造套裝、升級礦鎬、強化裝備 `+1~+15`、一鍵分解） |
-| `/rpg daily` | 每日連續簽到與一鍵領取每日／每週任務獎勵 |
-| `/rpg expedition` | 派遣離線冒險探索（離線或重啟皆持續計時領取戰利品） |
-| `/rpg class` | 職業殿堂（`Lv.30` 二轉、`Lv.70` 三轉覺醒，或消耗轉職徽章自由切換職業） |
-| `/rpg rebirth` | 滿級 `Lv.100` 星界轉生飛升（保留裝備與進度，永久獲得全屬性倍率加成） |
-| `/rpg achievements` | 查看 17 項永久屬性加成成就並切換配戴顯示稱號 |
-| `/rpg leaderboard` | 查看 6 大伺服器排行榜（支援下拉選單即時切換） |
-| `/rpg help` | 查看完整新手指南與指令說明 |
+| `/start` | 建立冒險者檔案、選擇初始職業並領取新手裝備包 |
+| `/profile` | 查看自己或隊友的角色面板、職業立繪、戰力、裝備與主城快捷按鈕 |
+| `/mine` | 進入 6 大階梯礦區挖礦（附礦區橫幅、連挖與快速喝體力劑按鈕） |
+| `/dungeon` | 開啟副本征討大廳（首領立繪預覽）或直接進入指定副本與難度開戰／掃蕩 |
+| `/abyss` | 挑戰無限層數「無盡深淵」爬塔 |
+| `/boss` | 查看並共同討伐全伺服器共享血條的「世界王」 |
+| `/shop` | 開啟冒險商店（常駐物資、6 小時神秘商店、保底抽箱、礦石回收） |
+| `/bag` | 管理裝備與材料背包、鎖定裝備、檢視裝備圖卡、一鍵穿戴最佳裝備 |
+| `/equip` | 穿戴指定裝備（支援自動補全），留空則一鍵自動穿戴各部位最強裝備 |
+| `/inspect` | 公開展示指定或最強裝備的精美圖片卡片、屬性、詞條與套裝加成 |
+| `/forge` | 進入鐵匠鋪（指定部位鍛造套裝、升級礦鎬、強化裝備 `+1~+15`、一鍵分解） |
+| `/daily` | 每日連續簽到與一鍵領取每日／每週任務獎勵 |
+| `/expedition` | 派遣離線冒險探索（離線或重啟皆持續計時領取戰利品） |
+| `/class` | 職業殿堂（`Lv.30` 二轉、`Lv.70` 三轉覺醒，或消耗轉職徽章自由切換職業） |
+| `/rebirth` | 滿級 `Lv.100` 星界轉生飛升（保留裝備與進度，永久獲得全屬性倍率加成） |
+| `/achievements` | 查看 17 項永久屬性加成成就並切換配戴顯示稱號 |
+| `/leaderboard` | 查看 6 大伺服器排行榜（支援下拉選單即時切換） |
+| `/help` | 查看完整新手指南與指令說明 |
 
 ---
 
@@ -55,7 +55,7 @@
 1. 前往 [Discord Developer Portal](https://discord.com/developers/applications) 建立或選擇您的 Application。
 2. 點選左側 **Bot** 頁面 ➔ 點擊 **Reset Token** 複製您的機器人 Token（即 `DISCORD_BOT_TOKEN`）。
 3. 點選左側 **OAuth2 -> URL Generator**：
-   - **Scopes** 勾選 `bot` 與 **`applications.commands`**（使用 `/rpg` 斜線指令必勾）。
+   - **Scopes** 勾選 `bot` 與 **`applications.commands`**（使用斜線指令必勾）。
    - **Bot Permissions** 勾選 `View Channels`、`Send Messages`、`Embed Links`、`Attach Files`、`Read Message History`（後兩項為選填私有備份頻道自動存檔所需）。
    - 複製下方生成的網址並將機器人邀請進您的 Discord 伺服器。
 
@@ -123,7 +123,7 @@ pytest -v
 
 ## 📁 專案結構
 
-- [`bot.py`](bot.py)：Discord 機器人入口（註冊 `/rpg` 斜線指令群組、定時與關機前 SQLite／雲端備份還原、支援 `--run-minutes` 定時安全下線）。
+- [`bot.py`](bot.py)：Discord 機器人入口（註冊 18 個頂層 RPG 斜線指令、定時與關機前 SQLite／雲端備份還原、支援 `--run-minutes` 定時安全下線）。
 - [`src/config.py`](src/config.py)：環境變數與 RPG 存檔／備份頻道設定解析器。
 - [`src/rpg/`](src/rpg/)：完整持久化長線 RPG 核心模組：
   - [`database.py`](src/rpg/database.py)：SQLite WAL 持久化、自動輪替備份與 Discord 私有頻道 Gzip 快照還原／上傳。
@@ -133,7 +133,7 @@ pytest -v
   - [`assets.py`](src/rpg/assets.py)：免費開源奇幻圖庫 URL 註冊表（裝備、首領、職業立繪、礦區與場景橫幅）。
   - [`embeds.py`](src/rpg/embeds.py)：Discord Embed 介面與裝備展示圖卡建構器。
   - [`views.py`](src/rpg/views.py)：互動式按鈕與下拉選單 UI 元件。
-  - [`commands.py`](src/rpg/commands.py)：`/rpg` 斜線指令群組與自動補全實作。
+  - [`commands.py`](src/rpg/commands.py)：頂層斜線指令與自動補全實作。
 - [`tests/test_rpg.py`](tests/test_rpg.py)：RPG 核心玩法、持久化、圖庫與 UI 完整單元測試。
 - [`start_bot.bat`](start_bot.bat)：Windows 一鍵常駐啟動腳本（含自動建立 `.env` 與斷線重連）。
 - [`.github/workflows/discord_bot.yml`](.github/workflows/discord_bot.yml)：GitHub Actions 隨選啟動 Discord RPG 機器人工作流程。

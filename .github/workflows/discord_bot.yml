@@ -38,7 +38,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Start Discord RPG Bot (/rpg)
+      - name: Start Discord RPG Bot
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           TIMEZONE_OFFSET_HOURS: ${{ secrets.TIMEZONE_OFFSET_HOURS || '8' }}

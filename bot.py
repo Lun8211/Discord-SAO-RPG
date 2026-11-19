@@ -99,7 +99,8 @@ class RPGBot(discord.Client):
                 except Exception as exc:
                     logger.warning("清除伺服器專屬斜線指令失敗: %s", exc)
             logger.info(
-                "✅ 斜線指令（/rpg）已使用全域註冊（已清理 %d 個伺服器的舊指令快取）",
+                "✅ 全部 %d 個 RPG 斜線指令已使用全域註冊（已清理 %d 個伺服器的舊指令快取）",
+                len(self.tree.get_commands()),
                 cleared,
             )
 

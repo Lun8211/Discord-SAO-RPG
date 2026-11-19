@@ -67,16 +67,10 @@ def _make_engine(tmp_path: Path, name: str = "rpg.db") -> tuple[RPGDatabase, RPG
     return db, engine
 
 
-def test_bot_registers_only_rpg_command_group() -> None:
-    cmd_names = {cmd.name for cmd in bot_module.bot.tree.get_commands()}
-    assert cmd_names == {"rpg"}
-    assert "shop" not in cmd_names
-    assert "cookie" not in cmd_names
-
-    rpg_group = bot_module.bot.tree.get_command("rpg")
-    assert rpg_group is not None
-    sub_names = {c.name for c in rpg_group.commands}
-    expected_subs = {
+def test_bot_registers_top_level_rpg_commands() -> None:
+    cmds = bot_module.bot.tree.get_commands()
+    cmd_names = {cmd.name for cmd in cmds}
+    expected_cmds = {
         "start",
         "profile",
         "mine",
@@ -96,8 +90,25 @@ def test_bot_registers_only_rpg_command_group() -> None:
         "rebirth",
         "help",
     }
-    assert sub_names == expected_subs
-    assert len(sub_names) <= 25
+    assert "rpg" not in cmd_names
+    assert "cookie" not in cmd_names
+    assert cmd_names == expected_cmds
+    assert len(cmd_names) == 18 <= 100
+
+    by_name = {cmd.name: cmd for cmd in cmds}
+    for cmd in cmds:
+        payload = cmd.to_dict(bot_module.bot.tree)
+        assert payload["name"] == cmd.name
+        assert payload["type"] == 1
+    for name, param in [
+        ("mine", "zone"),
+        ("dungeon", "dungeon"),
+        ("equip", "item_id"),
+        ("inspect", "item_id"),
+        ("forge", "enhance_id"),
+    ]:
+        p = by_name[name].get_parameter(param)
+        assert p is not None and p.autocomplete is True
 
 
 def test_settings_from_env_defaults_and_overrides(monkeypatch: pytest.MonkeyPatch) -> None:

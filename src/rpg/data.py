@@ -253,7 +253,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
     "hp_potion_l": {"name": "星光神聖藥水", "emoji": "🏺", "category": "consumable", "sell": 320, "heal_pct": 0.85, "heal_flat": 650, "desc": "戰鬥中使用，回復 85% 最大生命 (+650) 並回復 30 MP。"},
     "stamina_elixir": {"name": "體力恢復劑", "emoji": "⚡", "category": "consumable", "sell": 150, "stamina": 50, "desc": "使用後立即回復 50 點體力。"},
     "relic_key": {"name": "星界秘寶鑰匙", "emoji": "🗝️", "category": "key", "sell": 400, "desc": "可免費開啟一次「星界秘寶箱」（取代 100 星鑽）。"},
-    "class_emblem": {"name": "轉職徽章", "emoji": "🎖️", "category": "consumable", "sell": 600, "desc": "可於 `/rpg class` 自由轉換職業（保留轉職階級）。"},
+    "class_emblem": {"name": "轉職徽章", "emoji": "🎖️", "category": "consumable", "sell": 600, "desc": "可於 `/class` 自由轉換職業（保留轉職階級）。"},
 }
 
 # =============================================================================

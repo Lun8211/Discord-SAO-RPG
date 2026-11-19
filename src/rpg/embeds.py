@@ -179,7 +179,7 @@ def build_equipment_card_embed(
             embed.add_field(name=fname, value=fval[:1024], inline=finline)
 
     embed.set_footer(
-        text=f"裝備 #{eq.id} ｜ /rpg equip {eq.id} 穿戴 ｜ /rpg forge enhance_id:{eq.id} 強化"
+        text=f"裝備 #{eq.id} ｜ /equip {eq.id} 穿戴 ｜ /forge enhance_id:{eq.id} 強化"
     )
     return embed
 
@@ -264,7 +264,7 @@ def build_profile_embed(
 
     needed = exp_needed_for_level(player.level)
     exp_text = (
-        "**MAX（已滿級，可使用 `/rpg rebirth` 飛升轉生！）**"
+        "**MAX（已滿級，可使用 `/rebirth` 飛升轉生！）**"
         if player.level >= MAX_LEVEL
         else f"`{player.exp:,} / {needed:,}` ({progress_bar(player.exp, needed, 10)})"
     )
@@ -937,7 +937,7 @@ def build_leaderboard_embed(
 
     embed = discord.Embed(
         title=title,
-        description="\n".join(lines) if lines else "*目前還沒有冒險者上榜，快輸入 `/rpg start` 搶下第一名！*",
+        description="\n".join(lines) if lines else "*目前還沒有冒險者上榜，快輸入 `/start` 搶下第一名！*",
         color=color,
     )
     embed.set_thumbnail(url=get_leaderboard_icon_url(category))
@@ -1010,7 +1010,7 @@ def build_class_embed(player: PlayerProfile, inventory: Dict[str, int]) -> disco
     emblems = inventory.get("class_emblem", 0)
     embed.add_field(
         name="🎖️ 自由轉職（保留進階階級）",
-        value=f"持有轉職徽章：**`{emblems}`** 個（可於 `/rpg shop` 購買，點擊下方選單即可切換其他職業）。",
+        value=f"持有轉職徽章：**`{emblems}`** 個（可於 `/shop` 購買，點擊下方選單即可切換其他職業）。",
         inline=False,
     )
     return embed
@@ -1046,7 +1046,7 @@ def build_help_embed() -> discord.Embed:
         title="📖 星界紀元 RPG 完整指南",
         description=(
             "一款專為 Discord 打造的長線養成 RPG！支援 **SQLite 即時自動存檔**，重啟永不掉檔，並全面搭配**免費開源奇幻圖庫插圖與裝備展示卡片**。\n"
-            "所有功能都整合在 **`/rpg`** 指令群組內，並支援按鈕快速操作："
+            "所有指令皆可直接輸入 **`/`** 觸發，並支援按鈕快速操作："
         ),
         color=0x5865F2,
     )
@@ -1055,32 +1055,32 @@ def build_help_embed() -> discord.Embed:
     embed.add_field(
         name="🌱 新手起步與日常",
         value=(
-            "`/rpg start` — 建立角色、選擇職業並領取新手禮包\n"
-            "`/rpg profile` — 查看角色面板、戰力、裝備與主城快捷按鈕\n"
-            "`/rpg daily` — 每日連續簽到 + 領取每日／每週任務獎勵\n"
-            "`/rpg expedition` — 派遣離線冒險（重啟亦持續計時領獎）"
+            "`/start` — 建立角色、選擇職業並領取新手禮包\n"
+            "`/profile` — 查看角色面板、戰力、裝備與主城快捷按鈕\n"
+            "`/daily` — 每日連續簽到 + 領取每日／每週任務獎勵\n"
+            "`/expedition` — 派遣離線冒險（重啟亦持續計時領獎）"
         ),
         inline=False,
     )
     embed.add_field(
         name="⛏️ 挖礦、鍛造與裝備",
         value=(
-            "`/rpg mine` — 進入 6 大階梯礦區採礦（含礦區場景圖、連擊熱度與隨機奇遇）\n"
-            "`/rpg forge` — 升級 T1~T8 礦鎬、鍛造 T1~T6 套裝、強化裝備 `+1~+15`（絕不碎裝+保底）\n"
-            "`/rpg bag` — 查看裝備與材料背包，支援穿戴／鎖定／檢視裝備圖片卡片\n"
-            "`/rpg inspect` — 公開展示指定裝備的圖鑑與詳細詞條卡片\n"
-            "`/rpg shop` — 物資店、6 小時限時折扣神秘商店、星界抽箱（含保底）與礦石出售"
+            "`/mine` — 進入 6 大階梯礦區採礦（含礦區場景圖、連擊熱度與隨機奇遇）\n"
+            "`/forge` — 升級 T1~T8 礦鎬、鍛造 T1~T6 套裝、強化裝備 `+1~+15`（絕不碎裝+保底）\n"
+            "`/bag` / `/equip` — 管理裝備與材料背包，支援穿戴／鎖定／一鍵最強配裝\n"
+            "`/inspect` — 公開展示指定裝備的圖鑑與詳細詞條卡片\n"
+            "`/shop` — 物資店、6 小時限時折扣神秘商店、星界抽箱（含保底）與礦石出售"
         ),
         inline=False,
     )
     embed.add_field(
         name="⚔️ 副本、深淵、世界王與排行",
         value=(
-            "`/rpg dungeon` — 挑戰 8 大副本 × 3 種難度（首領立繪、回合制戰鬥／自動戰鬥／掃蕩）\n"
-            "`/rpg abyss` — 挑戰無限層數「無盡深淵」爬塔（每 5 層守門王大獎）\n"
-            "`/rpg boss` — 全伺服器共鬥「世界王」，全服共享血條、擊殺全員發獎\n"
-            "`/rpg class` / `/rpg rebirth` — 二轉三轉覺醒（立繪進階）& 滿級轉生飛升\n"
-            "`/rpg achievements` / `/rpg leaderboard` — 成就稱號永久加成 & 6 大排行榜"
+            "`/dungeon` — 挑戰 8 大副本 × 3 種難度（首領立繪、回合制戰鬥／自動戰鬥／掃蕩）\n"
+            "`/abyss` — 挑戰無限層數「無盡深淵」爬塔（每 5 層守門王大獎）\n"
+            "`/boss` — 全伺服器共鬥「世界王」，全服共享血條、擊殺全員發獎\n"
+            "`/class` / `/rebirth` — 二轉三轉覺醒（立繪進階）& 滿級轉生飛升\n"
+            "`/achievements` / `/leaderboard` — 成就稱號永久加成 & 6 大排行榜"
         ),
         inline=False,
     )

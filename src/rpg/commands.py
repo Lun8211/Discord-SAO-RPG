@@ -1,4 +1,4 @@
-"""Discord Slash Command Group (/rpg ...) wiring for the persistent RPG."""
+"""Top-level Discord Slash Commands wiring for the persistent RPG."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import discord
 from discord import app_commands
 
 from src.rpg.assets import get_ui_asset_url
-from src.rpg.data import DIFFICULTIES, DUNGEONS, MINE_ZONES, RARITIES, SLOTS
+from src.rpg.data import DUNGEONS, MINE_ZONES, RARITIES, SLOTS
 from src.rpg.embeds import (
     build_achievements_embed,
     build_class_embed,
@@ -47,14 +47,10 @@ from src.rpg.views import (
 )
 
 
-def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
-    """Create and return the `/rpg` slash command group bound to `engine`."""
-    rpg = app_commands.Group(
-        name="rpg",
-        description="星界紀元長線 RPG（挖礦、裝備鍛造強化、副本、無盡深淵、世界王、商店、排行榜）",
-    )
+def create_rpg_commands(engine: RPGEngine) -> List[app_commands.Command]:
+    """Create and return all top-level RPG slash commands bound to `engine`."""
 
-    @rpg.command(name="start", description="踏上冒險旅程！建立你的 RPG 角色並選擇職業")
+    @app_commands.command(name="start", description="踏上冒險旅程！建立你的 RPG 角色並選擇職業")
     async def rpg_start(interaction: discord.Interaction) -> None:
         existing = engine.db.get_player(str(interaction.user.id))
         if existing is not None:
@@ -82,7 +78,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
         view = ClassSelectView(engine, interaction.user.id)
         await interaction.response.send_message(embed=embed, view=view)
 
-    @rpg.command(name="profile", description="查看自己或隊友的 RPG 角色面板、戰力、裝備與主城按鈕")
+    @app_commands.command(name="profile", description="查看自己或隊友的 RPG 角色面板、戰力、裝備與主城按鈕")
     @app_commands.describe(member="（選填）選擇想查看的 Discord 成員，不填則看自己")
     async def rpg_profile(
         interaction: discord.Interaction, member: Optional[discord.User] = None
@@ -117,7 +113,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
         else:
             await interaction.response.send_message(embed=embed)
 
-    @rpg.command(name="mine", description="前往礦場挖礦採集礦石、強化石與隨機奇遇")
+    @app_commands.command(name="mine", description="前往礦場挖礦採集礦石、強化石與隨機奇遇")
     @app_commands.describe(zone="（選填）選擇礦區，不填則自動前往目前解鎖的最高礦區")
     async def rpg_mine(
         interaction: discord.Interaction, zone: Optional[str] = None
@@ -148,7 +144,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
                 choices.append(app_commands.Choice(name=label[:100], value=z["id"]))
         return choices[:25]
 
-    @rpg.command(name="dungeon", description="開啟副本大廳，或直接進入指定副本與難度展開戰鬥")
+    @app_commands.command(name="dungeon", description="開啟副本大廳，或直接進入指定副本與難度展開戰鬥")
     @app_commands.describe(
         dungeon="（選填）選擇要挑戰的副本，不填則開啟副本大廳",
         difficulty="（選填）選擇難度：普通 / 困難 / 地獄",
@@ -206,7 +202,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
                 choices.append(app_commands.Choice(name=label[:100], value=d["id"]))
         return choices[:25]
 
-    @rpg.command(name="abyss", description="挑戰無限爬塔「無盡深淵」（每 5 層守門王大獎與排行榜）")
+    @app_commands.command(name="abyss", description="挑戰無限爬塔「無盡深淵」（每 5 層守門王大獎與排行榜）")
     @app_commands.describe(floor="（選填）指定要挑戰的層數，不填則自動挑戰目前下一層")
     async def rpg_abyss(
         interaction: discord.Interaction, floor: Optional[int] = None
@@ -226,7 +222,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
         view = CombatView(engine, interaction.user.id)
         await interaction.response.send_message(embed=embed, view=view)
 
-    @rpg.command(name="boss", description="查看並共同討伐「伺服器世界王」（全服共享血條、全員領獎）")
+    @app_commands.command(name="boss", description="查看並共同討伐「伺服器世界王」（全服共享血條、全員領獎）")
     async def rpg_boss(interaction: discord.Interaction) -> None:
         try:
             player = engine.require_player(str(interaction.user.id), interaction.user.display_name)
@@ -240,7 +236,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
         view = WorldBossView(engine)
         await interaction.response.send_message(embed=embed, view=view)
 
-    @rpg.command(name="shop", description="開啟 RPG 冒險商店（常駐物資、限時神秘商店、秘寶抽箱、出售）")
+    @app_commands.command(name="shop", description="開啟 RPG 冒險商店（常駐物資、限時神秘商店、秘寶抽箱、出售）")
     @app_commands.choices(
         tab=[
             app_commands.Choice(name="🏪 常駐物資商店", value="supply"),
@@ -262,7 +258,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
         embed = view.render_embed(player)
         await interaction.response.send_message(embed=embed, view=view)
 
-    @rpg.command(name="bag", description="開啟背包裝備與礦石材料庫（支援穿戴、鎖定、一鍵最佳裝備）")
+    @app_commands.command(name="bag", description="開啟背包裝備與礦石材料庫（支援穿戴、鎖定、一鍵最佳裝備）")
     @app_commands.choices(
         tab=[
             app_commands.Choice(name="🛡️ 裝備清單", value="gear"),
@@ -299,7 +295,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
                 break
         return choices
 
-    @rpg.command(name="equip", description="穿戴指定編號裝備，不填則一鍵自動穿戴各部位最強裝備")
+    @app_commands.command(name="equip", description="穿戴指定編號裝備，不填則一鍵自動穿戴各部位最強裝備")
     @app_commands.describe(item_id="（選填）背包內的裝備數字編號，留空則自動穿戴最佳裝備")
     async def rpg_equip(
         interaction: discord.Interaction, item_id: Optional[int] = None
@@ -341,7 +337,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
     ) -> List[app_commands.Choice[int]]:
         return _owned_gear_choices(str(interaction.user.id), current)
 
-    @rpg.command(name="inspect", description="檢視並公開展示裝備圖片卡片、基礎屬性、隨機詞條與套裝效果")
+    @app_commands.command(name="inspect", description="檢視並公開展示裝備圖片卡片、基礎屬性、隨機詞條與套裝效果")
     @app_commands.describe(item_id="（選填）裝備數字編號，不填則展示你目前戰力最高的穿戴裝備")
     async def rpg_inspect(
         interaction: discord.Interaction, item_id: Optional[int] = None
@@ -364,7 +360,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
             pool = equipped if equipped else engine.db.get_equipment(player.user_id)
             if not pool:
                 await interaction.response.send_message(
-                    "⚠️ 你目前還沒有任何裝備，快去 `/rpg dungeon`、`/rpg forge` 或 `/rpg shop` 獲取裝備吧！",
+                    "⚠️ 你目前還沒有任何裝備，快去 `/dungeon`、`/forge` 或 `/shop` 獲取裝備吧！",
                     ephemeral=True,
                 )
                 return
@@ -382,7 +378,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
     ) -> List[app_commands.Choice[int]]:
         return _owned_gear_choices(str(interaction.user.id), current)
 
-    @rpg.command(name="forge", description="進入鐵匠鋪（鍛造套裝、升級礦鎬、裝備強化 +1~+15、分解裝備）")
+    @app_commands.command(name="forge", description="進入鐵匠鋪（鍛造套裝、升級礦鎬、裝備強化 +1~+15、分解裝備）")
     @app_commands.describe(
         enhance_id="（選填）直接強化指定裝備編號",
         use_protect="（選填）+10 以上強化失敗時是否消耗強化保護卷軸防止掉階",
@@ -422,7 +418,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
     ) -> List[app_commands.Choice[int]]:
         return _owned_gear_choices(str(interaction.user.id), current)
 
-    @rpg.command(name="daily", description="每日連續簽到與領取每日／每週任務獎勵")
+    @app_commands.command(name="daily", description="每日連續簽到與領取每日／每週任務獎勵")
     async def rpg_daily(interaction: discord.Interaction) -> None:
         try:
             player = engine.require_player(str(interaction.user.id), interaction.user.display_name)
@@ -435,7 +431,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
         view = DailyQuestView(engine, interaction.user.id)
         await interaction.response.send_message(embed=embed, view=view)
 
-    @rpg.command(name="expedition", description="派遣角色進行離線冒險探索（重啟亦持續計時領取豐厚收益）")
+    @app_commands.command(name="expedition", description="派遣角色進行離線冒險探索（重啟亦持續計時領取豐厚收益）")
     async def rpg_expedition(interaction: discord.Interaction) -> None:
         try:
             player = engine.require_player(str(interaction.user.id), interaction.user.display_name)
@@ -448,7 +444,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
         view = ExpeditionView(engine, interaction.user.id)
         await interaction.response.send_message(embed=embed, view=view)
 
-    @rpg.command(name="leaderboard", description="查看伺服器 6 大 RPG 排行榜（戰力、等級轉生、深淵、財富、礦神、世界王）")
+    @app_commands.command(name="leaderboard", description="查看伺服器 6 大 RPG 排行榜（戰力、等級轉生、深淵、財富、礦神、世界王）")
     @app_commands.choices(
         category=[
             app_commands.Choice(name="⚔️ 戰力排行榜", value="power"),
@@ -469,7 +465,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
         view = LeaderboardView(engine, category=cat)
         await interaction.response.send_message(embed=embed, view=view)
 
-    @rpg.command(name="achievements", description="查看成就與永久屬性加成圖鑑，並切換顯示稱號")
+    @app_commands.command(name="achievements", description="查看成就與永久屬性加成圖鑑，並切換顯示稱號")
     async def rpg_achievements(interaction: discord.Interaction) -> None:
         try:
             player = engine.require_player(str(interaction.user.id), interaction.user.display_name)
@@ -484,7 +480,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
         view = AchievementView(engine, interaction.user.id)
         await interaction.response.send_message(embed=embed, view=view)
 
-    @rpg.command(name="class", description="職業殿堂：進行 Lv.30 二轉 / Lv.70 三轉覺醒，或使用轉職徽章切換職業")
+    @app_commands.command(name="class", description="職業殿堂：進行 Lv.30 二轉 / Lv.70 三轉覺醒，或使用轉職徽章切換職業")
     async def rpg_class(interaction: discord.Interaction) -> None:
         try:
             player = engine.require_player(str(interaction.user.id), interaction.user.display_name)
@@ -497,7 +493,7 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
         view = ClassHallView(engine, interaction.user.id)
         await interaction.response.send_message(embed=embed, view=view)
 
-    @rpg.command(name="rebirth", description="滿級 Lv.100 星界轉生／飛升（保留裝備與進度，永久獲得全屬性倍率加成）")
+    @app_commands.command(name="rebirth", description="滿級 Lv.100 星界轉生／飛升（保留裝備與進度，永久獲得全屬性倍率加成）")
     async def rpg_rebirth(interaction: discord.Interaction) -> None:
         try:
             player = engine.require_player(str(interaction.user.id), interaction.user.display_name)
@@ -509,18 +505,41 @@ def create_rpg_group(engine: RPGEngine) -> app_commands.Group:
         view = RebirthView(engine, interaction.user.id)
         await interaction.response.send_message(embed=embed, view=view)
 
-    @rpg.command(name="help", description="查看星界紀元 RPG 完整玩法與指令介紹")
+    @app_commands.command(name="help", description="查看星界紀元 RPG 完整玩法與指令介紹")
     async def rpg_help(interaction: discord.Interaction) -> None:
         await interaction.response.send_message(embed=build_help_embed())
 
-    return rpg
+    return [
+        rpg_start,
+        rpg_profile,
+        rpg_mine,
+        rpg_dungeon,
+        rpg_abyss,
+        rpg_boss,
+        rpg_shop,
+        rpg_bag,
+        rpg_equip,
+        rpg_inspect,
+        rpg_forge,
+        rpg_daily,
+        rpg_expedition,
+        rpg_leaderboard,
+        rpg_achievements,
+        rpg_class,
+        rpg_rebirth,
+        rpg_help,
+    ]
 
 
-def register_rpg_commands(tree: app_commands.CommandTree, engine: RPGEngine) -> app_commands.Group:
-    """Attach the `/rpg` command group onto a Discord CommandTree."""
-    existing = tree.get_command("rpg")
-    if existing is not None:
+def register_rpg_commands(
+    tree: app_commands.CommandTree, engine: RPGEngine
+) -> List[app_commands.Command]:
+    """Attach all top-level RPG slash commands onto a Discord CommandTree."""
+    if tree.get_command("rpg") is not None:
         tree.remove_command("rpg")
-    group = create_rpg_group(engine)
-    tree.add_command(group)
-    return group
+    commands = create_rpg_commands(engine)
+    for cmd in commands:
+        if tree.get_command(cmd.name) is not None:
+            tree.remove_command(cmd.name)
+        tree.add_command(cmd)
+    return commands

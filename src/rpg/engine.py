@@ -111,7 +111,7 @@ class RPGEngine:
             raise RPGError("無效的職業選擇。")
         existing = self.db.get_player(uid)
         if existing is not None:
-            raise RPGError("你已經建立過角色了！請使用 `/rpg profile` 查看你的角色。")
+            raise RPGError("你已經建立過角色了！請使用 `/profile` 查看你的角色。")
 
         ts = self.now() if now_ts is None else now_ts
         with self.db.transaction():
@@ -143,7 +143,7 @@ class RPGEngine:
         uid = str(user_id)
         player = self.db.get_player(uid)
         if player is None:
-            raise RPGError("你還沒踏上冒險旅程！請先使用 `/rpg start` 建立角色並選擇職業。")
+            raise RPGError("你還沒踏上冒險旅程！請先使用 `/start` 建立角色並選擇職業。")
 
         ts = self.now() if now_ts is None else now_ts
         changed = False
@@ -616,7 +616,7 @@ class RPGEngine:
             actually_used_protect = False
             if use_protect and cfg["downgrade"]:
                 if self.db.get_item_qty(player.user_id, "protect_scroll") < 1:
-                    raise RPGError("你沒有 **強化保護卷軸**！可於 `/rpg shop` 購買。")
+                    raise RPGError("你沒有 **強化保護卷軸**！可於 `/shop` 購買。")
                 self.db.add_item(player.user_id, "protect_scroll", -1)
                 actually_used_protect = True
 
@@ -841,7 +841,7 @@ class RPGEngine:
         if player.pickaxe_tier < zone["min_pickaxe"]:
             req_pick = PICKAXES[zone["min_pickaxe"]]["name"]
             raise RPGError(
-                f"進入 **{zone['emoji']} {zone['name']}** 需要 **T{zone['min_pickaxe']} {req_pick}** 以上（請於 `/rpg forge` 升級礦鎬）。"
+                f"進入 **{zone['emoji']} {zone['name']}** 需要 **T{zone['min_pickaxe']} {req_pick}** 以上（請於 `/forge` 升級礦鎬）。"
             )
 
         cd_left = (player.last_mine_at + MINE_COOLDOWN_SECONDS) - ts
@@ -1915,7 +1915,7 @@ class RPGEngine:
             raise RPGError("此道具僅限在戰鬥中自動/手動使用，或請使用對應系統指令。")
         with self.db.transaction():
             if self.db.get_item_qty(player.user_id, "stamina_elixir") < 1:
-                raise RPGError("你沒有 **⚡ 體力恢復劑**！可於 `/rpg shop` 購買或完成每日簽到獲得。")
+                raise RPGError("你沒有 **⚡ 體力恢復劑**！可於 `/shop` 購買或完成每日簽到獲得。")
             self.db.add_item(player.user_id, "stamina_elixir", -1)
             gain = ITEMS["stamina_elixir"]["stamina"]
             player.stamina += gain
@@ -2155,7 +2155,7 @@ class RPGEngine:
 
         with self.db.transaction():
             if self.db.get_item_qty(player.user_id, "class_emblem") < 1:
-                raise RPGError("轉換職業需要 **🎖️ 轉職徽章 x1**（可於 `/rpg shop` 購買）。")
+                raise RPGError("轉換職業需要 **🎖️ 轉職徽章 x1**（可於 `/shop` 購買）。")
             self.db.add_item(player.user_id, "class_emblem", -1)
             old_title = get_class_title(player.class_id, player.promo_tier)
             player.class_id = new_class_id
