@@ -1,1 +1,1 @@
-"""Valorant Daily Store Discord Bot package."""
+"""Persistent RPG Discord Bot package."""

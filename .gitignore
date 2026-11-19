@@ -22,3 +22,10 @@ Thumbs.db
 # Pytest
 .pytest_cache/
 .coverage
+
+# RPG persistent database & backups (do not commit player data to public repo)
+data/
+*.db
+*.db-wal
+*.db-shm
+

@@ -1,90 +1,46 @@
 import argparse
 import asyncio
-import datetime
 import logging
-from typing import List, Optional, Tuple
 
 import discord
 from discord import app_commands
 from discord.ext import tasks
 
-from src.config import AccountConfig, Settings
-from src.discord_notifier import (
-    build_cookie_status_payload,
-    build_error_message_payload,
-    build_store_message_payload,
-)
-from src.valorant_client import CookieCheckResult, ValorantClient
+from src.config import Settings
+from src.rpg.commands import register_rpg_commands
+from src.rpg.database import RPGDatabase
+from src.rpg.engine import RPGEngine
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
-logger = logging.getLogger("val-dc-bot")
+logger = logging.getLogger("rpg-dc-bot")
 
 settings = Settings.from_env()
 
 
-def _get_daily_time() -> datetime.time:
-    parts = settings.daily_post_time.split(":")
-    hour = int(parts[0]) if len(parts) >= 1 and parts[0].isdigit() else 8
-    minute = int(parts[1]) if len(parts) >= 2 and parts[1].isdigit() else 5
-    tz = datetime.timezone(datetime.timedelta(hours=settings.timezone_offset_hours))
-    return datetime.time(hour=hour, minute=minute, tzinfo=tz)
-
-
-def _dict_to_discord_embed(embed_dict: dict) -> discord.Embed:
-    return discord.Embed.from_dict(embed_dict)
-
-
-def _match_account_filter(
-    acc: AccountConfig,
-    target_filter: Optional[str] = None,
-    caller_discord_id: Optional[str] = None,
-) -> bool:
-    q = (target_filter or "").strip().lower()
-    if not q or q in ("all", "全部", "全部帳號"):
-        return True
-    if q in ("me", "我自己", "自己"):
-        return bool(caller_discord_id and acc.discord_user_id == caller_discord_id)
-    return (
-        q == str(acc.index)
-        or q in acc.label.lower()
-        or q in acc.display_label.lower()
-        or q.strip("<@!>") == acc.discord_user_id
-    )
-
-
-def _build_account_autocomplete_choices(
-    current: str,
-    all_label: str = "📋 全部帳號 (執行所有人)",
-) -> List[app_commands.Choice[str]]:
-    choices: List[app_commands.Choice[str]] = [
-        app_commands.Choice(name=all_label, value="all"),
-        app_commands.Choice(name="🙋 我自己 (依 Discord ID 對應)", value="me"),
-    ]
-    for acc in settings.accounts:
-        display = f"[{acc.index}] {acc.display_label}"
-        choices.append(app_commands.Choice(name=display[:100], value=str(acc.index)))
-    if not current:
-        return choices[:25]
-    q = current.lower()
-    return [c for c in choices if q in c.name.lower() or q in c.value.lower()][:25]
-
-
-class ValorantStoreBot(discord.Client):
+class RPGBot(discord.Client):
     def __init__(self, run_minutes: int = 0) -> None:
         intents = discord.Intents.default()
         super().__init__(intents=intents)
         self.tree = app_commands.CommandTree(self)
         self.run_minutes = run_minutes
         self._synced_guilds = False
+        self._rpg_restore_started = False
+        self._rpg_restored = False
+        self.rpg_db = RPGDatabase(db_path=settings.rpg_db_path)
+        self.rpg_engine = RPGEngine(
+            db=self.rpg_db,
+            timezone_offset_hours=settings.timezone_offset_hours,
+        )
+        register_rpg_commands(self.tree, self.rpg_engine)
 
     async def setup_hook(self) -> None:
-        # 只註冊全域指令。過去版本會同時做「全域 + 伺服器」兩種註冊，
-        # 導致伺服器內的 /shop、/cookie 出現兩次。
+        # 採用全域斜線指令註冊，避免在各伺服器出現重複指令
         await self.tree.sync()
-        self.daily_store_task.start()
+        self.rpg_backup_task.change_interval(minutes=settings.rpg_backup_interval_minutes)
+        self.rpg_backup_task.start()
         if self.run_minutes > 0:
             asyncio.create_task(self._auto_shutdown_after(self.run_minutes))
 
@@ -92,19 +48,48 @@ class ValorantStoreBot(discord.Client):
         await self.wait_until_ready()
         logger.info("⏳ 機器人將於 %d 分鐘後自動安全下線...", minutes)
         await asyncio.sleep(minutes * 60)
-        logger.info("⏹️ 已達設定執行時間 (%d 分鐘)，正在安全關閉機器人...", minutes)
+        logger.info("⏹️ 已達設定執行時間 (%d 分鐘)，正在存檔並安全關閉機器人...", minutes)
         await self.close()
 
+    async def close(self) -> None:
+        # 關機前務必完成 RPG SQLite checkpoint、本地備份與（若已設定）雲端備份上傳
+        try:
+            if settings.rpg_backup_channel_id and self.is_ready() and self._rpg_restored:
+                uploaded = await self.rpg_db.backup_to_discord_channel(
+                    self, settings.rpg_backup_channel_id, force=False
+                )
+                if uploaded:
+                    logger.info("💾 關機前已完成 RPG 雲端快照備份。")
+        except Exception as exc:
+            logger.warning("關機前上傳 RPG 雲端備份失敗: %s", exc)
+        try:
+            self.rpg_db.close()
+            logger.info("💾 RPG 資料庫已完成 checkpoint 與本地備份。")
+        except Exception as exc:
+            logger.warning("關閉 RPG 資料庫時發生警告: %s", exc)
+        await super().close()
+
     async def on_ready(self) -> None:
+        # 若設定了 RPG_BACKUP_CHANNEL_ID，開機時自動檢查並還原較新的雲端存檔快照
+        if not self._rpg_restore_started:
+            self._rpg_restore_started = True
+            try:
+                if settings.rpg_backup_channel_id:
+                    await self.rpg_db.restore_from_discord_channel(
+                        self, settings.rpg_backup_channel_id
+                    )
+            finally:
+                self._rpg_restored = True
+
         # 不在 log 中記錄機器人 / 伺服器名稱與 ID（公開 repo 的 Actions log 任何人都看得到）
         logger.info(
-            "🤖 機器人已上線，共載入 %d 個帳號，已加入 %d 個伺服器",
-            len(settings.accounts),
+            "🤖 星界紀元 RPG 機器人已上線，共載入 %d 位冒險者檔案，已加入 %d 個伺服器",
+            self.rpg_db.get_player_count(),
             len(self.guilds),
         )
         if not self._synced_guilds:
             self._synced_guilds = True
-            # 清除舊版本殘留在各伺服器的「伺服器專屬指令」，避免與全域指令重複顯示
+            # 清除舊版本殘留在各伺服器的「伺服器專屬指令」，避免與全域指令重複或殘留舊指令
             cleared = 0
             for guild in self.guilds:
                 try:
@@ -113,182 +98,37 @@ class ValorantStoreBot(discord.Client):
                     cleared += 1
                 except Exception as exc:
                     logger.warning("清除伺服器專屬斜線指令失敗: %s", exc)
-            logger.info("✅ 斜線指令（/shop、/cookie）已使用全域註冊（已清理 %d 個伺服器的重複指令）", cleared)
-
-    async def fetch_all_payloads_async(
-        self,
-        target_filter: Optional[str] = None,
-        caller_discord_id: Optional[str] = None,
-    ) -> List[Tuple[AccountConfig, dict]]:
-        def _fetch_all() -> List[Tuple[AccountConfig, dict]]:
-            shared_client = ValorantClient(
-                region=settings.riot_region,
-                language=settings.valorant_lang,
+            logger.info(
+                "✅ 斜線指令（/rpg）已使用全域註冊（已清理 %d 個伺服器的舊指令快取）",
+                cleared,
             )
-            client_version = shared_client.get_client_version()
-            skin_catalog = shared_client.fetch_skin_catalog()
 
-            results: List[Tuple[AccountConfig, dict]] = []
-            for acc in settings.accounts:
-                if not _match_account_filter(acc, target_filter, caller_discord_id):
-                    continue
-                try:
-                    client = ValorantClient(
-                        riot_ssid=acc.riot_ssid,
-                        riot_cookies=acc.riot_cookies,
-                        region=acc.riot_region or settings.riot_region,
-                        language=settings.valorant_lang,
-                    )
-                    report = client.fetch_daily_store_report(
-                        account_label=acc.label,
-                        discord_user_id=acc.discord_user_id,
-                        skin_catalog=skin_catalog,
-                        client_version=client_version,
-                    )
-                    payload = build_store_message_payload(report)
-                except Exception as exc:
-                    payload = build_error_message_payload(
-                        str(exc),
-                        account_label=acc.display_label,
-                        discord_user_id=acc.discord_user_id,
-                    )
-                results.append((acc, payload))
-            return results
-
-        return await asyncio.to_thread(_fetch_all)
-
-    async def fetch_cookie_statuses_async(
-        self,
-        target_filter: Optional[str] = None,
-        caller_discord_id: Optional[str] = None,
-    ) -> List[Tuple[AccountConfig, CookieCheckResult]]:
-        def _check_all() -> List[Tuple[AccountConfig, CookieCheckResult]]:
-            results: List[Tuple[AccountConfig, CookieCheckResult]] = []
-            for acc in settings.accounts:
-                if not _match_account_filter(acc, target_filter, caller_discord_id):
-                    continue
-                client = ValorantClient(
-                    riot_ssid=acc.riot_ssid,
-                    riot_cookies=acc.riot_cookies,
-                    region=acc.riot_region or settings.riot_region,
-                    language=settings.valorant_lang,
-                )
-                result = client.check_cookie_status(
-                    account_label=acc.label,
-                    discord_user_id=acc.discord_user_id,
-                )
-                results.append((acc, result))
-            return results
-
-        return await asyncio.to_thread(_check_all)
-
-    @tasks.loop(time=_get_daily_time())
-    async def daily_store_task(self) -> None:
-        # 注意：tasks.loop 遇到未處理的例外會「永久停止」之後的每日排程，
-        # 因此這裡必須攔截所有錯誤，並讓每個帳號彼此獨立。
+    @tasks.loop(minutes=15)
+    async def rpg_backup_task(self) -> None:
+        # 定時建立 SQLite 本地備份與（若設定）Discord 私有備份頻道快照，攔截所有例外以免排程中斷
         try:
-            results = await self.fetch_all_payloads_async()
-        except Exception:
-            logger.exception("❌ 每日定時商店：抓取資料失敗，今日略過")
-            return
+            if not self._rpg_restored:
+                return
+            self.rpg_db.checkpoint()
+            if self.rpg_db.get_player_count() > 0:
+                self.rpg_db.create_local_backup(keep=5)
+            if settings.rpg_backup_channel_id:
+                await self.rpg_db.backup_to_discord_channel(
+                    self, settings.rpg_backup_channel_id, force=False
+                )
+        except Exception as exc:
+            logger.warning("RPG 定時備份任務發生警告: %s", exc)
 
-        for acc, payload in results:
-            channel_id_str = (acc.discord_channel_id or settings.discord_channel_id or "").strip()
-            if not channel_id_str:
-                continue
-            if not channel_id_str.isdigit():
-                logger.warning("⚠️ [%s] 的頻道 ID 格式不正確，已略過", acc.display_label)
-                continue
-            try:
-                channel = self.get_channel(int(channel_id_str))
-                if channel is None:
-                    channel = await self.fetch_channel(int(channel_id_str))
-
-                embeds = [_dict_to_discord_embed(e) for e in payload.get("embeds", [])]
-                await channel.send(content=payload.get("content", ""), embeds=embeds)
-                logger.info("✅ 每日定時商店已發送 [%s]", acc.display_label)
-            except Exception as exc:
-                logger.error("❌ 每日定時商店發送 [%s] 失敗: %s", acc.display_label, exc)
-            await asyncio.sleep(1.0)
-
-    @daily_store_task.before_loop
-    async def before_daily_store(self) -> None:
+    @rpg_backup_task.before_loop
+    async def before_rpg_backup(self) -> None:
         await self.wait_until_ready()
 
 
-bot = ValorantStoreBot()
-
-
-@bot.tree.command(
-    name="shop", description="立即手動執行一次特戰英豪 (VALORANT) 每日商店查詢與推送"
-)
-@app_commands.describe(account="（選填）選擇要查詢的帳號（不填則一次執行全部帳號）")
-async def shop_command(
-    interaction: discord.Interaction, account: Optional[str] = None
-) -> None:
-    await interaction.response.defer()
-    caller_id = str(interaction.user.id) if interaction.user else None
-    results = await bot.fetch_all_payloads_async(
-        target_filter=account, caller_discord_id=caller_id
-    )
-    if not results:
-        await interaction.followup.send("⚠️ 找不到符合條件的特戰英豪帳號設定。")
-        return
-
-    for idx, (_, payload) in enumerate(results):
-        embeds = [_dict_to_discord_embed(e) for e in payload.get("embeds", [])]
-        await interaction.followup.send(
-            content=payload.get("content", ""), embeds=embeds
-        )
-        if idx + 1 < len(results):
-            await asyncio.sleep(0.5)
-
-
-@shop_command.autocomplete("account")
-async def shop_account_autocomplete(
-    interaction: discord.Interaction,
-    current: str,
-) -> List[app_commands.Choice[str]]:
-    return _build_account_autocomplete_choices(
-        current, all_label="📋 全部帳號 (執行所有人)"
-    )
-
-
-@bot.tree.command(
-    name="cookie", description="查詢已設定帳號的 Riot Cookie 狀態與剩餘有效期限"
-)
-@app_commands.describe(account="（選填）選擇要查詢的帳號（不填則一次檢查全部帳號）")
-async def cookie_command(
-    interaction: discord.Interaction, account: Optional[str] = None
-) -> None:
-    await interaction.response.defer()
-    caller_id = str(interaction.user.id) if interaction.user else None
-    results = await bot.fetch_cookie_statuses_async(
-        target_filter=account, caller_discord_id=caller_id
-    )
-    if not results:
-        await interaction.followup.send("⚠️ 找不到符合條件的特戰英豪帳號設定。")
-        return
-
-    payload = build_cookie_status_payload(results)
-    embeds = [_dict_to_discord_embed(e) for e in payload.get("embeds", [])]
-    await interaction.followup.send(
-        content=payload.get("content", ""), embeds=embeds
-    )
-
-
-@cookie_command.autocomplete("account")
-async def cookie_account_autocomplete(
-    interaction: discord.Interaction,
-    current: str,
-) -> List[app_commands.Choice[str]]:
-    return _build_account_autocomplete_choices(
-        current, all_label="📋 全部帳號 (檢查所有人)"
-    )
+bot = RPGBot()
 
 
 def parse_bot_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="VALORANT 每日商店常駐型 Discord Bot")
+    parser = argparse.ArgumentParser(description="星界紀元持久化 RPG Discord 機器人")
     parser.add_argument(
         "--run-minutes",
         type=int,
@@ -304,4 +144,3 @@ if __name__ == "__main__":
         raise SystemExit("請先設定 DISCORD_BOT_TOKEN 環境變數。")
     bot.run_minutes = args.run_minutes
     bot.run(settings.discord_bot_token)
-

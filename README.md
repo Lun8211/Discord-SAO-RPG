@@ -1,162 +1,139 @@
-# 🛒 val-dc — 特戰英豪 (VALORANT) 多人每日商店 Discord 機器人
+# ⚔️ 星界紀元 RPG — Discord 持久化長線冒險機器人
 
-自動擷取您與朋友們的多個 **VALORANT（特戰英豪）** 帳號每日商店刷新的 **4 個武器造型**，並透過您的 **Discord 機器人** 在指定聊天頻道內，依序為每個人的帳號發送 **4 張精美 Embed 圖卡**（包含自訂暱稱、自動 `@標註` 對應朋友、造型名稱、高清圖片、VP 價格、稀有度顏色與等級圖示、特效預覽影片連結，以及特務幣/輻能點數餘額）。
-
-支援透過 **GitHub Actions 免費每日自動排程執行**（不需開著電腦或租用伺服器），也支援本地常駐或在 Discord 內使用 **`/shop`** 與 **`/cookie`** 指令即時查詢商店或 Cookie 效期！
+一套專為 Discord 打造的**完整長線養成 RPG 機器人**，整合全按鈕互動選單、**免費開源奇幻圖庫與裝備展示圖卡**，以及 **SQLite WAL 即時自動存檔＋選填雲端快照備份**——無論在自己的電腦、VPS，還是透過 **GitHub Actions** 隨選啟動，每次機器人重啟都能完整記憶所有玩家的資料、裝備、進度與全服世界王狀態！
 
 ---
 
-## ✨ 功能特色
+## ✨ 核心玩法特色
 
-- **👥 支援多人帳號推送**：可綁定多個特戰英豪帳號，每天依序推送每個人的每日商店，並支援「玩家暱稱」、「自動 `@Tag` 對應的 Discord 成員」或「個別指定發送頻道」。
-- **🛡️ 帳號獨立容錯與過期提醒**：若其中一位朋友的 Cookie 過期，其他人的商店依然會正常推送，且機器人會針對過期的帳號單獨發送提醒並 `@標註` 該名成員更新 Cookie。
-- **🃏 4 張獨立 Discord Embed 圖卡**：每個帳號發送一則包含 4 張 Embed 的訊息，完整呈現每日刷新的 4 把槍枝造型高清圖片、VP 售價、稀有度分級與對應色條。
-- **🎬 支援特效影片預覽**：若造型具備升級特效影片，點擊標題或欄位連結即可直接預覽。
-- **⏰ GitHub Actions 全自動排程**：預設於每日 **台灣時間早上 08:17（UTC 00:17）**（特戰英豪每日 08:00 商店刷新後，完美避開整點尖峰塞車）自動發送至您的 Discord 頻道。
-- **⚡ 互動式 `/shop` 與 `/cookie` 斜線指令**：支援在 Discord 隨時輸入 `/shop` 即時查詢每日商店，或輸入 `/cookie` 檢查各帳號 Riot Cookie 是否有效與剩餘有效期限。
+- **🎨 免費開源奇幻圖庫 × 視覺化圖卡**：整合經典開源奇幻戰棋專案 [The Battle for Wesnoth](https://github.com/wesnoth/wesnoth)（GPL-2.0，零 API Key、完全免費），所有裝備（`T1~T6` × 6 大部位）、副本與世界王首領立繪、1轉~3轉進階職業立繪、礦區／鐵匠鋪／遠征場景橫幅，以及戰鬥掉落、開箱、鍛造、強化結果皆以精美 Embed 圖卡呈現。
+- **🧙 四大職業與三段覺醒轉職**：劍士、法師、遊俠、聖騎士，各有專屬主動技能與終極奧義；達 `Lv.30` 可二轉、`Lv.70` 可三轉覺醒（立繪同步進化），亦可透過轉職徽章自由切換職業並保留階級。
+- **⛏️ 階梯挖礦、礦鎬鍛造與奇遇**：6 大階梯礦區（翠綠淺礦坑 ➔ 星界原初脈）、`T1~T8` 礦鎬鍛造升級、採礦連擊熱度倍率與隨機礦脈奇遇（富礦脈、星晶簇、遠古寶箱、哥布林偷襲）。
+- **🛡️ 深度裝備、套裝、強化與圖鑑展示**：
+  - 6 大部位（武器、頭盔、護甲、手套、戰靴、飾品）、6 階稀有度（普通 ~ 神話）、隨機詞條與 5 大套裝（2 件／4 件套效果）。
+  - 鐵匠鋪支援指定部位鍛造與 **`+1 ~ +15` 強化（絕不碎裝，失敗累積保底祝福值，達 100% 必成，並支援保護卷軸防止高階掉階）**。
+  - 支援 `/rpg inspect` 指令與背包下拉選單，隨時檢視與公開展示裝備圖片卡片。
+- **🏰 副本、無盡深淵與全服世界王**：
+  - **8 大階梯副本 × 普通／困難／地獄 3 種難度**：支援首領立繪即時預覽、回合制互動戰鬥（首領蓄力預警 + 防禦反擊）、自動戰鬥、勝利掉落裝備展示卡，通關後解鎖快速掃蕩。
+  - **🗼 無盡深淵**：無限爬塔挑戰，每 5 層守門王豐厚大獎，長線戰力試金石。
+  - **🐉 全伺服器共鬥世界王**：全服共享血條與即時傷害貢獻榜，擊殺後自動發放獎勵給所有參與玩家，並刷新更高階世界王。
+- **🛒 多元商店與抽箱保底**：常駐物資店、每 6 小時全服同步刷新的限時折扣神秘商店、星界秘寶抽箱（10 抽傳說保底／30 抽神話保底）與多餘礦石出售／低階裝備一鍵分解。
+- **📅 每日簽到、任務、離線派遣、成就與轉生飛升**：7 日循環簽到、每日／每週任務、**離線與重啟皆持續計時的冒險派遣**、17 項永久屬性加成成就與稱號，以及 **`Lv.100` 星界轉生飛升**（保留裝備、礦鎬與資源，永久疊加全屬性與收益倍率）。
+- **🏆 6 大伺服器排行榜**：戰力榜、等級轉生榜、無盡深淵榜、財富榜、礦神榜、世界王貢獻榜。
 
 ---
 
-## 🚀 快速設定教學（GitHub Actions 免伺服器每日自動發送）
+## 📜 `/rpg` 斜線指令一覽
 
-### 第一步：準備 Discord 機器人與頻道 ID
+| 指令 | 說明 |
+| :--- | :--- |
+| `/rpg start` | 建立冒險者檔案、選擇初始職業並領取新手裝備包 |
+| `/rpg profile` | 查看自己或隊友的角色面板、職業立繪、戰力、裝備與主城快捷按鈕 |
+| `/rpg mine` | 進入 6 大階梯礦區挖礦（附礦區橫幅、連挖與快速喝體力劑按鈕） |
+| `/rpg dungeon` | 開啟副本征討大廳（首領立繪預覽）或直接進入指定副本與難度開戰／掃蕩 |
+| `/rpg abyss` | 挑戰無限層數「無盡深淵」爬塔 |
+| `/rpg boss` | 查看並共同討伐全伺服器共享血條的「世界王」 |
+| `/rpg shop` | 開啟冒險商店（常駐物資、6 小時神秘商店、保底抽箱、礦石回收） |
+| `/rpg bag` | 管理裝備與材料背包、鎖定裝備、檢視裝備圖卡、一鍵穿戴最佳裝備 |
+| `/rpg equip` | 穿戴指定裝備（支援自動補全），留空則一鍵自動穿戴各部位最強裝備 |
+| `/rpg inspect` | 公開展示指定或最強裝備的精美圖片卡片、屬性、詞條與套裝加成 |
+| `/rpg forge` | 進入鐵匠鋪（指定部位鍛造套裝、升級礦鎬、強化裝備 `+1~+15`、一鍵分解） |
+| `/rpg daily` | 每日連續簽到與一鍵領取每日／每週任務獎勵 |
+| `/rpg expedition` | 派遣離線冒險探索（離線或重啟皆持續計時領取戰利品） |
+| `/rpg class` | 職業殿堂（`Lv.30` 二轉、`Lv.70` 三轉覺醒，或消耗轉職徽章自由切換職業） |
+| `/rpg rebirth` | 滿級 `Lv.100` 星界轉生飛升（保留裝備與進度，永久獲得全屬性倍率加成） |
+| `/rpg achievements` | 查看 17 項永久屬性加成成就並切換配戴顯示稱號 |
+| `/rpg leaderboard` | 查看 6 大伺服器排行榜（支援下拉選單即時切換） |
+| `/rpg help` | 查看完整新手指南與指令說明 |
+
+---
+
+## 🚀 快速開始與啟動教學
+
+### 第一步：建立並邀請 Discord 機器人
 
 1. 前往 [Discord Developer Portal](https://discord.com/developers/applications) 建立或選擇您的 Application。
-2. 點選左側 **Bot** 頁面：
-   - 點擊 **Reset Token** 複製您的機器人 Token（即 `DISCORD_BOT_TOKEN`）。
+2. 點選左側 **Bot** 頁面 ➔ 點擊 **Reset Token** 複製您的機器人 Token（即 `DISCORD_BOT_TOKEN`）。
 3. 點選左側 **OAuth2 -> URL Generator**：
-   - **Scopes** 勾選 `bot` 與 **`applications.commands`**（使用 `/shop`、`/cookie` 指令必勾）。
-   - **Bot Permissions** 勾選 `Send Messages`、`Embed Links`、`View Channels`。
-   - 複製下方產生的網址並邀請機器人進入您的 Discord 伺服器。
-4. 在 Discord 中開啟「使用者設定 -> 進階 -> **開發者模式**」：
-   - 對著您想顯示每日商店的文字頻道按右鍵 ➔ **複製頻道 ID**（即 `DISCORD_CHANNEL_ID`）。
-   - 對著您或朋友的使用者頭像按右鍵 ➔ **複製使用者 ID**（即 `Discord 用戶 ID`，供 `@標註` 使用）。
+   - **Scopes** 勾選 `bot` 與 **`applications.commands`**（使用 `/rpg` 斜線指令必勾）。
+   - **Bot Permissions** 勾選 `View Channels`、`Send Messages`、`Embed Links`、`Attach Files`、`Read Message History`（後兩項為選填私有備份頻道自動存檔所需）。
+   - 複製下方生成的網址並將機器人邀請進您的 Discord 伺服器。
 
 ---
 
-### 第二步：取得每位玩家的 Riot Cookie（重要操作步驟）
+### 第二步：選擇啟動方式
 
-> [!IMPORTANT]
-> **🚨 必看防坑守則（千萬不要點網頁上的「登出」）**
-> - 在同一台電腦抓取多個帳號時，登出帳號會通知 Riot 伺服器**立即註銷先前的 Cookie**！
-> - 請務必使用 **無痕視窗** 操作，抓完後**直接點視窗右上角 `❌` 關閉無痕視窗**，**絕對不要**在 Riot 網頁上按「登出 (Sign Out)」！
+#### 方式一：透過 GitHub Actions 免伺服器啟動（推薦先體驗）
 
-每位玩家請各自依序執行以下步驟：
-
-1. 按下快捷鍵 **`Ctrl + Shift + N`**（Mac 為 `Cmd + Shift + N`）開啟一個**全新的無痕視窗**。
-2. 在無痕視窗中打開 Riot 帳號官網登入：
-   👉 [https://account.riotgames.com/](https://account.riotgames.com/)
-3. 登入特戰英豪帳號（⚠️ **務必勾選「保持登入 / Stay signed in」**，才能取得 30 天效期的長期 Cookie）。
-4. 登入完成並看到帳號管理畫面後，在**同一個分頁網址列**改輸入並前往：
-   👉 [https://auth.riotgames.com/.well-known/openid-configuration](https://auth.riotgames.com/.well-known/openid-configuration)
-5. 按下鍵盤 **`F12`** 打開開發者工具：
-   - **確認效期**：先切到 **`Application`（應用程式）** ➔ 左側展開 **`Cookies`** ➔ 點選 **`https://auth.riotgames.com`**，確認 **`ssid`** 那一列的 `Expires / Max-Age` 顯示為 **約 30 天後的日期**（而不是 `Session`）。
-   - **複製完整 Cookie**：再切至 **`Network`（網路）** 分頁 ➔ 按 **`F5`** 重新整理 ➔ 點擊左側 **`openid-configuration`** ➔ 在右側 **`Request Headers`** 找到 **`Cookie:`**，複製冒號後面的**整串完整內容**（包含 `ssid=...; csid=...; tdid=...` 等）。
-6. ⚠️ **最關鍵的一步**：複製好後，**直接按視窗右上角的 `❌` 關閉整個無痕視窗**！（絕對不要點網頁登出）。
-7. **抓第 2 個人或下一個帳號時**：重新開啟一個新的無痕視窗，重複上述步驟 1~6 即可。
-
----
-
-### 第三步：在 GitHub 專案設定 Secrets
-
-1. 打開您 GitHub 上的這個專案。
-2. 點選上方選單 **Settings** ➔ 左側 **Secrets and variables** ➔ **Actions** ➔ **New repository secret**。
-3. 首先新增 **Discord 基本設定**：
+1. 打開您的 GitHub 專案，點選上方 **Settings** ➔ **Secrets and variables** ➔ **Actions** ➔ **New repository secret**，設定以下 Secrets：
 
 | Secret 名稱 | 必填 | 說明 |
 | :--- | :---: | :--- |
 | `DISCORD_BOT_TOKEN` | ✅ 必填 | 您的 Discord 機器人 Token |
-| `DISCORD_CHANNEL_ID` | ✅ 必填 | 預設要顯示每日商店的 Discord 頻道 ID |
+| `RPG_BACKUP_CHANNEL_ID` | ⭐ 強烈建議 | 在 Discord 建立一個**僅管理員與機器人可見的私有文字頻道**，貼上頻道 ID；每次 Actions 重啟都會自動還原與備份所有玩家進度，永不掉檔！ |
+| `TIMEZONE_OFFSET_HOURS` | 選填 | 每日簽到與任務重置時區（預設 `8`，即台灣時間 UTC+8） |
+| `RPG_BACKUP_INTERVAL_MINUTES` | 選填 | 自動備份間隔分鐘數（預設 `15`） |
 
-4. 接著設定每位玩家的帳號資訊（提供 **2 種方式**，任選一種即可）：
+2. 點選專案上方的 **Actions** 分頁 ➔ 左側點選 **啟動星界紀元 RPG Discord 機器人 (Interactive RPG Bot)**。
+3. 點擊右側 **Run workflow**，輸入要維持上線的分鐘數（最長 `350` 分鐘，到期前會自動完成存檔並安全下線）即可開玩！
 
-#### 💡 方式 A（最直覺推薦）：使用編號 Secrets（支援管道分隔符號 `|`）
-直接建立 `RIOT_SSID_1`、`RIOT_SSID_2`... 一個 Secret 搞定一個人的全部設定：
+#### 方式二：在自己的電腦或 VPS 上 24 小時常駐執行
 
-| Secret 名稱 | 內容填寫格式 | 範例 |
-| :--- | :--- | :--- |
-| **`RIOT_SSID_1`** | `暱稱\|Cookie內容\|Discord用戶ID` | `aaa\|ssid=eyJ...; csid=...\|123456789012345678` |
-| **`RIOT_SSID_2`** | `暱稱\|Cookie內容\|Discord用戶ID` | `bbb\|ssid=eyJ...; csid=...\|234567890123456789` |
-| **`RIOT_SSID_3`** | `暱稱\|Cookie內容\|Discord用戶ID` | `ccc\|ssid=eyJ...; csid=...\|345678901234567890` |
-| **`RIOT_SSID_4`** | `暱稱\|Cookie內容\|Discord用戶ID` | `ddd\|ssid=eyJ...; csid=...\|456789012345678901` |
-| **`RIOT_SSID_5`** | `暱稱\|Cookie內容\|Discord用戶ID` | `eee\|ssid=eyJ...; csid=...\|567890123456789012` |
+- **Windows 使用者**：直接點兩下 [`start_bot.bat`](start_bot.bat)，首次執行會自動建立 `.env` 並開啟記事本，填入 `DISCORD_BOT_TOKEN` 存檔後重新執行即可（內建斷線自動重啟）。
+- **macOS / Linux / VPS 使用者**：
 
-> 📌 **欄位格式說明**：`暱稱|Cookie|Discord用戶ID|指定發送頻道ID(選填)`
-> - 如果不需要 `@標註` 該成員，第 3 欄可留空，例如：`小明|貼上整串Cookie`。
-> - 如果不需要暱稱，直接貼 Cookie 亦可，程式會自動抓取遊戲內真實的 `RiotID#TAG`。
-> - 也支援把暱稱與 ID 分開寫成獨立 Secret：`ACCOUNT_NAME_1`、`DISCORD_USER_ID_1`。
-
-#### 💡 方式 B：使用單一 `RIOT_ACCOUNTS` Secret（一行一個人）
-建立一個名為 **`RIOT_ACCOUNTS`** 的 Secret，每一行代表一位玩家：
-```text
-aaa|貼上整串Cookie|123456789012345678
-ccc|貼上整串Cookie|234567890123456789
-sss|貼上整串Cookie|345678901234567890
-```
-
----
-
-### 第四步：立即手動測試發送！
-
-1. 點選 GitHub 專案上方的 **Actions** 分頁。
-2. 左側點選 **VALORANT 每日商店推送 (Daily Store Notifier)**。
-3. 點擊右側的 **Run workflow** 按鈕 ➔ 點擊綠色的 **Run workflow**。
-4. 等待約 20~30 秒，Discord 頻道就會依序跳出每位玩家的 4 張每日商店圖卡！
-
----
-
-## ⚡ 在 Discord 使用 `/shop` 與 `/cookie` 斜線指令即時查詢
-
-除了每天早上 08:17 的自動推送外，如果你想隨時在 Discord 手動執行查詢或檢查 Cookie 效期：
-
-### 方式一：透過 GitHub Actions 臨時啟動機器人（不需開電腦）
-1. 點選專案上方的 **Actions** 分頁。
-2. 左側點選 **啟動 Discord /shop 指令機器人 (Interactive Slash Command Bot)**。
-3. 點擊右側 **Run workflow**（可填寫要維持在線的分鐘數，例如 `30`）並送出。
-4. 機器人上線後，任何伺服器成員即可在 Discord 輸入斜線指令：
-   - **`/shop`**：直接送出查詢全部帳號商店，或選擇 `🙋 我自己` / `[1] 玩家1` 單獨查詢。
-   - **`/cookie`**：即時驗證帳號 Riot Cookie 是否仍有效，並顯示距離到期的剩餘天數與小時（同樣支援 `🙋 我自己` 或指定隊友）。
-
-### 方式二：在自己的電腦或 VPS 上常駐執行
-只要在電腦終端機啟動：
 ```bash
 # 安裝依賴套件
 pip install -r requirements.txt
 
-# 複製環境變數範本並填入 DISCORD_BOT_TOKEN 等
+# 複製環境變數範本並填入 DISCORD_BOT_TOKEN
 cp .env.example .env
 
-# 啟動常駐型機器人（支援 24 小時隨時回應 /shop、/cookie 指令 + 每日定時推送）
+# 啟動常駐型 RPG 機器人
 python bot.py
 ```
 
 ---
 
-## 💻 本地單次執行與測試指令
+## 💾 重啟永久存檔機制（本地 & 雲端皆支援）
 
-```bash
-# 單次執行（立即查詢所有帳號並發送至 Discord 頻道）
-python main.py
-
-# 使用範例模擬資料測試 Discord 機器人發送效果（不需 Riot Cookie）
-python main.py --mock
-
-# 僅在終端機輸出生成的 JSON，不發送至 Discord
-python main.py --dry-run
-```
+1. **本地常駐（`start_bot.bat` / 本機 / VPS）**：
+   - 所有遊玩進度即時以 **SQLite WAL 交易模式**寫入 `data/rpg.db`（可透過 `RPG_DB_PATH` 自訂），並於定時與安全關機前自動執行 WAL checkpoint 與輪替備份至 `data/backups/`。
+   - **免任何額外設定**，每次重新啟動機器人皆會完整記憶所有人的角色、裝備、背包、副本通關、深淵紀錄、離線派遣與世界王血量！
+2. **GitHub Actions / 無本地硬碟雲端環境**：
+   - 只要在 Secrets 設定 **`RPG_BACKUP_CHANNEL_ID`**（指向僅管理員與機器人可見的私有文字頻道），機器人開機時會自動從該頻道還原最新壓縮快照（附版本序號防回滾保護），執行期間定時上傳並於關機前自動備份，**永不掉檔且絕不公開任何玩家資料**。
 
 ---
 
-# 非Riot官方，使用風險自負
+## 🧪 執行單元測試
 
+```bash
+pytest -v
+```
 
+測試涵蓋：全流程重啟持久化、Gzip 快照還原與防回滾保護、Discord 備份頻道同步、挖礦／鍛造／強化保底與保護卷軸、副本／掃蕩／無盡深淵、全服世界王共鬥、商店抽箱保底、轉職轉生、全套 120+ 張免費圖庫資源格式驗證，以及所有 Embed 圖卡與 Discord UI View 版面檢查。
+
+---
+
+## 🎨 免費開源美術素材授權致謝
+
+本專案 RPG 系統之裝備圖示、職業與首領立繪及場景橫幅皆取自免費開源專案 **[The Battle for Wesnoth](https://github.com/wesnoth/wesnoth)**（GPL-2.0 授權），透過 GitHub 固定 Commit CDN 靜態載入，完全免費且無需任何 API Key。
+
+---
 
 ## 📁 專案結構
 
-- [`main.py`](main.py)：多人單次執行入口（供 GitHub Actions 每日排程或本地命令列呼叫，具備單帳號獨立容錯）。
-- [`bot.py`](bot.py)：Discord 機器人入口（支援即時伺服器同步、`/shop` 與 `/cookie` 選單自動補全與可自訂下線時間）。
-- [`src/valorant_client.py`](src/valorant_client.py)：Riot Cookie Reauth 換證、Cookie 效期檢查、Storefront v3 API 與 `valorant-api.com` 繁體中文造型資料整合。
-- [`src/discord_notifier.py`](src/discord_notifier.py)：建構每日商店 Embed 圖卡、Cookie 效期檢查摘要與錯誤提醒。
-- [`src/config.py`](src/config.py)：支援多行 `RIOT_ACCOUNTS`、JSON 陣列與編號 `RIOT_SSID_1..20` 的多帳號設定解析器。
-- [`.github/workflows/daily_store.yml`](.github/workflows/daily_store.yml)：GitHub Actions 每日定時排程（08:17）。
-- [`.github/workflows/discord_bot.yml`](.github/workflows/discord_bot.yml)：GitHub Actions 隨選啟動機器人工作流程。
+- [`bot.py`](bot.py)：Discord 機器人入口（註冊 `/rpg` 斜線指令群組、定時與關機前 SQLite／雲端備份還原、支援 `--run-minutes` 定時安全下線）。
+- [`src/config.py`](src/config.py)：環境變數與 RPG 存檔／備份頻道設定解析器。
+- [`src/rpg/`](src/rpg/)：完整持久化長線 RPG 核心模組：
+  - [`database.py`](src/rpg/database.py)：SQLite WAL 持久化、自動輪替備份與 Discord 私有頻道 Gzip 快照還原／上傳。
+  - [`data.py`](src/rpg/data.py)：職業、礦區、礦鎬、裝備、詞條、套裝、副本、世界王、商店、任務、成就與派遣數值設定。
+  - [`models.py`](src/rpg/models.py)：玩家、裝備、戰鬥狀態、遠征與世界王資料模型。
+  - [`engine.py`](src/rpg/engine.py)：核心遊戲邏輯引擎（戰力計算、挖礦、鍛造強化、回合制戰鬥、深淵、世界王、商店抽箱、轉職轉生）。
+  - [`assets.py`](src/rpg/assets.py)：免費開源奇幻圖庫 URL 註冊表（裝備、首領、職業立繪、礦區與場景橫幅）。
+  - [`embeds.py`](src/rpg/embeds.py)：Discord Embed 介面與裝備展示圖卡建構器。
+  - [`views.py`](src/rpg/views.py)：互動式按鈕與下拉選單 UI 元件。
+  - [`commands.py`](src/rpg/commands.py)：`/rpg` 斜線指令群組與自動補全實作。
+- [`tests/test_rpg.py`](tests/test_rpg.py)：RPG 核心玩法、持久化、圖庫與 UI 完整單元測試。
+- [`start_bot.bat`](start_bot.bat)：Windows 一鍵常駐啟動腳本（含自動建立 `.env` 與斷線重連）。
+- [`.github/workflows/discord_bot.yml`](.github/workflows/discord_bot.yml)：GitHub Actions 隨選啟動 Discord RPG 機器人工作流程。
