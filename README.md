@@ -20,6 +20,7 @@
 - **🛒 多元商店與抽箱保底**：常駐物資店、每 6 小時全服同步刷新的限時折扣神秘商店、星界秘寶抽箱（10 抽傳說保底／30 抽神話保底）與多餘礦石出售／低階裝備一鍵分解。
 - **📅 每日簽到、任務、離線派遣、成就與轉生飛升**：7 日循環簽到、每日／每週任務、**離線與重啟皆持續計時的冒險派遣**、17 項永久屬性加成成就與稱號，以及 **`Lv.100` 星界轉生飛升**（保留裝備、礦鎬與資源，永久疊加全屬性與收益倍率）。
 - **🏆 6 大伺服器排行榜**：戰力榜、等級轉生榜、無盡深淵榜、財富榜、礦神榜、世界王貢獻榜。
+- **🎭 `/p` 二次元梗圖／表情包隨機抽選**：免費串接多個 GitHub 開源中文二次元梗圖與表情包資料庫（零 API Key、3,000+ 張以上圖庫），支援一鍵 `/p` 平衡隨機抽圖、分類篩選（二次元綜合／經典動漫／藍色大肥魚 DeepSeek娘／動態 GIF）、繁簡中文關鍵字搜尋，以及「換一張／再來一張／原圖」互動按鈕。
 
 ---
 
@@ -44,6 +45,7 @@
 | `/rebirth` | 滿級 `Lv.100` 星界轉生飛升（保留裝備與進度，永久獲得全屬性倍率加成） |
 | `/achievements` | 查看 17 項永久屬性加成成就並切換配戴顯示稱號 |
 | `/leaderboard` | 查看 6 大伺服器排行榜（支援下拉選單即時切換） |
+| `/p` | 隨機產生一張二次元梗圖／表情包（支援分類篩選、繁簡關鍵字搜尋與互動換圖按鈕） |
 | `/help` | 查看完整新手指南與指令說明 |
 
 ---
@@ -119,16 +121,24 @@ pytest -v
 
 ---
 
-## 🎨 免費開源美術素材授權致謝
+## 🎨 免費開源美術素材與梗圖資料庫授權致謝
 
-本專案 RPG 系統之裝備圖示、職業與首領立繪及場景橫幅皆取自免費開源專案 **[The Battle for Wesnoth](https://github.com/wesnoth/wesnoth)**（GPL-2.0 授權），透過 GitHub 固定 Commit CDN 靜態載入，完全免費且無需任何 API Key。
+- **RPG 奇幻圖庫**：本專案 RPG 系統之裝備圖示、職業與首領立繪及場景橫幅皆取自免費開源專案 **[The Battle for Wesnoth](https://github.com/wesnoth/wesnoth)**（GPL-2.0 授權），透過 GitHub 固定 Commit CDN 靜態載入，完全免費且無需任何 API Key。
+- **`/p` 二次元梗圖免費開源資料庫**：動態串接以下免費公開 GitHub 社群開源二次元表情包與梗圖倉庫（零 API Key、無需額外設定，原圖版權歸各原作者與社群貢獻者所有，僅供非商業交流使用）：
+  - [DDZS987/astrbot-meme-pack-semantic-01](https://github.com/DDZS987/astrbot-meme-pack-semantic-01)（二次元綜合梗圖庫）
+  - [DumKing/ChineseBQB-AstrBot](https://github.com/DumKing/ChineseBQB-AstrBot)（精選整理自 [zhaoolee/ChineseBQB](https://github.com/zhaoolee/ChineseBQB) 的純動漫分類：原神、芙莉蓮、北方栖姬、阿庫婭、JOJO、輝夜大小姐、間諜過家家、鬼滅之刃、進擊的巨人、美少女戰士、電鋸人等）
+  - [EDMOK/blue-fish-archive](https://github.com/EDMOK/blue-fish-archive)、[anka-afk/deepseek-fanart-meme-pack](https://github.com/anka-afk/deepseek-fanart-meme-pack)、[anka-afk/blue-fat-fish-meme-pack](https://github.com/anka-afk/blue-fat-fish-meme-pack)、[yyh-001/dsh-meme-packs](https://github.com/yyh-001/dsh-meme-packs)（藍色大肥魚／DeepSeek娘與 AI 娘化動靜態梗圖）
+  - [NooAcc/astrbot-meme-IzumiHiyori](https://github.com/NooAcc/astrbot-meme-IzumiHiyori)、[anka-afk/juxueli-meme-pack](https://github.com/anka-afk/juxueli-meme-pack)、[anka-afk/congyu-meme-pack](https://github.com/anka-afk/congyu-meme-pack)、[anka-afk/clover-days-meme-pack](https://github.com/anka-afk/clover-days-meme-pack)（和泉妃愛、橘雪莉、叢雨、鷹倉杏鈴等萌系動漫表情包）
 
 ---
 
 ## 📁 專案結構
 
-- [`bot.py`](bot.py)：Discord 機器人入口（註冊 18 個頂層 RPG 斜線指令、防重複啟動鎖定、UTF-8 輪替日誌、定時與關機前 SQLite／雲端備份還原、支援 `--run-minutes` 定時安全下線與本機安全停止訊號）。
+- [`bot.py`](bot.py)：Discord 機器人入口（註冊 19 個頂層斜線指令含 RPG 與 `/p` 梗圖、防重複啟動鎖定、UTF-8 輪替日誌、定時與關機前 SQLite／雲端備份還原、支援 `--run-minutes` 定時安全下線與本機安全停止訊號）。
 - [`src/config.py`](src/config.py)：環境變數與 RPG 存檔／備份頻道設定解析器。
+- [`src/memes/`](src/memes/)：`/p` 隨機二次元梗圖模組：
+  - [`catalog.py`](src/memes/catalog.py)：免費開源線上二次元梗圖多來源索引抓取器、記憶體快取（TTL 6 小時＋背景刷新）、SFW 過濾、繁簡關鍵字搜尋、防連抽重複與離線備援圖庫。
+  - [`commands.py`](src/memes/commands.py)：`/p` 斜線指令、Embed 卡片建構器與「換一張／再來一張／原圖」互動按鈕。
 - [`src/rpg/`](src/rpg/)：完整持久化長線 RPG 核心模組：
   - [`database.py`](src/rpg/database.py)：SQLite WAL 持久化、自動輪替備份與 Discord 私有頻道 Gzip 快照還原／上傳。
   - [`data.py`](src/rpg/data.py)：職業、礦區、礦鎬、裝備、詞條、套裝、副本、世界王、商店、任務、成就與派遣數值設定。
@@ -139,6 +149,7 @@ pytest -v
   - [`views.py`](src/rpg/views.py)：互動式按鈕與下拉選單 UI 元件。
   - [`commands.py`](src/rpg/commands.py)：頂層斜線指令與自動補全實作。
 - [`tests/test_rpg.py`](tests/test_rpg.py)：RPG 核心玩法、持久化、圖庫與 UI 完整單元測試。
+- [`tests/test_memes.py`](tests/test_memes.py)：`/p` 二次元梗圖指令、線上多來源資料庫解析、SFW 過濾、繁簡搜尋與互動元件單元測試。
 - [`start_bot.bat`](start_bot.bat)：Windows 一鍵常駐啟動腳本（含自動建立 `.env`、防重複啟動、UTF-8 日誌與斷線重連）。
 - [`start_bot_hidden.vbs`](start_bot_hidden.vbs)：Windows 無黑窗靜默背景啟動器。
 - [`setup_autostart.bat`](setup_autostart.bat)：Windows 一鍵安裝／移除開機自動無黑窗啟動與狀態／紀錄查看工具。

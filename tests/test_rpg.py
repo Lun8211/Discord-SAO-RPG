@@ -89,11 +89,12 @@ def test_bot_registers_top_level_rpg_commands() -> None:
         "class",
         "rebirth",
         "help",
+        "p",
     }
     assert "rpg" not in cmd_names
     assert "cookie" not in cmd_names
     assert cmd_names == expected_cmds
-    assert len(cmd_names) == 18 <= 100
+    assert len(cmd_names) == 19 <= 100
 
     by_name = {cmd.name: cmd for cmd in cmds}
     for cmd in cmds:

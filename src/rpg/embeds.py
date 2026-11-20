@@ -1084,5 +1084,10 @@ def build_help_embed() -> discord.Embed:
         ),
         inline=False,
     )
+    embed.add_field(
+        name="🎭 趣味娛樂",
+        value="`/p` — 隨機產生二次元梗圖／表情包（串接免費開源線上圖庫，支援分類篩選與關鍵字搜尋）",
+        inline=False,
+    )
     embed.set_footer(text=ASSET_CREDITS)
     return embed

@@ -12,6 +12,7 @@ from discord import app_commands
 from discord.ext import tasks
 
 from src.config import Settings
+from src.memes import AnimeMemeService, register_meme_commands
 from src.rpg.commands import register_rpg_commands
 from src.rpg.database import RPGDatabase
 from src.rpg.engine import RPGEngine
@@ -140,11 +141,15 @@ class RPGBot(discord.Client):
             db=self.rpg_db,
             timezone_offset_hours=settings.timezone_offset_hours,
         )
+        self.meme_service = AnimeMemeService()
         register_rpg_commands(self.tree, self.rpg_engine)
+        register_meme_commands(self.tree, self.meme_service)
 
     async def setup_hook(self) -> None:
         # 採用全域斜線指令註冊，避免在各伺服器出現重複指令
         await self.tree.sync()
+        # 背景預先載入免費開源線上二次元梗圖圖庫索引，不阻塞機器人開機
+        asyncio.create_task(self.meme_service.ensure_loaded())
         self.rpg_backup_task.change_interval(minutes=settings.rpg_backup_interval_minutes)
         self.rpg_backup_task.start()
         if self.stop_signal_path is not None:
@@ -217,7 +222,7 @@ class RPGBot(discord.Client):
                 except Exception as exc:
                     logger.warning("清除伺服器專屬斜線指令失敗: %s", exc)
             logger.info(
-                "✅ 全部 %d 個 RPG 斜線指令已使用全域註冊（已清理 %d 個伺服器的舊指令快取）",
+                "✅ 全部 %d 個斜線指令已使用全域註冊（已清理 %d 個伺服器的舊指令快取）",
                 len(self.tree.get_commands()),
                 cleared,
             )
