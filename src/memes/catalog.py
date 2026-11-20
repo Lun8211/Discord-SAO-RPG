@@ -921,6 +921,38 @@ class AnimeMemeService:
             return
         self._refresh_task = loop.create_task(self.refresh())
 
+    async def download_image(
+        self, url: str, *, max_bytes: int = 8 * 1024 * 1024
+    ) -> Optional[Tuple[bytes, str]]:
+        """Download raw image bytes and a clean ASCII filename for pure image-only Discord attachment."""
+        if not _is_valid_image_url(url):
+            return None
+        timeout = aiohttp.ClientTimeout(total=self.request_timeout_seconds)
+        headers = {"User-Agent": "AstralChronicle-DiscordBot/1.0"}
+        try:
+            async with aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
+                async with session.get(url) as resp:
+                    if resp.status != 200:
+                        return None
+                    content_type = (resp.headers.get("Content-Type") or "").split(";", 1)[0].strip().lower()
+                    if content_type and not content_type.startswith("image/"):
+                        return None
+                    data = await resp.read()
+        except Exception as exc:
+            logger.warning("下載梗圖原圖失敗，將改以純圖片 Embed 發送: %s", exc)
+            return None
+
+        if not data or len(data) > max_bytes:
+            return None
+
+        base = url.split("?", 1)[0].lower()
+        ext = ".png"
+        for candidate in VALID_IMAGE_EXTS:
+            if base.endswith(candidate):
+                ext = candidate
+                break
+        return data, f"meme{ext}"
+
     def get_stats(self) -> Dict[str, Any]:
         pool = self._entries if self._entries else list(FALLBACK_MEMES)
         counts: Dict[str, int] = {}

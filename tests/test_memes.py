@@ -16,7 +16,6 @@ from src.memes import (
     FALLBACK_MEMES,
     MEME_SOURCES,
     AnimeMemeService,
-    AnimeMemeView,
     MemeEntry,
     MemeSourceSpec,
     build_meme_embed,
@@ -235,32 +234,28 @@ def test_service_dedup_search_antirepeat_and_fallback() -> None:
     assert pick1.url != pick2.url
 
 
-def test_meme_embed_view_and_slash_command_execution() -> None:
+def test_meme_embed_and_slash_command_output_image_only() -> None:
     svc = AnimeMemeService(sources=(), rng=random.Random(7))
     svc._set_pool(FALLBACK_MEMES, using_fallback=False, online_sources=10)
 
     sample = FALLBACK_MEMES[0]
-    embed = build_meme_embed(sample, total_count=3043, match_count=3043, category="all")
+    embed = build_meme_embed(sample)
     d = embed.to_dict()
-    assert d["title"].startswith("🎭 ")
     assert d["image"]["url"] == sample.url
-    assert "3,043" in d["footer"]["text"]
+    assert "title" not in d
+    assert "description" not in d
+    assert "footer" not in d
+    assert "author" not in d
+    assert "fields" not in d
 
-    async def _exercise_view_and_command() -> None:
-        view = AnimeMemeView(svc, invoker_id=1001, category="all", meme_url=sample.url)
-        assert len(view.children) == 3
-        link_buttons = [c for c in view.children if isinstance(c, discord.ui.Button) and c.style == discord.ButtonStyle.link]
-        assert len(link_buttons) == 1 and link_buttons[0].url == sample.url
-        view.stop()
-
-        # Execute `/p` slash command callback directly with mocked Interaction
+    async def _exercise_command() -> None:
         from src.memes.commands import create_meme_commands
 
         p_cmd = create_meme_commands(svc)[0]
         sent: List[Dict[str, Any]] = []
 
         async def fake_send(*args: Any, **kwargs: Any) -> None:
-            sent.append(kwargs)
+            sent.append({"args": args, "kwargs": kwargs})
 
         interaction = SimpleNamespace(
             user=SimpleNamespace(id=1001, display_name="Tester"),
@@ -269,22 +264,41 @@ def test_meme_embed_view_and_slash_command_execution() -> None:
             followup=SimpleNamespace(send=AsyncMock(side_effect=fake_send)),
         )
 
-        # Warm cache -> instant response (no defer needed)
+        # 1. Normal path: downloads image and sends ONLY discord.File (no text, no embed, no view)
+        svc.download_image = AsyncMock(return_value=(b"\x89PNG\r\n\x1a\nfake", "meme.png"))  # type: ignore[method-assign]
         await p_cmd.callback(interaction, category="deepseek", keyword="吃飯")
-        assert interaction.response.defer.await_count == 0
+        assert interaction.response.defer.await_count == 1
         assert len(sent) == 1
-        assert isinstance(sent[0]["embed"], discord.Embed)
-        assert _is_valid_meme_url(sent[0]["embed"].image.url)
-        sent[0]["view"].stop()
+        assert sent[0]["args"] == ()
+        kwargs = sent[0]["kwargs"]
+        assert set(kwargs.keys()) == {"file"}
+        assert isinstance(kwargs["file"], discord.File)
+        assert kwargs["file"].filename == "meme.png"
 
-        # Keyword miss -> friendly ephemeral reply
+        # 2. Download fallback path: sends ONLY pure image-only Embed (still zero text / no view)
+        sent.clear()
+        svc.download_image = AsyncMock(return_value=None)  # type: ignore[method-assign]
+        await p_cmd.callback(interaction, category="all", keyword=None)
+        assert len(sent) == 1
+        assert sent[0]["args"] == ()
+        kwargs = sent[0]["kwargs"]
+        assert set(kwargs.keys()) == {"embed"}
+        emb_dict = kwargs["embed"].to_dict()
+        assert _is_valid_meme_url(emb_dict["image"]["url"])
+        assert "title" not in emb_dict
+        assert "description" not in emb_dict
+        assert "footer" not in emb_dict
+        assert "fields" not in emb_dict
+
+        # 3. Keyword miss -> ephemeral hint only
         sent.clear()
         await p_cmd.callback(interaction, category="all", keyword="完全不存在的關鍵字zzz")
         assert len(sent) == 1
-        assert sent[0].get("ephemeral") is True
+        assert sent[0]["kwargs"].get("ephemeral") is True
 
-        # Cold-start service -> defers first, loads fallback, sends via followup
+        # 4. Cold-start service -> defers, loads fallback pool, outputs pure image only
         cold_svc = AnimeMemeService(sources=(), rng=random.Random(9))
+        cold_svc.download_image = AsyncMock(return_value=(b"GIF89afake", "meme.gif"))  # type: ignore[method-assign]
         cold_cmd = create_meme_commands(cold_svc)[0]
         sent.clear()
         interaction2 = SimpleNamespace(
@@ -297,6 +311,7 @@ def test_meme_embed_view_and_slash_command_execution() -> None:
         assert interaction2.response.defer.await_count == 1
         assert interaction2.followup.send.await_count == 1
         assert len(sent) == 1
-        sent[0]["view"].stop()
+        assert set(sent[0]["kwargs"].keys()) == {"file"}
+        assert isinstance(sent[0]["kwargs"]["file"], discord.File)
 
-    asyncio.run(_exercise_view_and_command())
+    asyncio.run(_exercise_command())

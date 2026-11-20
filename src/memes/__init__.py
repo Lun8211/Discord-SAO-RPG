@@ -9,7 +9,6 @@ from src.memes.catalog import (
     normalize_search_text,
 )
 from src.memes.commands import (
-    AnimeMemeView,
     build_meme_embed,
     create_meme_commands,
     register_meme_commands,
@@ -17,7 +16,6 @@ from src.memes.commands import (
 
 __all__ = [
     "AnimeMemeService",
-    "AnimeMemeView",
     "FALLBACK_MEMES",
     "MEME_SOURCES",
     "MemeEntry",
