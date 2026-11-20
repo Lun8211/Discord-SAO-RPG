@@ -29,3 +29,7 @@ data/
 *.db-wal
 *.db-shm
 
+# Local bot runtime logs
+logs/
+*.log
+

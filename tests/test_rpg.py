@@ -781,3 +781,61 @@ def test_all_discord_ui_views_instantiate_cleanly(tmp_path: Path) -> None:
     asyncio.run(_build_all())
     db.close()
 
+
+def test_single_instance_lock_logging_and_cli_args(tmp_path: Path) -> None:
+    import logging
+    import os
+
+    lock1 = bot_module.SingleInstanceLock(tmp_path)
+    lock2 = bot_module.SingleInstanceLock(tmp_path)
+
+    assert lock1.acquire() is True
+    assert (tmp_path / "bot.pid").read_text(encoding="utf-8").strip() == str(os.getpid())
+    assert lock2.acquire() is False
+
+    lock1.release()
+    assert not (tmp_path / "bot.pid").exists()
+    assert lock2.acquire() is True
+    lock2.release()
+
+    log_file = tmp_path / "logs" / "bot.log"
+    handler = bot_module.configure_file_logging(str(log_file))
+    handler_same = bot_module.configure_file_logging(str(log_file))
+    assert handler is handler_same
+    try:
+        bot_module.logger.info("🤖 UTF-8 日誌測試成功")
+        handler.flush()
+        content = log_file.read_text(encoding="utf-8")
+        assert "🤖 UTF-8 日誌測試成功" in content
+    finally:
+        logging.getLogger().removeHandler(handler)
+        handler.close()
+
+    args = bot_module.parse_bot_args(["--run-minutes", "120", "--log-file", "logs/bot.log", "--control-dir", "tmp_ctrl"])
+    assert args.run_minutes == 120
+    assert args.log_file == "logs/bot.log"
+    assert args.control_dir == "tmp_ctrl"
+
+
+def test_windows_autostart_scripts_format_and_encoding() -> None:
+    repo_root = Path(__file__).resolve().parent.parent
+    scripts = [
+        "start_bot.bat",
+        "start_bot_hidden.vbs",
+        "stop_bot.bat",
+        "setup_autostart.bat",
+    ]
+    for name in scripts:
+        p = repo_root / name
+        assert p.exists(), f"Missing Windows script: {name}"
+        raw = p.read_bytes()
+        assert b"\r\n" in raw, f"{name} must use CRLF line endings for Windows"
+        # Ensure there are no bare LF bytes without preceding CR
+        assert b"\n" not in raw.replace(b"\r\n", b""), f"{name} contains bare LF"
+
+    # VBScript MUST stay pure ASCII so wscript.exe never hits cp950/UTF-8 mojibake or syntax errors
+    vbs_raw = (repo_root / "start_bot_hidden.vbs").read_bytes()
+    vbs_raw.decode("ascii")
+    assert b"--hidden" in vbs_raw
+
+

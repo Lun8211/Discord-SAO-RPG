@@ -79,7 +79,11 @@
 
 #### 方式二：在自己的電腦或 VPS 上 24 小時常駐執行
 
-- **Windows 使用者**：直接點兩下 [`start_bot.bat`](start_bot.bat)，首次執行會自動建立 `.env` 並開啟記事本，填入 `DISCORD_BOT_TOKEN` 存檔後重新執行即可（內建斷線自動重啟）。
+- **Windows 使用者（支援完全無黑窗開機自動啟動）**：
+  1. 下載整個專案並解壓縮到固定資料夾（例如 `C:\RPG-Bot`）。
+  2. 先手動點兩下 [`start_bot.bat`](start_bot.bat)：首次會自動建立 `.env` 並打開記事本，填入 `DISCORD_BOT_TOKEN` 存檔後再點兩下確認機器人正常上線。
+  3. 測試沒問題後關掉黑窗，點兩下 [`setup_autostart.bat`](setup_autostart.bat) ➔ 輸入 **`1`**，即可一鍵安裝**「開機自動無黑窗背景啟動」**並立刻在背景上線！
+  4. 平常想確認執行紀錄可開 [`setup_autostart.bat`](setup_autostart.bat) 選 `[5]`（或直接看 `logs\bot.log`）；想安全存檔並關閉背景機器人只要點兩下 [`stop_bot.bat`](stop_bot.bat)。
 - **macOS / Linux / VPS 使用者**：
 
 ```bash
@@ -111,7 +115,7 @@ python bot.py
 pytest -v
 ```
 
-測試涵蓋：全流程重啟持久化、Gzip 快照還原與防回滾保護、Discord 備份頻道同步、挖礦／鍛造／強化保底與保護卷軸、副本／掃蕩／無盡深淵、全服世界王共鬥、商店抽箱保底、轉職轉生、全套 120+ 張免費圖庫資源格式驗證，以及所有 Embed 圖卡與 Discord UI View 版面檢查。
+測試涵蓋：全流程重啟持久化、Gzip 快照還原與防回滾保護、Discord 備份頻道同步、挖礦／鍛造／強化保底與保護卷軸、副本／掃蕩／無盡深淵、全服世界王共鬥、商店抽箱保底、轉職轉生、全套 120+ 張免費圖庫資源格式驗證、本機單實例防重複鎖定與輪替日誌，以及所有 Embed 圖卡與 Discord UI View 版面檢查。
 
 ---
 
@@ -123,7 +127,7 @@ pytest -v
 
 ## 📁 專案結構
 
-- [`bot.py`](bot.py)：Discord 機器人入口（註冊 18 個頂層 RPG 斜線指令、定時與關機前 SQLite／雲端備份還原、支援 `--run-minutes` 定時安全下線）。
+- [`bot.py`](bot.py)：Discord 機器人入口（註冊 18 個頂層 RPG 斜線指令、防重複啟動鎖定、UTF-8 輪替日誌、定時與關機前 SQLite／雲端備份還原、支援 `--run-minutes` 定時安全下線與本機安全停止訊號）。
 - [`src/config.py`](src/config.py)：環境變數與 RPG 存檔／備份頻道設定解析器。
 - [`src/rpg/`](src/rpg/)：完整持久化長線 RPG 核心模組：
   - [`database.py`](src/rpg/database.py)：SQLite WAL 持久化、自動輪替備份與 Discord 私有頻道 Gzip 快照還原／上傳。
@@ -135,5 +139,8 @@ pytest -v
   - [`views.py`](src/rpg/views.py)：互動式按鈕與下拉選單 UI 元件。
   - [`commands.py`](src/rpg/commands.py)：頂層斜線指令與自動補全實作。
 - [`tests/test_rpg.py`](tests/test_rpg.py)：RPG 核心玩法、持久化、圖庫與 UI 完整單元測試。
-- [`start_bot.bat`](start_bot.bat)：Windows 一鍵常駐啟動腳本（含自動建立 `.env` 與斷線重連）。
+- [`start_bot.bat`](start_bot.bat)：Windows 一鍵常駐啟動腳本（含自動建立 `.env`、防重複啟動、UTF-8 日誌與斷線重連）。
+- [`start_bot_hidden.vbs`](start_bot_hidden.vbs)：Windows 無黑窗靜默背景啟動器。
+- [`setup_autostart.bat`](setup_autostart.bat)：Windows 一鍵安裝／移除開機自動無黑窗啟動與狀態／紀錄查看工具。
+- [`stop_bot.bat`](stop_bot.bat)：Windows 一鍵安全存檔並停止背景機器人。
 - [`.github/workflows/discord_bot.yml`](.github/workflows/discord_bot.yml)：GitHub Actions 隨選啟動 Discord RPG 機器人工作流程。
