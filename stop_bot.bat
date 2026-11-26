@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title 停止星界紀元 RPG Discord 機器人
+title 停止刀劍神域 SAO 艾恩葛朗特 RPG Discord 機器人
 cd /d "%~dp0"
 
 if not exist "data\bot.pid" (

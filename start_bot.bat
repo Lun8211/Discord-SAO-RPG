@@ -8,7 +8,7 @@ set "HIDDEN_MODE=0"
 if /i "%~1"=="--hidden" set "HIDDEN_MODE=1"
 
 if "%HIDDEN_MODE%"=="0" (
-    title 星界紀元 RPG Discord 機器人 (常駐模式)
+    title 刀劍神域 SAO 艾恩葛朗特 RPG Discord 機器人 (常駐模式)
 )
 
 if not exist "logs" mkdir "logs"
@@ -56,7 +56,7 @@ if exist "data\bot.stop" del /f /q "data\bot.stop" >nul 2>&1
 
 if "%HIDDEN_MODE%"=="0" (
     echo.
-    echo [啟動] 正在啟動星界紀元 RPG Discord 機器人...
+    echo [啟動] 正在啟動刀劍神域 SAO 艾恩葛朗特 RPG Discord 機器人...
     echo [提示] 日誌將自動存至 logs\bot.log；按 Ctrl+C 或執行 stop_bot.bat 可安全存檔並關閉。
     %PYTHON_CMD% bot.py --log-file logs/bot.log
 ) else (

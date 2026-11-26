@@ -1,0 +1,373 @@
+{
+  "story": {
+    "ch1_link_start": {
+      "id": "ch1_link_start",
+      "floor": 1,
+      "title": "第一章・Link Start！死亡遊戲的宣告",
+      "summary": "登出按鈕憑空消失，茅場晶彥的巨大紅袍身影籠罩起始之鎮廣場——唯有通關艾恩葛朗特第 100 層才能回到現實世界。",
+      "choices": [
+        {
+          "id": "lead_newcomers",
+          "label": "協助慌亂的新手玩家穩定心神並分享起始資源",
+          "cursor_delta": 10,
+          "reward_col": 400,
+          "reward_exp": 120,
+          "reward_items": {"hp_potion_t1": 3, "teleport_crystal": 1}
+        },
+        {
+          "id": "rush_tolbana",
+          "label": "搶先奔向托爾巴納草原獨自搶佔首輪練級資源",
+          "cursor_delta": -5,
+          "reward_col": 650,
+          "reward_exp": 160,
+          "reward_items": {"bright_crystal_shard": 3}
+        }
+      ]
+    },
+    "ch2_kobold_raid": {
+      "id": "ch2_kobold_raid",
+      "floor": 1,
+      "title": "第二章・第一層攻略會議與伊爾方",
+      "summary": "托爾巴納圓形劇場聚集了首批攻略者，針對封測情報與伊爾方最後一條血條的未知變數展開激辯。",
+      "choices": [
+        {
+          "id": "share_beta_intel",
+          "label": "主動公開武器與交換（Switch）站位情報，團結攻略隊",
+          "cursor_delta": 12,
+          "reward_col": 600,
+          "reward_exp": 260,
+          "reward_items": {"healing_crystal": 1, "hp_potion_t1": 2}
+        },
+        {
+          "id": "bear_beater_name",
+          "label": "扛下「封弊者」罵名吸收眾人怒火，保護其他封測玩家",
+          "cursor_delta": 5,
+          "reward_col": 800,
+          "reward_exp": 320,
+          "reward_items": {"bright_crystal_shard": 4}
+        }
+      ]
+    },
+    "ch3_moonlit_black_cats": {
+      "id": "ch3_moonlit_black_cats",
+      "floor": 27,
+      "title": "第三章・第 27 層水晶無效化陷阱的警鐘",
+      "summary": "迷宮深處傳出隱藏寶箱其實是水晶無效化陷阱房的悲劇傳聞，你發現一間可疑的密室寶箱。",
+      "choices": [
+        {
+          "id": "warn_and_mark",
+          "label": "運用索敵標記陷阱位置並通報阿爾狗廣傳攻略組",
+          "cursor_delta": 15,
+          "reward_col": 2200,
+          "reward_exp": 1200,
+          "reward_items": {"corridor_crystal": 1, "healing_crystal": 2}
+        },
+        {
+          "id": "disarm_solo",
+          "label": "親自強行突破陷阱伏擊奪取密室戰利品",
+          "cursor_delta": 0,
+          "reward_col": 3200,
+          "reward_exp": 1500,
+          "reward_items": {"bright_crystal": 3}
+        }
+      ]
+    },
+    "ch4_algade_frontline": {
+      "id": "ch4_algade_frontline",
+      "floor": 50,
+      "title": "第四章・鋼鐵商都阿爾格特與獨有技能覺醒",
+      "summary": "突破第 50 層中繼點後，艾恩葛朗特過半！系統悄然開始檢測頂尖劍士的反應速度與防禦極限。",
+      "choices": [
+        {
+          "id": "join_frontline_pact",
+          "label": "與血盟騎士團及攻略組締結合攻誓約",
+          "cursor_delta": 12,
+          "reward_col": 6500,
+          "reward_exp": 4200,
+          "reward_items": {"dark_crystal": 2, "protection_talisman": 1}
+        },
+        {
+          "id": "walk_solo_edge",
+          "label": "繼續在獨行與組隊的邊界磨礪極限反應",
+          "cursor_delta": 0,
+          "reward_col": 8000,
+          "reward_exp": 4800,
+          "reward_items": {"reroll_stone": 2}
+        }
+      ]
+    },
+    "ch5_crystallite_forge": {
+      "id": "ch5_crystallite_forge",
+      "floor": 55,
+      "title": "第五章・西山白龍巢穴與水晶石英",
+      "summary": "與鍛造師深入第 55 層結晶雪嶺尋找能與闡釋者匹敵的稀世金屬——水晶石英。",
+      "choices": [
+        {
+          "id": "protect_blacksmith",
+          "label": "在龍巢裂谷中全力掩護鍛造師安全採掘",
+          "cursor_delta": 15,
+          "reward_col": 9000,
+          "reward_exp": 6200,
+          "reward_items": {"crystallite_ingot": 2, "healing_crystal": 2}
+        },
+        {
+          "id": "challenge_white_dragon",
+          "label": "正面挑戰水晶白龍爭取更多高純度礦脈",
+          "cursor_delta": 5,
+          "reward_col": 11500,
+          "reward_exp": 7400,
+          "reward_items": {"crystallite_ingot": 3}
+        }
+      ]
+    },
+    "ch6_gleam_and_reaper": {
+      "id": "ch6_gleam_and_reaper",
+      "floor": 74,
+      "title": "第六章・無法撤退的煉獄與骸骨死域",
+      "summary": "第 74 層閃耀魔眼與第 75 層骸骨獵殺者全面封印轉移水晶，攻略組迎來最殘酷的考驗。",
+      "choices": [
+        {
+          "id": "rally_raid_alliance",
+          "label": "主持攻略聯盟作戰會議，籌備屠龍大鍋與雙坦陣型",
+          "cursor_delta": 15,
+          "reward_col": 18000,
+          "reward_exp": 14000,
+          "reward_items": {"stew_dragon_ward_pot": 1, "dark_crystal_pure": 2}
+        },
+        {
+          "id": "unleash_unique_blade",
+          "label": "解封隱藏獨有劍技，賭上全部生命爭奪突圍契機",
+          "cursor_delta": 5,
+          "reward_col": 22000,
+          "reward_exp": 16500,
+          "reward_items": {"swap_stone": 2, "protection_talisman": 1}
+        }
+      ]
+    },
+    "ch7_ruby_palace_finale": {
+      "id": "ch7_ruby_palace_finale",
+      "floor": 100,
+      "title": "第七章・紅玉宮殿與超越系統的意志",
+      "summary": "推開第 100 層紅玉宮大門，半徑的化身與最終創造者希茲克利夫靜候於王座前。",
+      "choices": [
+        {
+          "id": "fight_for_everyone",
+          "label": "高舉並肩作戰夥伴的信念，為解放全體玩家揮出最後一劍",
+          "cursor_delta": 25,
+          "reward_col": 50000,
+          "reward_exp": 35000,
+          "reward_items": {"stew_ruby_apex_pot": 1, "refine_stone": 2, "gacha_relic_ticket": 3}
+        },
+        {
+          "id": "surpass_cardinal",
+          "label": "以超越卡迪納爾系統極限的覺悟正面決鬥希茲克利夫",
+          "cursor_delta": 15,
+          "reward_col": 60000,
+          "reward_exp": 40000,
+          "reward_items": {"dark_crystal_pure": 4, "gacha_relic_ticket": 3}
+        }
+      ]
+    }
+  },
+  "bounties": [
+    {"id": "bounty_t1", "tier": 1, "name": "起始平原清剿懸賞", "desc": "於第 1～10 層討伐 10 隻野外怪物或頭目。", "target": 10, "reward_col": 600, "reward_exp": 220, "reward_items": {"bright_crystal_shard": 3}},
+    {"id": "bounty_t2", "tier": 2, "name": "迷霧峽谷淨化懸賞", "desc": "於第 11～20 層討伐 12 隻怪物並擊破毒霧威脅。", "target": 12, "reward_col": 1200, "reward_exp": 520, "reward_items": {"antidote_crystal": 2}},
+    {"id": "bounty_t3", "tier": 3, "name": "珊瑚湖畔巡邏懸賞", "desc": "於第 21～30 層討伐 12 隻凍土怪物。", "target": 12, "reward_col": 2200, "reward_exp": 1050, "reward_items": {"bright_crystal": 2}},
+    {"id": "bounty_t4", "tier": 4, "name": "幽影古城除靈懸賞", "desc": "於第 31～40 層討伐 15 隻不死或暗影怪物。", "target": 15, "reward_col": 3800, "reward_exp": 2100, "reward_items": {"dark_crystal_shard": 3}},
+    {"id": "bounty_t5", "tier": 5, "name": "阿爾格特商道護衛懸賞", "desc": "於第 41～50 層討伐 15 隻機械或重甲怪物。", "target": 15, "reward_col": 6200, "reward_exp": 3800, "reward_items": {"reroll_stone": 1}},
+    {"id": "bounty_t6", "tier": 6, "name": "結晶山脈龍害討伐懸賞", "desc": "於第 51～60 層討伐 16 隻龍裔或熔岩怪物。", "target": 16, "reward_col": 9800, "reward_exp": 6500, "reward_items": {"crystallite_ingot": 1}},
+    {"id": "bounty_t7", "tier": 7, "name": "天空庭園嵐海掃蕩懸賞", "desc": "於第 61～70 層討伐 18 隻天界怪物。", "target": 18, "reward_col": 14500, "reward_exp": 10200, "reward_items": {"dark_crystal": 2}},
+    {"id": "bounty_t8", "tier": 8, "name": "煉獄骨域前線增援懸賞", "desc": "於第 71～80 層討伐 20 隻煉獄怪物。", "target": 20, "reward_col": 22000, "reward_exp": 16500, "reward_items": {"protection_talisman": 1}},
+    {"id": "bounty_t9", "tier": 9, "name": "星辰迴廊裂隙封鎖懸賞", "desc": "於第 81～90 層討伐 20 隻虛空怪物。", "target": 20, "reward_col": 34000, "reward_exp": 26000, "reward_items": {"dark_crystal_pure": 2}},
+    {"id": "bounty_t10", "tier": 10, "name": "紅玉神域終局試煉懸賞", "desc": "於第 91～100 層討伐 22 隻紅玉禁衛或神龍。", "target": 22, "reward_col": 52000, "reward_exp": 42000, "reward_items": {"refine_stone": 1}}
+  ],
+  "daily_quests": [
+    {"id": "dq_explore_5", "name": "樓層前沿探索", "desc": "進行樓層探索或開箱累計 5 次。", "target": 5, "reward_col": 800, "reward_exp": 300, "reward_items": {"hp_potion_t2": 2}},
+    {"id": "dq_boss_1", "name": "攻略組出擊", "desc": "完成 1 次樓層頭目或組隊共鬥。", "target": 1, "reward_col": 1200, "reward_exp": 500, "reward_items": {"healing_crystal": 1}},
+    {"id": "dq_mine_3", "name": "礦脈採集日常", "desc": "於艾恩葛朗特礦脈採集 3 次。", "target": 3, "reward_col": 650, "reward_exp": 260, "reward_items": {"bright_crystal_shard": 3}},
+    {"id": "dq_cook_1", "name": "前線補給料理", "desc": "烹調任意料理或參與一大鍋 1 次。", "target": 1, "reward_col": 600, "reward_exp": 240, "reward_items": {"spice_pack": 3}},
+    {"id": "dq_enhance_1", "name": "莉茲貝特鍛造課", "desc": "進行裝備強化或鍛造 1 次。", "target": 1, "reward_col": 900, "reward_exp": 320, "reward_items": {"bright_crystal": 1}}
+  ],
+  "weekly_quests": [
+    {"id": "wq_boss_10", "name": "週常・攻略組核心成員", "desc": "本週累計擊破 10 次樓層頭目或團隊首領。", "target": 10, "reward_col": 8500, "reward_exp": 4500, "reward_items": {"dark_crystal": 2, "gacha_relic_ticket": 1}},
+    {"id": "wq_coop_5", "name": "週常・並肩作戰的羈絆", "desc": "本週完成 5 次真人多人組隊頭目共鬥。", "target": 5, "reward_col": 9500, "reward_exp": 5200, "reward_items": {"protection_talisman": 1}},
+    {"id": "wq_roguelike_3", "name": "週常・黑鐵宮地下迷宮探險", "desc": "本週完成並撤離 3 次黑鐵宮地下迷宮。", "target": 3, "reward_col": 7500, "reward_exp": 4000, "reward_items": {"reroll_stone": 2}},
+    {"id": "wq_world_boss_5", "name": "週常・加速世界見證者", "desc": "本週對樓層世界王發動 5 次討伐攻擊。", "target": 5, "reward_col": 11000, "reward_exp": 6000, "reward_items": {"swap_stone": 1, "gacha_relic_ticket": 2}}
+  ],
+  "events": [
+    {"id": "evt_argo_tip", "name": "情報商阿爾狗的密報", "desc": "「嘿，想知道下個轉角的頭目弱點嗎？只要一點柯爾，情報馬上送上！」", "type": "intel", "reward_col": 200, "reward_items": {"teleport_crystal": 1}},
+    {"id": "evt_orange_ambush", "name": "微笑棺木橙名伏擊", "desc": "數名橙名紅名襲擊者試圖在野外區搶劫！成功擊退可維持綠名正義聲望。", "type": "ambush", "cursor_delta": 5, "reward_col": 450, "reward_items": {"antidote_crystal": 1}},
+    {"id": "evt_nicholas_sighting", "name": "第 35 層背叛者尼古拉斯蹤跡", "desc": "冷杉林深處閃過紅色身影，擊退他的隨從可拾獲珍貴回復結晶。", "type": "special_encounter", "reward_col": 1200, "reward_items": {"healing_crystal": 2}},
+    {"id": "evt_cardinal_shrine", "name": "卡迪納爾修復神壇", "desc": "發光的白玉祭壇瞬間回復全隊體力與 SP，並淨化所有負面狀態。", "type": "shrine", "reward_col": 0, "reward_items": {}},
+    {"id": "evt_lost_adventurer", "name": "救援迷途冒險者", "desc": "你在迷宮區發現一名被怪物包圍的新手，伸出援手護送其返回圈內。", "type": "rescue", "cursor_delta": 8, "reward_col": 500, "reward_items": {"hp_potion_t2": 2}},
+    {"id": "evt_hidden_vein", "name": "閃耀隱藏礦脈", "desc": "岩壁裂縫中閃爍著未曾被開採的結晶光輝！", "type": "mining_bonus", "reward_col": 350, "reward_items": {"bright_crystal": 1}},
+    {"id": "evt_wandering_chef", "name": "流浪料理人的試吃攤", "desc": "熱心廚師邀請你品嚐秘製熱湯，並贈送香料包。", "type": "cooking_bonus", "reward_col": 150, "reward_items": {"spice_pack": 3}},
+    {"id": "evt_relic_merchant", "name": "迷宮黑市商人", "desc": "神秘商人在迷宮安全角落兜售罕見強化結晶與魔石。", "type": "merchant", "reward_col": 300, "reward_items": {"bright_crystal_shard": 3}},
+    {"id": "evt_ancient_monolith", "name": "古劍士碑文共鳴", "desc": "觸碰石碑上的劍痕，瞬間領悟武器熟練度與劍技奧秘。", "type": "mastery_boost", "reward_col": 250, "reward_items": {}},
+    {"id": "evt_miasma_rift", "name": "秘境瘴氣裂隙", "desc": "危險的紫色裂隙湧出濃烈瘴氣，蘊藏高倍經驗但承受傷害亦會大增！", "type": "secret_realm_hook", "reward_col": 600, "reward_items": {"dark_crystal_shard": 1}}
+  ],
+  "expeditions": [
+    {
+      "id": "exp_tolbana_patrol",
+      "name": "托爾巴納草原巡查",
+      "min_floor": 1,
+      "duration_sec": 1800,
+      "col_range": [350, 650],
+      "exp_range": [150, 280],
+      "ore_pool": ["copper_vein_ore", "iron_vein_ore", "bright_crystal_shard"],
+      "desc": "派遣偵查小隊巡邏第 1～10 層草原與礦道。"
+    },
+    {
+      "id": "exp_coral_harvest",
+      "name": "珊瑚湖畔採集遠征",
+      "min_floor": 20,
+      "duration_sec": 3600,
+      "col_range": [1200, 2200],
+      "exp_range": [580, 1050],
+      "ore_pool": ["silver_vein_ore", "aurora_ice_crystal", "bright_crystal"],
+      "desc": "沿珊瑚村與極光港冰窟採集銀礦與極光寒晶。"
+    },
+    {
+      "id": "exp_algade_convoy",
+      "name": "阿爾格特商隊護送",
+      "min_floor": 45,
+      "duration_sec": 7200,
+      "col_range": [3800, 6800],
+      "exp_range": [2100, 3600],
+      "ore_pool": ["mithril_vein_ore", "soul_blossom_ore", "dark_crystal_shard"],
+      "desc": "護送艾基爾商隊穿越第 41～50 層鋼鐵商道。"
+    },
+    {
+      "id": "exp_crystallite_survey",
+      "name": "西山白龍礦脈勘探",
+      "min_floor": 55,
+      "duration_sec": 14400,
+      "col_range": [9500, 16500],
+      "exp_range": [5800, 9600],
+      "ore_pool": ["crystallite_ingot", "volcanic_adamant_ore", "dark_crystal"],
+      "desc": "深入第 55 層結晶雪嶺勘探稀世水晶石英與炎岩精金。"
+    },
+    {
+      "id": "exp_ruby_vanguard",
+      "name": "神域天階前線偵察",
+      "min_floor": 85,
+      "duration_sec": 21600,
+      "col_range": [26000, 44000],
+      "exp_range": [18000, 29000],
+      "ore_pool": ["astral_origin_crystal", "ruby_core_crystal", "dark_crystal_pure"],
+      "desc": "橫越星辰迴廊至紅玉宮前殿的最高危險度離線遠征。"
+    }
+  ],
+  "achievements": [
+    {"id": "sao_ach_f01", "name": "突破起始之壁", "desc": "首次擊破第 1 層頭目狗頭人領主・伊爾方。", "title_id": "kobold_slayer", "reward_col": 1000, "reward_items": {"healing_crystal": 1}, "bonus": {"atk_pct": 0.02}},
+    {"id": "sao_ach_f10", "name": "千蛇天守制霸", "desc": "突破第 10 層武士領主・加賀智。", "title_id": "samurai_breaker", "reward_col": 2500, "reward_items": {"bright_crystal": 2}, "bonus": {"crit_rate": 0.02}},
+    {"id": "sao_ach_f25", "name": "跨越第 25 層噩夢", "desc": "突破第 25 層雙面獄魔・阿比斯瓦德。", "title_id": "clearer", "reward_col": 6000, "reward_items": {"corridor_crystal": 1}, "bonus": {"hp_pct": 0.04, "def_pct": 0.04}},
+    {"id": "sao_ach_f50", "name": "阿爾格特半程英雄", "desc": "突破第 50 層鋼鐵審判官並解鎖獨有劍技試煉。", "title_id": "algade_vanguard_title", "reward_col": 15000, "reward_items": {"dark_crystal": 2}, "bonus": {"atk_pct": 0.05, "spd_flat": 8}},
+    {"id": "sao_ach_f74", "name": "閃耀魔眼討伐者", "desc": "於水晶無效化區域擊破第 74 層閃耀魔眼。", "title_id": "black_swordsman", "reward_col": 28000, "reward_items": {"protection_talisman": 1}, "bonus": {"crit_dmg": 0.12, "res_dragon": 0.05}},
+    {"id": "sao_ach_f75", "name": "死域生還者", "desc": "擊破第 75 層骸骨獵殺者。", "title_id": "reaper_bane", "reward_col": 35000, "reward_items": {"dark_crystal_pure": 2}, "bonus": {"dmg_reduction": 0.04, "hp_pct": 0.06}},
+    {"id": "sao_ach_f100", "name": "艾恩葛朗特解放者", "desc": "擊破第 100 層半徑的化身與希茲克利夫，通關艾恩葛朗特！", "title_id": "liberator", "reward_col": 100000, "reward_items": {"gacha_relic_ticket": 5}, "bonus": {"atk_pct": 0.1, "def_pct": 0.1, "hp_pct": 0.1, "res_all": 0.05}},
+    {"id": "sao_ach_first_kill", "name": "全服首殺留名", "desc": "參與奪下任意樓層的全服首殺榮譽殿堂。", "title_id": "beater", "reward_col": 12000, "reward_items": {"gacha_relic_ticket": 2}, "bonus": {"exp_bonus": 0.06, "col_bonus": 0.06}},
+    {"id": "sao_ach_la_bonus", "name": "最後一擊（Last Attack）", "desc": "於頭目戰中奪得 Last Attack 尾刀並獲得名品裝備。", "title_id": "la_hunter", "reward_col": 8000, "reward_items": {"reroll_stone": 1}, "bonus": {"crit_rate": 0.03}},
+    {"id": "sao_ach_dual_blades", "name": "蒼藍雙劍覺醒", "desc": "成功解鎖隱藏獨有劍技「二刀流」。", "title_id": "dual_wielder", "reward_col": 20000, "reward_items": {"dark_crystal": 3}, "bonus": {"atk_pct": 0.06, "spd_flat": 10}},
+    {"id": "sao_ach_holy_sword", "name": "血盟神聖之壁", "desc": "成功解鎖隱藏獨有劍技「神聖劍」。", "title_id": "sacred_paladin", "reward_col": 20000, "reward_items": {"dark_crystal": 3}, "bonus": {"def_pct": 0.08, "dmg_reduction": 0.04}},
+    {"id": "sao_ach_coop_10", "name": "攻略隊指揮官", "desc": "與其他真人玩家組隊完成 10 次頭目共鬥。", "title_id": "raid_commander", "reward_col": 10000, "reward_items": {"stew_frontline_pot": 1}, "bonus": {"break_bonus": 0.08}},
+    {"id": "sao_ach_forge_master", "name": "林達斯鍛造巨匠", "desc": "鍛造技能達 Lv.40 或成功將裝備強化至 +15。", "title_id": "master_smith", "reward_col": 18000, "reward_items": {"protection_talisman": 2}, "bonus": {"atk_pct": 0.05, "def_pct": 0.05}},
+    {"id": "sao_ach_cook_master", "name": "艾恩葛朗特御廚", "desc": "料理技能達 Lv.40 或烹調出 S 級雜燴兔肉濃湯。", "title_id": "master_chef", "reward_col": 15000, "reward_items": {"spice_pack": 10}, "bonus": {"potion_bonus": 0.1, "hp_pct": 0.05}},
+    {"id": "sao_ach_guild_leader", "name": "公會榮耀", "desc": "加入或建立公會並完成公會貢獻。", "title_id": "guild_vanguard", "reward_col": 6000, "reward_items": {"healing_crystal": 2}, "bonus": {"col_bonus": 0.05}},
+    {"id": "sao_ach_hardcore_f50", "name": "一命鐵人", "desc": "於死亡遊戲一命模式（Hardcore）存活突破第 50 層。", "title_id": "survivor_hardcore", "reward_col": 45000, "reward_items": {"refine_stone": 2}, "bonus": {"res_all": 0.06, "evasion": 0.04}},
+    {"id": "sao_ach_roguelike_boss", "name": "黑鐵宮深淵制霸", "desc": "於黑鐵宮地下迷宮擊敗迷宮守衛並成功撤離。", "title_id": "labyrinth_crawler", "reward_col": 12000, "reward_items": {"swap_stone": 1}, "bonus": {"drop_bonus": 0.06}},
+    {"id": "sao_ach_duel_10", "name": "決鬥場閃光", "desc": "於公平決鬥中取得 10 場勝利。", "title_id": "the_flash", "reward_col": 14000, "reward_items": {"sp_potion_t2": 3}, "bonus": {"spd_flat": 12, "crit_rate": 0.03}}
+  ],
+  "turnins": {
+    "rarity_points": {
+      "plain": 1,
+      "fine": 3,
+      "rare": 8,
+      "set": 20,
+      "legendary": 35,
+      "named": 60
+    },
+    "milestones": [
+      {"points": 10, "name": "圖鑑初錄", "bonus": {"hp_flat": 80, "atk_flat": 12}},
+      {"points": 30, "name": "百兵收藏家", "bonus": {"hp_flat": 180, "def_flat": 25, "res_slash": 0.03}},
+      {"points": 75, "name": "攻略物資庫", "bonus": {"atk_pct": 0.04, "def_pct": 0.04, "res_pierce": 0.03}},
+      {"points": 150, "name": "阿爾格特鑑賞家", "bonus": {"hp_pct": 0.06, "crit_rate": 0.02, "res_blunt": 0.03}},
+      {"points": 300, "name": "名匠裝備殿堂", "bonus": {"atk_pct": 0.06, "crit_dmg": 0.12, "res_dragon": 0.04}},
+      {"points": 500, "name": "浮游城武器博覽", "bonus": {"atk_pct": 0.08, "def_pct": 0.08, "spd_flat": 10}},
+      {"points": 800, "name": "卡迪納爾全典錄", "bonus": {"hp_pct": 0.1, "skill_dmg": 0.08, "res_all": 0.04}},
+      {"points": 1200, "name": "艾恩葛朗特傳奇收藏王", "bonus": {"atk_pct": 0.12, "def_pct": 0.12, "hp_pct": 0.12, "res_all": 0.06}}
+    ]
+  },
+  "titles": {
+    "beater": {"id": "beater", "name": "封弊者（Beater）", "emoji": "🖤", "desc": "兼具封測知識與作弊般實力的先驅者。"},
+    "clearer": {"id": "clearer", "name": "前線攻略組", "emoji": "⚔️", "desc": "屹立艾恩葛朗特最前線的開拓英雄。"},
+    "black_swordsman": {"id": "black_swordsman", "name": "黑色劍士", "emoji": "🌑", "desc": "於第 74 層擊破閃耀魔眼的傳說劍士。"},
+    "the_flash": {"id": "the_flash", "name": "閃光", "emoji": "⚡", "desc": "劍尖化作無數流星光痕的極速決鬥者。"},
+    "liberator": {"id": "liberator", "name": "艾恩葛朗特解放者", "emoji": "👑", "desc": "突破第 100 層紅玉宮殿、終結死亡遊戲的英雄。"},
+    "kobold_slayer": {"id": "kobold_slayer", "name": "第一層破門者", "emoji": "🗡️", "desc": "擊破狗頭人領主伊爾方開啟浮游城征途。"},
+    "samurai_breaker": {"id": "samurai_breaker", "name": "千蛇破陣者", "emoji": "🌸", "desc": "擊潰武士領主加賀智千蛇劍陣的武人。"},
+    "algade_vanguard_title": {"id": "algade_vanguard_title", "name": "阿爾格特審判突破者", "emoji": "🛡️", "desc": "征服第 50 層鋼鐵審判官的前線精英。"},
+    "reaper_bane": {"id": "reaper_bane", "name": "骸骨獵殺終結者", "emoji": "☠️", "desc": "於第 75 層死域生還並斬斷百足骨鐮。"},
+    "la_hunter": {"id": "la_hunter", "name": "尾刀獵人", "emoji": "🎯", "desc": "精準奪得 Last Attack 名品大獎的強者。"},
+    "dual_wielder": {"id": "dual_wielder", "name": "二刀流覺醒者", "emoji": "✨", "desc": "系統認證反應速度最快的雙劍奇才。"},
+    "sacred_paladin": {"id": "sacred_paladin", "name": "神聖劍騎士", "emoji": "✝️", "desc": "手持不動十字盾守護夥伴的聖騎士。"},
+    "master_smith": {"id": "master_smith", "name": "林達斯鍛造宗師", "emoji": "🔨", "desc": "能以水晶石英鍛出傳說神兵的工匠。"},
+    "master_chef": {"id": "master_chef", "name": "S 級料理大師", "emoji": "🍲", "desc": "精通雜燴兔與神域大鍋的頂尖御廚。"},
+    "survivor_hardcore": {"id": "survivor_hardcore", "name": "死亡遊戲生還者", "emoji": "💎", "desc": "在一命絕境中依然屹立不倒的鋼鐵意志。"},
+    "raid_commander": {"id": "raid_commander", "name": "攻略聯盟總指揮", "emoji": "🚩", "desc": "率領多人真人攻略隊百戰百勝的領袖。"},
+    "guild_vanguard": {"id": "guild_vanguard", "name": "公會先鋒", "emoji": "🏰", "desc": "為公會榮耀與倉庫無私奉獻的成員。"},
+    "labyrinth_crawler": {"id": "labyrinth_crawler", "name": "黑鐵宮地下行者", "emoji": "🗝️", "desc": "成功自黑鐵宮地下迷宮帶回秘寶的探險家。"},
+    "yui_guardian": {"id": "yui_guardian", "name": "MHCP-001 守護者", "emoji": "💫", "desc": "解讀所有結衣終端機機密日誌的知情者。"}
+  },
+  "yui_logs": {
+    "yui_log_f01": {
+      "id": "yui_log_f01",
+      "unlock_floor": 1,
+      "code": "MHCP-001 // LOG-01",
+      "title": "起始之鎮與生命之碑啟動紀錄",
+      "content": "2022 年 11 月 6 日 17:30，卡迪納爾系統正式鎖定登出模組。我被下達「不得干涉玩家心理」的最高指令，只能靜靜注視一萬名玩家在黑鐵宮生命之碑前顫抖與立誓。"
+    },
+    "yui_log_f10": {
+      "id": "yui_log_f10",
+      "unlock_floor": 10,
+      "code": "MHCP-001 // LOG-02",
+      "title": "千蛇城與攻略組的誕生",
+      "content": "當第十層武士領主倒下時，系統情緒監測儀首次偵測到「希望」超越了「恐懼」。玩家們開始主動交換（Switch）站位，彼此託付背後——這是演算法無法預測的溫暖。"
+    },
+    "yui_log_f25": {
+      "id": "yui_log_f25",
+      "unlock_floor": 25,
+      "code": "MHCP-001 // LOG-03",
+      "title": "第 25 層悲劇與團隊協作轉折",
+      "content": "雙面獄魔讓過於自負的攻略團付出慘重代價。自此之後，攻略組學會了事前情報交換、雙坦承傷與隊伍藥水共享。生命之碑上劃去的每一個名字，都沉重地刻進了我的記憶核心。"
+    },
+    "yui_log_f27_black_cats": {
+      "id": "yui_log_f27_black_cats",
+      "unlock_floor": 27,
+      "code": "MHCP-001 // LOG-04",
+      "title": "第 27 層水晶無效化陷阱與月夜黑貓團",
+      "content": "系統生成了封鎖轉移水晶與回復水晶的殘酷陷阱房。我看見一名獨行黑衣劍士因失去夥伴而陷入深層自責，也看見他把「活下去」的信念傳遞給所有後來踏入迷宮區的人。"
+    },
+    "yui_log_f50": {
+      "id": "yui_log_f50",
+      "unlock_floor": 50,
+      "code": "MHCP-001 // LOG-05",
+      "title": "阿爾格特中繼突破與獨有技能投放",
+      "content": "卡迪納爾系統確認攻略進度過半，依茅場博士預設的劇本釋放「二刀流」與「神聖劍」兩項獨有技能——分別賦予反應速度最快的勇者，以及潛伏於玩家之中的創造者本人。"
+    },
+    "yui_log_f75": {
+      "id": "yui_log_f75",
+      "unlock_floor": 75,
+      "code": "MHCP-001 // LOG-06",
+      "title": "骸骨獵殺者與系統管理權限異動",
+      "content": "第 75 層轉移水晶徹底失效。當骸骨獵殺者倒下、兩道劍光在聖殿交鋒時，卡迪納爾偵測到超越系統計算框架的「人類意志」——玩家的 HP 歸零後竟然仍能多揮出一劍！"
+    },
+    "yui_log_f100": {
+      "id": "yui_log_f100",
+      "unlock_floor": 100,
+      "code": "MHCP-001 // LOG-07 [FINAL]",
+      "title": "紅玉宮解放與世界種子的託付",
+      "content": "艾恩葛朗特第 100 層已被完全攻略！浮游城崩解於夕陽雲海之中，所有生還者正回歸現實世界。謝謝你一路走到這裡——這份連結無數虛擬世界的「世界種子」，將永遠見證你們的傳說。"
+    }
+  }
+}

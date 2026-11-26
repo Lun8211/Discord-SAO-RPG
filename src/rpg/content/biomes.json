@@ -1,0 +1,407 @@
+{
+  "scaling_rules": {
+    "monster_hp": {
+      "base": 75.0,
+      "growth": 1.06,
+      "linear": 18.0,
+      "use_tier_mult": true
+    },
+    "monster_atk": {
+      "base": 14.0,
+      "growth": 1.048,
+      "linear": 3.5,
+      "use_tier_mult": true
+    },
+    "monster_def": {
+      "base": 6.0,
+      "growth": 1.045,
+      "linear": 2.0,
+      "use_tier_mult": true
+    },
+    "exp_base": {
+      "base": 28.0,
+      "growth": 1.062,
+      "linear": 12.0,
+      "use_tier_mult": false
+    },
+    "col_base": {
+      "base": 22.0,
+      "growth": 1.058,
+      "linear": 10.0,
+      "use_tier_mult": false
+    },
+    "res_penetration": {
+      "per_floor": 0.0065,
+      "max": 0.65
+    },
+    "boss_template_mult": {
+      "hp": 16.0,
+      "atk": 2.4,
+      "def": 2.0,
+      "exp": 12.0,
+      "col": 10.0
+    },
+    "elite_mult": {
+      "hp": 1.85,
+      "atk": 1.35,
+      "def": 1.25,
+      "exp": 2.2,
+      "col": 2.0
+    },
+    "field_boss_mult": {
+      "hp": 4.2,
+      "atk": 1.65,
+      "def": 1.45,
+      "exp": 4.5,
+      "col": 4.0
+    },
+    "secret_realm_miasma": {
+      "dmg_taken_per_stack": 0.12,
+      "res_penalty_per_stack": 0.03,
+      "exp_bonus_per_stack": 0.15,
+      "max_stacks": 10
+    }
+  },
+  "tiers": [
+    {
+      "tier": 1,
+      "floor_min": 1,
+      "floor_max": 10,
+      "name": "起始平原與東方古都",
+      "en_name": "Starter Plains & Eastern Citadel",
+      "tier_mult": 1.0,
+      "tier_res_penetration": 0.0,
+      "default_town_pattern": "第 {floor} 層・初綻商鎮",
+      "field_name_pattern": "第 {floor} 層・翠綠平原野外區",
+      "labyrinth_name_pattern": "第 {floor} 層・古石迷宮塔",
+      "secret_realm_name": "古都遺忘秘境",
+      "explore_required": 100,
+      "dominant_dmg_types": ["slash", "blunt"],
+      "mob_pool_ids": [
+        "frenzy_boar",
+        "dire_wolf",
+        "ruin_kobold",
+        "taurus_warrior",
+        "snake_samurai"
+      ],
+      "elite_mob_ids": ["ruin_kobold_trooper"],
+      "field_boss_id": "bullbous_bow",
+      "chest_table_id": "tier_1_chests",
+      "default_boss_template": "tier_1_guardian",
+      "world_boss_id": "wb_iron_behemoth",
+      "ore_ids": [
+        "copper_vein_ore",
+        "iron_vein_ore",
+        "bright_crystal_shard"
+      ],
+      "meat_ids": ["boar_meat", "wolf_haunch"],
+      "banner_asset_key": "biome_t1_plains"
+    },
+    {
+      "tier": 2,
+      "floor_min": 11,
+      "floor_max": 20,
+      "name": "迷霧峽谷與翠綠密林",
+      "en_name": "Misty Canyon & Verdant Wilds",
+      "tier_mult": 1.05,
+      "tier_res_penetration": 0.05,
+      "default_town_pattern": "第 {floor} 層・林間驛站",
+      "field_name_pattern": "第 {floor} 層・迷霧峽谷野外區",
+      "labyrinth_name_pattern": "第 {floor} 層・藤蔓古樹迷宮",
+      "secret_realm_name": "深霧孢子秘境",
+      "explore_required": 100,
+      "dominant_dmg_types": ["pierce", "blunt"],
+      "mob_pool_ids": [
+        "venom_hornet",
+        "mist_treant",
+        "canyon_gargoyle",
+        "bog_basilisk",
+        "shadow_panther"
+      ],
+      "elite_mob_ids": ["elder_treant"],
+      "field_boss_id": "venom_matriarch",
+      "chest_table_id": "tier_2_chests",
+      "default_boss_template": "tier_2_guardian",
+      "world_boss_id": "wb_miasma_hydra",
+      "ore_ids": [
+        "emerald_ore",
+        "iron_vein_ore",
+        "bright_crystal_shard"
+      ],
+      "meat_ids": ["basilisk_tail", "panther_steak"],
+      "banner_asset_key": "biome_t2_mist_woods"
+    },
+    {
+      "tier": 3,
+      "floor_min": 21,
+      "floor_max": 30,
+      "name": "珊瑚湖畔與白金凍土",
+      "en_name": "Coral Lakeside & Platinum Tundra",
+      "tier_mult": 1.1,
+      "tier_res_penetration": 0.1,
+      "default_town_pattern": "第 {floor} 層・湖畔霜鎮",
+      "field_name_pattern": "第 {floor} 層・白金凍原野外區",
+      "labyrinth_name_pattern": "第 {floor} 層・極光冰窟迷宮",
+      "secret_realm_name": "冰封極光秘境",
+      "explore_required": 100,
+      "dominant_dmg_types": ["pierce", "slash"],
+      "mob_pool_ids": [
+        "lake_serpent",
+        "frost_wolf",
+        "tundra_yeti",
+        "glacial_knight",
+        "crystal_elemental"
+      ],
+      "elite_mob_ids": ["blizzard_valkyrie"],
+      "field_boss_id": "king_of_lakes",
+      "chest_table_id": "tier_3_chests",
+      "default_boss_template": "tier_3_guardian",
+      "world_boss_id": "wb_aurora_leviathan",
+      "ore_ids": [
+        "aurora_ice_crystal",
+        "silver_vein_ore",
+        "bright_crystal"
+      ],
+      "meat_ids": ["coral_lake_fish", "frost_wolf_loin"],
+      "banner_asset_key": "biome_t3_glacial_lake"
+    },
+    {
+      "tier": 4,
+      "floor_min": 31,
+      "floor_max": 40,
+      "name": "迷途魔森與幽影古城",
+      "en_name": "Lost Demon Woods & Shadow Keep",
+      "tier_mult": 1.16,
+      "tier_res_penetration": 0.15,
+      "default_town_pattern": "第 {floor} 層・幽影哨站",
+      "field_name_pattern": "第 {floor} 層・迷途魔森野外區",
+      "labyrinth_name_pattern": "第 {floor} 層・死靈古城迷宮",
+      "secret_realm_name": "幽影回廊秘境",
+      "explore_required": 100,
+      "dominant_dmg_types": ["slash", "pierce"],
+      "mob_pool_ids": [
+        "shadow_hound",
+        "cursed_armor",
+        "bone_lancer",
+        "phantom_assassin",
+        "crypt_ogre"
+      ],
+      "elite_mob_ids": ["dread_executioner"],
+      "field_boss_id": "nicholas_the_renegade",
+      "chest_table_id": "tier_4_chests",
+      "default_boss_template": "tier_4_guardian",
+      "world_boss_id": "wb_phantom_sovereign",
+      "ore_ids": [
+        "shadow_steel_ore",
+        "dark_crystal_shard",
+        "bright_crystal"
+      ],
+      "meat_ids": ["ogre_rib", "shadow_venison"],
+      "banner_asset_key": "biome_t4_shadow_keep"
+    },
+    {
+      "tier": 5,
+      "floor_min": 41,
+      "floor_max": 50,
+      "name": "繁花丘陵與鋼鐵商都",
+      "en_name": "Blossom Hills & Iron Metropolis",
+      "tier_mult": 1.22,
+      "tier_res_penetration": 0.2,
+      "default_town_pattern": "第 {floor} 層・鋼鐵商鎮",
+      "field_name_pattern": "第 {floor} 層・繁花鐵道野外區",
+      "labyrinth_name_pattern": "第 {floor} 層・齒輪審判迷宮",
+      "secret_realm_name": "機械花園秘境",
+      "explore_required": 100,
+      "dominant_dmg_types": ["blunt", "slash"],
+      "mob_pool_ids": [
+        "petal_dryad",
+        "hornet_lancer",
+        "clockwork_golem",
+        "gilded_sentinel",
+        "obsidian_knight"
+      ],
+      "elite_mob_ids": ["algade_vanguard"],
+      "field_boss_id": "iron_colossus_prime",
+      "chest_table_id": "tier_5_chests",
+      "default_boss_template": "tier_5_guardian",
+      "world_boss_id": "wb_clockwork_titan",
+      "ore_ids": [
+        "mithril_vein_ore",
+        "soul_blossom_ore",
+        "bright_crystal"
+      ],
+      "meat_ids": ["blossom_boar_cut", "gilded_poultry"],
+      "banner_asset_key": "biome_t5_iron_metropolis"
+    },
+    {
+      "tier": 6,
+      "floor_min": 51,
+      "floor_max": 60,
+      "name": "結晶山脈與灼熱熔岩",
+      "en_name": "Crystallite Peaks & Molten Caldera",
+      "tier_mult": 1.3,
+      "tier_res_penetration": 0.28,
+      "default_town_pattern": "第 {floor} 層・熔岩堡壘",
+      "field_name_pattern": "第 {floor} 層・結晶雪嶺野外區",
+      "labyrinth_name_pattern": "第 {floor} 層・黑曜龍巢迷宮",
+      "secret_realm_name": "龍脈熔核秘境",
+      "explore_required": 100,
+      "dominant_dmg_types": ["dragon", "blunt"],
+      "mob_pool_ids": [
+        "crystallite_drake",
+        "magma_golem",
+        "flame_salamander",
+        "crimson_knight",
+        "ash_wyvern"
+      ],
+      "elite_mob_ids": ["molten_juggernaut"],
+      "field_boss_id": "x_rhan_white_dragon",
+      "chest_table_id": "tier_6_chests",
+      "default_boss_template": "tier_6_guardian",
+      "world_boss_id": "wb_caldera_wyrm",
+      "ore_ids": [
+        "crystallite_ingot",
+        "volcanic_adamant_ore",
+        "dark_crystal"
+      ],
+      "meat_ids": ["salamander_fillet", "drake_wing_meat"],
+      "banner_asset_key": "biome_t6_crystallite_peaks"
+    },
+    {
+      "tier": 7,
+      "floor_min": 61,
+      "floor_max": 70,
+      "name": "天空庭園與深海神殿",
+      "en_name": "Sky Gardens & Abyssal Sanctum",
+      "tier_mult": 1.38,
+      "tier_res_penetration": 0.36,
+      "default_town_pattern": "第 {floor} 層・雲端水都",
+      "field_name_pattern": "第 {floor} 層・浮空翠原野外區",
+      "labyrinth_name_pattern": "第 {floor} 層・雷霆神殿迷宮",
+      "secret_realm_name": "蒼穹嵐海秘境",
+      "explore_required": 100,
+      "dominant_dmg_types": ["pierce", "dragon"],
+      "mob_pool_ids": [
+        "sky_wyvern",
+        "celestial_gargoyle",
+        "abyssal_kraken",
+        "thunder_valkyrie",
+        "storm_griffin"
+      ],
+      "elite_mob_ids": ["tempest_archon"],
+      "field_boss_id": "sky_sovereign_griffin",
+      "chest_table_id": "tier_7_chests",
+      "default_boss_template": "tier_7_guardian",
+      "world_boss_id": "wb_tempest_seraph",
+      "ore_ids": [
+        "celestial_mithril_ore",
+        "tide_pearl_ore",
+        "dark_crystal"
+      ],
+      "meat_ids": ["s_rank_ragout_rabbit", "s_rank_kraken_tentacle"],
+      "banner_asset_key": "biome_t7_sky_sanctum"
+    },
+    {
+      "tier": 8,
+      "floor_min": 71,
+      "floor_max": 80,
+      "name": "煉獄迷宮與蒼白骨域",
+      "en_name": "Infernal Labyrinth & Pale Wasteland",
+      "tier_mult": 1.48,
+      "tier_res_penetration": 0.45,
+      "default_town_pattern": "第 {floor} 層・前線軍營",
+      "field_name_pattern": "第 {floor} 層・赤岩骨原野外區",
+      "labyrinth_name_pattern": "第 {floor} 層・煉獄骸骨迷宮",
+      "secret_realm_name": "蒼白死域秘境",
+      "explore_required": 100,
+      "dominant_dmg_types": ["slash", "dragon"],
+      "mob_pool_ids": [
+        "demon_vanguard",
+        "bone_wyvern",
+        "abyss_reaper",
+        "hellhound_alpha",
+        "pale_centurion"
+      ],
+      "elite_mob_ids": ["crimson_inquisitor"],
+      "field_boss_id": "infernal_minotaur",
+      "chest_table_id": "tier_8_chests",
+      "default_boss_template": "tier_8_guardian",
+      "world_boss_id": "wb_pale_behemoth",
+      "ore_ids": [
+        "abyssal_crystal_ore",
+        "obsidian_dragonsteel",
+        "dark_crystal"
+      ],
+      "meat_ids": ["s_rank_wyvern_sirloin", "s_rank_abyss_crab"],
+      "banner_asset_key": "biome_t8_bone_wasteland"
+    },
+    {
+      "tier": 9,
+      "floor_min": 81,
+      "floor_max": 90,
+      "name": "星辰迴廊與虛空聖域",
+      "en_name": "Astral Corridor & Void Sanctum",
+      "tier_mult": 1.6,
+      "tier_res_penetration": 0.55,
+      "default_town_pattern": "第 {floor} 層・星輝聖鎮",
+      "field_name_pattern": "第 {floor} 層・星辰裂谷野外區",
+      "labyrinth_name_pattern": "第 {floor} 層・虛空相位迷宮",
+      "secret_realm_name": "時空裂隙秘境",
+      "explore_required": 100,
+      "dominant_dmg_types": ["pierce", "dragon"],
+      "mob_pool_ids": [
+        "void_knight",
+        "astral_colossus",
+        "fallen_seraph",
+        "chrono_warden",
+        "rift_stalker"
+      ],
+      "elite_mob_ids": ["astral_arbiter"],
+      "field_boss_id": "void_harbinger",
+      "chest_table_id": "tier_9_chests",
+      "default_boss_template": "tier_9_guardian",
+      "world_boss_id": "wb_void_empress_sao",
+      "ore_ids": [
+        "astral_origin_crystal",
+        "void_prism_ore",
+        "dark_crystal_pure"
+      ],
+      "meat_ids": ["s_rank_astral_phoenix_breast", "s_rank_void_lobster"],
+      "banner_asset_key": "biome_t9_astral_void"
+    },
+    {
+      "tier": 10,
+      "floor_min": 91,
+      "floor_max": 100,
+      "name": "神域天階與紅玉宮殿",
+      "en_name": "Divine Ascent & Ruby Palace",
+      "tier_mult": 1.75,
+      "tier_res_penetration": 0.65,
+      "default_town_pattern": "第 {floor} 層・紅玉聖堡",
+      "field_name_pattern": "第 {floor} 層・神域天階野外區",
+      "labyrinth_name_pattern": "第 {floor} 層・紅玉迴廊迷宮",
+      "secret_realm_name": "茅場核心秘境",
+      "explore_required": 100,
+      "dominant_dmg_types": ["slash", "dragon"],
+      "mob_pool_ids": [
+        "ruby_praetorian",
+        "cardinal_sentinel",
+        "primordial_dragon",
+        "final_arbiter",
+        "aegis_templar"
+      ],
+      "elite_mob_ids": ["ruby_palace_commander"],
+      "field_boss_id": "cardinal_grand_executor",
+      "chest_table_id": "tier_10_chests",
+      "default_boss_template": "tier_10_guardian",
+      "world_boss_id": "wb_cardinal_omega",
+      "ore_ids": [
+        "ruby_core_crystal",
+        "world_seed_shard",
+        "dark_crystal_pure"
+      ],
+      "meat_ids": ["s_rank_dragon_king_prime", "s_rank_celestial_truffle"],
+      "banner_asset_key": "biome_t10_ruby_palace"
+    }
+  ]
+}

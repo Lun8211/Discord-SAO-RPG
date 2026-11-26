@@ -1,11 +1,17 @@
+"""Sword Art Online: Aincrad 100-Floor Multiplayer Discord RPG Bot entrypoint."""
+
+from __future__ import annotations
+
 import argparse
 import asyncio
+import contextlib
 import logging
-from logging.handlers import RotatingFileHandler
 import os
-from pathlib import Path
 import sys
-from typing import IO, Optional, Sequence
+from collections.abc import Sequence
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
+from typing import IO
 
 import discord
 from discord import app_commands
@@ -14,23 +20,22 @@ from discord.ext import tasks
 from src.config import Settings
 from src.memes import AnimeMemeService, register_meme_commands
 from src.rpg.commands import register_rpg_commands
+from src.rpg.content.loader import load_and_validate_all
 from src.rpg.database import RPGDatabase
 from src.rpg.engine import RPGEngine
 
 # 避免繁體中文 Windows (cp950) 輸出 Emoji 時發生編碼錯誤
 for _stream in (sys.stdout, sys.stderr):
     if hasattr(_stream, "reconfigure"):
-        try:
+        with contextlib.suppress(AttributeError, OSError, ValueError):
             _stream.reconfigure(encoding="utf-8", errors="replace")
-        except Exception:
-            pass
 
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(message)s"
 logging.basicConfig(
     level=logging.INFO,
     format=LOG_FORMAT,
 )
-logger = logging.getLogger("rpg-dc-bot")
+logger = logging.getLogger("sao-aincrad-bot")
 
 settings = Settings.from_env()
 
@@ -67,11 +72,11 @@ class SingleInstanceLock:
         self.control_dir = Path(control_dir)
         self.lock_path = self.control_dir / "bot.lock"
         self.pid_path = self.control_dir / "bot.pid"
-        self._handle: Optional[IO[bytes]] = None
+        self._handle: IO[bytes] | None = None
 
     def acquire(self) -> bool:
         self.control_dir.mkdir(parents=True, exist_ok=True)
-        handle = open(self.lock_path, "a+b")
+        handle = open(self.lock_path, "a+b")  # noqa: SIM115
         try:
             handle.seek(0)
             if len(handle.read(1)) == 0:
@@ -81,7 +86,7 @@ class SingleInstanceLock:
             if os.name == "nt":
                 import msvcrt
 
-                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)  # type: ignore[attr-defined]
             else:
                 import fcntl
 
@@ -110,7 +115,7 @@ class SingleInstanceLock:
             if os.name == "nt":
                 import msvcrt
 
-                msvcrt.locking(self._handle.fileno(), msvcrt.LK_UNLCK, 1)
+                msvcrt.locking(self._handle.fileno(), msvcrt.LK_UNLCK, 1)  # type: ignore[attr-defined]
             else:
                 import fcntl
 
@@ -126,31 +131,40 @@ class SingleInstanceLock:
 
 
 class RPGBot(discord.Client):
-    def __init__(self, run_minutes: int = 0) -> None:
+    """SAO Aincrad 100-Floor Multiplayer RPG Discord Client (with preserved /p meme command)."""
+
+    def __init__(
+        self,
+        bot_settings: Settings | None = None,
+        *,
+        run_minutes: int = 0,
+    ) -> None:
         intents = discord.Intents.default()
         super().__init__(intents=intents)
+        self.settings = bot_settings if bot_settings is not None else Settings.from_env()
         self.tree = app_commands.CommandTree(self)
         self.run_minutes = run_minutes
-        self.stop_signal_path: Optional[Path] = None
+        self.stop_signal_path: Path | None = None
         self._synced_guilds = False
         self._rpg_restore_started = False
         self._rpg_restored = False
         self._closing_started = False
-        self.rpg_db = RPGDatabase(db_path=settings.rpg_db_path)
+
+        content_bundle = load_and_validate_all()
+        self.rpg_db = RPGDatabase(db_path=self.settings.rpg_db_path)
         self.rpg_engine = RPGEngine(
             db=self.rpg_db,
-            timezone_offset_hours=settings.timezone_offset_hours,
+            content=content_bundle,
+            timezone_offset_hours=self.settings.timezone_offset_hours,
         )
         self.meme_service = AnimeMemeService()
         register_rpg_commands(self.tree, self.rpg_engine)
         register_meme_commands(self.tree, self.meme_service)
 
     async def setup_hook(self) -> None:
-        # 採用全域斜線指令註冊，避免在各伺服器出現重複指令
         await self.tree.sync()
-        # 背景預先載入免費開源線上二次元梗圖圖庫索引，不阻塞機器人開機
         asyncio.create_task(self.meme_service.ensure_loaded())
-        self.rpg_backup_task.change_interval(minutes=settings.rpg_backup_interval_minutes)
+        self.rpg_backup_task.change_interval(minutes=self.settings.rpg_backup_interval_minutes)
         self.rpg_backup_task.start()
         if self.stop_signal_path is not None:
             asyncio.create_task(self._watch_stop_signal())
@@ -160,7 +174,7 @@ class RPGBot(discord.Client):
     async def _watch_stop_signal(self) -> None:
         while not self.is_closed():
             if self.stop_signal_path is not None and self.stop_signal_path.exists():
-                logger.info("🛑 收到安全停止訊號，正在完成存檔並關閉機器人...")
+                logger.info("🛑 收到安全停止訊號，正在完成艾恩葛朗特存檔並關閉機器人...")
                 await self.close()
                 return
             await asyncio.sleep(2.0)
@@ -173,53 +187,50 @@ class RPGBot(discord.Client):
         await self.close()
 
     async def close(self) -> None:
-        # 關機前務必完成 RPG SQLite checkpoint、本地備份與（若已設定）雲端備份上傳
         if not self._closing_started:
             self._closing_started = True
             try:
-                if settings.rpg_backup_channel_id and self.is_ready() and self._rpg_restored:
+                if self.settings.rpg_backup_channel_id and self.is_ready() and self._rpg_restored:
                     uploaded = await self.rpg_db.backup_to_discord_channel(
-                        self, settings.rpg_backup_channel_id, force=False
+                        self, self.settings.rpg_backup_channel_id, force=False
                     )
                     if uploaded:
-                        logger.info("💾 關機前已完成 RPG 雲端快照備份。")
-            except Exception as exc:
-                logger.warning("關機前上傳 RPG 雲端備份失敗: %s", exc)
+                        logger.info("💾 關機前已完成 SAO 雲端快照備份。")
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("關機前上傳 SAO 雲端備份失敗: %s", exc)
             try:
                 self.rpg_db.close()
-                logger.info("💾 RPG 資料庫已完成 checkpoint 與本地備份。")
-            except Exception as exc:
-                logger.warning("關閉 RPG 資料庫時發生警告: %s", exc)
+                logger.info("💾 SAO 資料庫已完成 checkpoint 與本地備份。")
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("關閉 SAO 資料庫時發生警告: %s", exc)
         await super().close()
 
     async def on_ready(self) -> None:
-        # 若設定了 RPG_BACKUP_CHANNEL_ID，開機時自動檢查並還原較新的雲端存檔快照
         if not self._rpg_restore_started:
             self._rpg_restore_started = True
             try:
-                if settings.rpg_backup_channel_id:
+                if self.settings.rpg_backup_channel_id:
                     await self.rpg_db.restore_from_discord_channel(
-                        self, settings.rpg_backup_channel_id
+                        self, self.settings.rpg_backup_channel_id
                     )
             finally:
                 self._rpg_restored = True
 
         # 不在 log 中記錄機器人 / 伺服器名稱與 ID（公開 repo 的 Actions log 任何人都看得到）
         logger.info(
-            "🤖 星界紀元 RPG 機器人已上線，共載入 %d 位冒險者檔案，已加入 %d 個伺服器",
+            "⚔️ 刀劍神域 SAO 艾恩葛朗特機器人已上線，共載入 %d 位攻略者檔案，已加入 %d 個伺服器",
             self.rpg_db.get_player_count(),
             len(self.guilds),
         )
         if not self._synced_guilds:
             self._synced_guilds = True
-            # 清除舊版本殘留在各伺服器的「伺服器專屬指令」，避免與全域指令重複或殘留舊指令
             cleared = 0
             for guild in self.guilds:
                 try:
                     self.tree.clear_commands(guild=guild)
                     await self.tree.sync(guild=guild)
                     cleared += 1
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001
                     logger.warning("清除伺服器專屬斜線指令失敗: %s", exc)
             logger.info(
                 "✅ 全部 %d 個斜線指令已使用全域註冊（已清理 %d 個伺服器的舊指令快取）",
@@ -229,30 +240,47 @@ class RPGBot(discord.Client):
 
     @tasks.loop(minutes=15)
     async def rpg_backup_task(self) -> None:
-        # 定時建立 SQLite 本地備份與（若設定）Discord 私有備份頻道快照，攔截所有例外以免排程中斷
         try:
             if not self._rpg_restored:
                 return
             self.rpg_db.checkpoint()
             if self.rpg_db.get_player_count() > 0:
                 self.rpg_db.create_local_backup(keep=5)
-            if settings.rpg_backup_channel_id:
+            if self.settings.rpg_backup_channel_id:
                 await self.rpg_db.backup_to_discord_channel(
-                    self, settings.rpg_backup_channel_id, force=False
+                    self, self.settings.rpg_backup_channel_id, force=False
                 )
-        except Exception as exc:
-            logger.warning("RPG 定時備份任務發生警告: %s", exc)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("SAO 定時備份任務發生警告: %s", exc)
 
     @rpg_backup_task.before_loop
     async def before_rpg_backup(self) -> None:
         await self.wait_until_ready()
 
 
-bot = RPGBot()
+def create_bot(
+    bot_settings: Settings | None = None,
+    *,
+    run_minutes: int = 0,
+) -> RPGBot:
+    """Factory creating an isolated RPGBot instance without import-time DB side-effects."""
+    return RPGBot(bot_settings=bot_settings, run_minutes=run_minutes)
 
 
-def parse_bot_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="星界紀元持久化 RPG Discord 機器人")
+_LAZY_BOT: RPGBot | None = None
+
+
+def __getattr__(name: str) -> object:
+    global _LAZY_BOT
+    if name == "bot":
+        if _LAZY_BOT is None:
+            _LAZY_BOT = create_bot()
+        return _LAZY_BOT
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def parse_bot_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="刀劍神域 SAO 艾恩葛朗特 100 層持久化多人 RPG Discord 機器人")
     parser.add_argument(
         "--run-minutes",
         type=int,
@@ -274,11 +302,12 @@ def parse_bot_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     args = parse_bot_args(argv)
     if args.log_file:
         configure_file_logging(args.log_file)
-    if not settings.discord_bot_token:
+    active_settings = Settings.from_env()
+    if not active_settings.discord_bot_token:
         logger.error("請先設定 DISCORD_BOT_TOKEN 環境變數（或於 .env 檔案中填入）。")
         return MISSING_TOKEN_EXIT_CODE
 
@@ -294,10 +323,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except OSError:
         pass
 
-    bot.run_minutes = args.run_minutes
-    bot.stop_signal_path = stop_signal
+    bot_instance = create_bot(active_settings, run_minutes=args.run_minutes)
+    bot_instance.stop_signal_path = stop_signal
     try:
-        bot.run(settings.discord_bot_token)
+        bot_instance.run(active_settings.discord_bot_token)
         return 0
     finally:
         try:

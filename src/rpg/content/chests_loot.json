@@ -1,0 +1,358 @@
+{
+  "chest_tiers": {
+    "wooden": {
+      "name": "木製寶箱",
+      "emoji": "📦",
+      "rarity_shift": 0,
+      "col_mult": 1.0,
+      "gear_chance": 0.35,
+      "crystal_chance": 0.2,
+      "detect_difficulty": 5,
+      "asset_key": "chest_wooden"
+    },
+    "iron": {
+      "name": "鐵製寶箱",
+      "emoji": "🧰",
+      "rarity_shift": 1,
+      "col_mult": 1.6,
+      "gear_chance": 0.55,
+      "crystal_chance": 0.32,
+      "detect_difficulty": 10,
+      "asset_key": "chest_iron"
+    },
+    "silver": {
+      "name": "白銀寶箱",
+      "emoji": "🪙",
+      "rarity_shift": 2,
+      "col_mult": 2.4,
+      "gear_chance": 0.78,
+      "crystal_chance": 0.48,
+      "detect_difficulty": 16,
+      "asset_key": "chest_silver"
+    },
+    "gold": {
+      "name": "黃金寶箱",
+      "emoji": "🏆",
+      "rarity_shift": 3,
+      "col_mult": 3.8,
+      "gear_chance": 0.95,
+      "crystal_chance": 0.68,
+      "detect_difficulty": 22,
+      "asset_key": "chest_gold"
+    },
+    "boss_relic": {
+      "name": "頭目秘寶箱",
+      "emoji": "👑",
+      "rarity_shift": 4,
+      "col_mult": 5.5,
+      "gear_chance": 1.0,
+      "crystal_chance": 0.9,
+      "detect_difficulty": 30,
+      "asset_key": "chest_boss_relic"
+    },
+    "mimic_trap": {
+      "name": "偽裝擬態箱",
+      "emoji": "😈",
+      "rarity_shift": 2,
+      "col_mult": 2.6,
+      "gear_chance": 0.65,
+      "crystal_chance": 0.5,
+      "detect_difficulty": 15,
+      "asset_key": "chest_mimic"
+    }
+  },
+  "tier_tables": {
+    "tier_1_chests": {
+      "gear_tier": 1,
+      "weights": [
+        {"chest_tier": "wooden", "weight": 45},
+        {"chest_tier": "iron", "weight": 30},
+        {"chest_tier": "silver", "weight": 12},
+        {"chest_tier": "gold", "weight": 4},
+        {"chest_tier": "boss_relic", "weight": 1},
+        {"chest_tier": "mimic_trap", "weight": 8}
+      ],
+      "guaranteed_pool": [
+        {"item_id": "hp_potion_t1", "min": 1, "max": 3, "weight": 35},
+        {"item_id": "bright_crystal_shard", "min": 1, "max": 3, "weight": 35},
+        {"item_id": "teleport_crystal", "min": 1, "max": 1, "weight": 15},
+        {"item_id": "healing_crystal", "min": 1, "max": 1, "weight": 15}
+      ],
+      "set_ids": ["kobold_hunter"]
+    },
+    "tier_2_chests": {
+      "gear_tier": 2,
+      "weights": [
+        {"chest_tier": "wooden", "weight": 40},
+        {"chest_tier": "iron", "weight": 32},
+        {"chest_tier": "silver", "weight": 14},
+        {"chest_tier": "gold", "weight": 5},
+        {"chest_tier": "boss_relic", "weight": 1},
+        {"chest_tier": "mimic_trap", "weight": 8}
+      ],
+      "guaranteed_pool": [
+        {"item_id": "hp_potion_t1", "min": 2, "max": 3, "weight": 30},
+        {"item_id": "antidote_crystal", "min": 1, "max": 2, "weight": 30},
+        {"item_id": "bright_crystal_shard", "min": 2, "max": 4, "weight": 25},
+        {"item_id": "healing_crystal", "min": 1, "max": 1, "weight": 15}
+      ],
+      "set_ids": ["kobold_hunter", "clearer_vanguard"]
+    },
+    "tier_3_chests": {
+      "gear_tier": 3,
+      "weights": [
+        {"chest_tier": "wooden", "weight": 35},
+        {"chest_tier": "iron", "weight": 32},
+        {"chest_tier": "silver", "weight": 17},
+        {"chest_tier": "gold", "weight": 6},
+        {"chest_tier": "boss_relic", "weight": 2},
+        {"chest_tier": "mimic_trap", "weight": 8}
+      ],
+      "guaranteed_pool": [
+        {"item_id": "hp_potion_t2", "min": 1, "max": 3, "weight": 30},
+        {"item_id": "bright_crystal", "min": 1, "max": 2, "weight": 30},
+        {"item_id": "teleport_crystal", "min": 1, "max": 2, "weight": 20},
+        {"item_id": "corridor_crystal", "min": 1, "max": 1, "weight": 20}
+      ],
+      "set_ids": ["clearer_vanguard"]
+    },
+    "tier_4_chests": {
+      "gear_tier": 4,
+      "weights": [
+        {"chest_tier": "wooden", "weight": 30},
+        {"chest_tier": "iron", "weight": 33},
+        {"chest_tier": "silver", "weight": 19},
+        {"chest_tier": "gold", "weight": 7},
+        {"chest_tier": "boss_relic", "weight": 2},
+        {"chest_tier": "mimic_trap", "weight": 9}
+      ],
+      "guaranteed_pool": [
+        {"item_id": "hp_potion_t2", "min": 2, "max": 4, "weight": 28},
+        {"item_id": "bright_crystal", "min": 1, "max": 3, "weight": 28},
+        {"item_id": "dark_crystal_shard", "min": 1, "max": 3, "weight": 24},
+        {"item_id": "reroll_stone", "min": 1, "max": 1, "weight": 20}
+      ],
+      "set_ids": ["clearer_vanguard", "fuurinkazan"]
+    },
+    "tier_5_chests": {
+      "gear_tier": 5,
+      "weights": [
+        {"chest_tier": "wooden", "weight": 26},
+        {"chest_tier": "iron", "weight": 32},
+        {"chest_tier": "silver", "weight": 22},
+        {"chest_tier": "gold", "weight": 9},
+        {"chest_tier": "boss_relic", "weight": 2},
+        {"chest_tier": "mimic_trap", "weight": 9}
+      ],
+      "guaranteed_pool": [
+        {"item_id": "hp_potion_t3", "min": 1, "max": 3, "weight": 28},
+        {"item_id": "bright_crystal", "min": 2, "max": 3, "weight": 28},
+        {"item_id": "dark_crystal", "min": 1, "max": 2, "weight": 24},
+        {"item_id": "swap_stone", "min": 1, "max": 1, "weight": 20}
+      ],
+      "set_ids": ["fuurinkazan", "black_swordsman"]
+    },
+    "tier_6_chests": {
+      "gear_tier": 6,
+      "weights": [
+        {"chest_tier": "wooden", "weight": 22},
+        {"chest_tier": "iron", "weight": 30},
+        {"chest_tier": "silver", "weight": 24},
+        {"chest_tier": "gold", "weight": 11},
+        {"chest_tier": "boss_relic", "weight": 3},
+        {"chest_tier": "mimic_trap", "weight": 10}
+      ],
+      "guaranteed_pool": [
+        {"item_id": "hp_potion_t3", "min": 2, "max": 4, "weight": 28},
+        {"item_id": "dark_crystal", "min": 1, "max": 3, "weight": 30},
+        {"item_id": "crystallite_ingot", "min": 1, "max": 1, "weight": 22},
+        {"item_id": "healing_crystal", "min": 1, "max": 2, "weight": 20}
+      ],
+      "set_ids": ["black_swordsman", "knights_of_blood"]
+    },
+    "tier_7_chests": {
+      "gear_tier": 7,
+      "weights": [
+        {"chest_tier": "wooden", "weight": 18},
+        {"chest_tier": "iron", "weight": 29},
+        {"chest_tier": "silver", "weight": 26},
+        {"chest_tier": "gold", "weight": 13},
+        {"chest_tier": "boss_relic", "weight": 4},
+        {"chest_tier": "mimic_trap", "weight": 10}
+      ],
+      "guaranteed_pool": [
+        {"item_id": "hp_potion_t3", "min": 2, "max": 4, "weight": 25},
+        {"item_id": "dark_crystal", "min": 2, "max": 3, "weight": 30},
+        {"item_id": "protection_talisman", "min": 1, "max": 1, "weight": 20},
+        {"item_id": "reroll_stone", "min": 1, "max": 2, "weight": 25}
+      ],
+      "set_ids": ["knights_of_blood", "dragon_slayer_sao"]
+    },
+    "tier_8_chests": {
+      "gear_tier": 8,
+      "weights": [
+        {"chest_tier": "wooden", "weight": 14},
+        {"chest_tier": "iron", "weight": 27},
+        {"chest_tier": "silver", "weight": 28},
+        {"chest_tier": "gold", "weight": 16},
+        {"chest_tier": "boss_relic", "weight": 5},
+        {"chest_tier": "mimic_trap", "weight": 10}
+      ],
+      "guaranteed_pool": [
+        {"item_id": "hp_potion_t4", "min": 1, "max": 3, "weight": 28},
+        {"item_id": "dark_crystal_pure", "min": 1, "max": 2, "weight": 28},
+        {"item_id": "swap_stone", "min": 1, "max": 2, "weight": 22},
+        {"item_id": "healing_crystal", "min": 2, "max": 3, "weight": 22}
+      ],
+      "set_ids": ["dragon_slayer_sao", "sleeping_knights"]
+    },
+    "tier_9_chests": {
+      "gear_tier": 9,
+      "weights": [
+        {"chest_tier": "wooden", "weight": 10},
+        {"chest_tier": "iron", "weight": 24},
+        {"chest_tier": "silver", "weight": 30},
+        {"chest_tier": "gold", "weight": 19},
+        {"chest_tier": "boss_relic", "weight": 7},
+        {"chest_tier": "mimic_trap", "weight": 10}
+      ],
+      "guaranteed_pool": [
+        {"item_id": "hp_potion_t4", "min": 2, "max": 4, "weight": 26},
+        {"item_id": "dark_crystal_pure", "min": 1, "max": 3, "weight": 30},
+        {"item_id": "refine_stone", "min": 1, "max": 1, "weight": 22},
+        {"item_id": "protection_talisman", "min": 1, "max": 1, "chance": 1.0, "weight": 22}
+      ],
+      "set_ids": ["sleeping_knights", "cardinal_sovereign"]
+    },
+    "tier_10_chests": {
+      "gear_tier": 10,
+      "weights": [
+        {"chest_tier": "wooden", "weight": 6},
+        {"chest_tier": "iron", "weight": 20},
+        {"chest_tier": "silver", "weight": 31},
+        {"chest_tier": "gold", "weight": 23},
+        {"chest_tier": "boss_relic", "weight": 10},
+        {"chest_tier": "mimic_trap", "weight": 10}
+      ],
+      "guaranteed_pool": [
+        {"item_id": "hp_potion_t4", "min": 3, "max": 5, "weight": 25},
+        {"item_id": "dark_crystal_pure", "min": 2, "max": 4, "weight": 30},
+        {"item_id": "refine_stone", "min": 1, "max": 2, "weight": 23},
+        {"item_id": "gacha_relic_ticket", "min": 1, "max": 1, "weight": 22}
+      ],
+      "set_ids": ["cardinal_sovereign"]
+    }
+  },
+  "traps": {
+    "mimic": {
+      "mob_id": "mimic_chest",
+      "potion_bite_chance": 0.45,
+      "detect_searching_level": 10,
+      "message": "寶箱突然張開利齒咬住了你的背包，掉出一瓶藥水！"
+    },
+    "crystal_null_room": {
+      "name": "水晶無效化陷阱房",
+      "no_teleport_crystal": true,
+      "no_healing_crystal": true,
+      "ambush_waves": 2,
+      "detect_searching_level": 25,
+      "escape_turns": 4,
+      "message": "⚠️ 系統警報：已觸發水晶無效化空間！轉移水晶與回復水晶暫時無法啟動！"
+    }
+  },
+  "rarity_order": ["plain", "fine", "rare", "set", "legendary", "named"],
+  "rarities": {
+    "plain": {
+      "name": "正品",
+      "emoji": "⬜",
+      "color": 9807270,
+      "stat_mult": 1.0,
+      "affix_range": [0, 1],
+      "tradable_default": true,
+      "allow_magic_stone": true,
+      "bypass_loot_filter": false,
+      "order": 1,
+      "base_weight": 42
+    },
+    "fine": {
+      "name": "上品",
+      "emoji": "🟩",
+      "color": 3066993,
+      "stat_mult": 1.22,
+      "affix_range": [1, 2],
+      "tradable_default": true,
+      "allow_magic_stone": true,
+      "bypass_loot_filter": false,
+      "order": 2,
+      "base_weight": 30
+    },
+    "rare": {
+      "name": "極品",
+      "emoji": "🟦",
+      "color": 3447003,
+      "stat_mult": 1.5,
+      "affix_range": [2, 3],
+      "tradable_default": true,
+      "allow_magic_stone": true,
+      "bypass_loot_filter": false,
+      "order": 3,
+      "base_weight": 16
+    },
+    "set": {
+      "name": "珍品",
+      "emoji": "🟪",
+      "color": 10181046,
+      "stat_mult": 1.85,
+      "affix_range": [2, 3],
+      "tradable_default": true,
+      "allow_magic_stone": true,
+      "bypass_loot_filter": true,
+      "order": 4,
+      "base_weight": 8
+    },
+    "legendary": {
+      "name": "傳說",
+      "emoji": "🟧",
+      "color": 15965202,
+      "stat_mult": 2.3,
+      "affix_range": [3, 4],
+      "tradable_default": true,
+      "allow_magic_stone": true,
+      "bypass_loot_filter": true,
+      "order": 5,
+      "base_weight": 3
+    },
+    "named": {
+      "name": "名品",
+      "emoji": "🟥",
+      "color": 15158332,
+      "stat_mult": 2.85,
+      "affix_range": [3, 4],
+      "tradable_default": false,
+      "allow_magic_stone": false,
+      "bypass_loot_filter": true,
+      "order": 6,
+      "base_weight": 1
+    }
+  },
+  "affix_pool": {
+    "res_slash": {"name": "斬擊抗性", "fmt": "pct", "base_range": [0.03, 0.09]},
+    "res_pierce": {"name": "穿刺抗性", "fmt": "pct", "base_range": [0.03, 0.09]},
+    "res_blunt": {"name": "打擊抗性", "fmt": "pct", "base_range": [0.03, 0.09]},
+    "res_dragon": {"name": "龍息抗性", "fmt": "pct", "base_range": [0.03, 0.09]},
+    "atk_pct": {"name": "攻擊力", "fmt": "pct", "base_range": [0.04, 0.14]},
+    "def_pct": {"name": "防禦力", "fmt": "pct", "base_range": [0.04, 0.14]},
+    "hp_pct": {"name": "最大生命", "fmt": "pct", "base_range": [0.05, 0.16]},
+    "sp_pct": {"name": "最大 SP", "fmt": "pct", "base_range": [0.04, 0.12]},
+    "spd": {"name": "速度", "fmt": "flat", "base_range": [4, 18]},
+    "crit_rate": {"name": "暴擊率", "fmt": "pct", "base_range": [0.02, 0.07]},
+    "crit_dmg": {"name": "暴擊傷害", "fmt": "pct", "base_range": [0.06, 0.22]},
+    "evasion": {"name": "閃避率", "fmt": "pct", "base_range": [0.02, 0.06]},
+    "lifesteal": {"name": "生命汲取", "fmt": "pct", "base_range": [0.01, 0.05]},
+    "skill_dmg": {"name": "劍技傷害", "fmt": "pct", "base_range": [0.04, 0.14]},
+    "break_power": {"name": "破防威力", "fmt": "pct", "base_range": [0.05, 0.15]},
+    "col_bonus": {"name": "柯爾加成", "fmt": "pct", "base_range": [0.05, 0.18]},
+    "exp_bonus": {"name": "經驗加成", "fmt": "pct", "base_range": [0.05, 0.16]},
+    "drop_bonus": {"name": "掉落率加成", "fmt": "pct", "base_range": [0.04, 0.14]}
+  }
+}

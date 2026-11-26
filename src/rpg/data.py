@@ -1,6 +1,15 @@
-"""Static game data tables for the val-dc persistent RPG."""
+"""Static game data tables (legacy compat) + SAO Aincrad JSON-driven content facade."""
 
-from typing import Any, Dict, List, Tuple
+from __future__ import annotations
+
+from typing import Any
+
+from src.rpg.content.loader import (
+    SAOContentBundle,
+    load_and_validate_all,
+    load_content,
+    resolve_floor_config,
+)
 
 # =============================================================================
 # Core Constants
@@ -19,7 +28,7 @@ MAX_EQUIPMENT_CAPACITY = 80
 # =============================================================================
 # Rarities & Equipment Slots
 # =============================================================================
-RARITIES: Dict[str, Dict[str, Any]] = {
+RARITIES: dict[str, dict[str, Any]] = {
     "common": {
         "name": "普通",
         "emoji": "⬜",
@@ -82,7 +91,7 @@ RARITIES: Dict[str, Dict[str, Any]] = {
     },
 }
 
-RARITY_ORDER: List[str] = [
+RARITY_ORDER: list[str] = [
     "common",
     "uncommon",
     "rare",
@@ -91,7 +100,7 @@ RARITY_ORDER: List[str] = [
     "mythic",
 ]
 
-SLOTS: Dict[str, Dict[str, str]] = {
+SLOTS: dict[str, dict[str, str]] = {
     "weapon": {"name": "武器", "emoji": "⚔️"},
     "helmet": {"name": "頭盔", "emoji": "🪖"},
     "armor": {"name": "護甲", "emoji": "🛡️"},
@@ -100,12 +109,12 @@ SLOTS: Dict[str, Dict[str, str]] = {
     "accessory": {"name": "飾品", "emoji": "💍"},
 }
 
-SLOT_ORDER: List[str] = ["weapon", "helmet", "armor", "gloves", "boots", "accessory"]
+SLOT_ORDER: list[str] = ["weapon", "helmet", "armor", "gloves", "boots", "accessory"]
 
 # =============================================================================
 # Classes & 3-Stage Promotions
 # =============================================================================
-CLASSES: Dict[str, Dict[str, Any]] = {
+CLASSES: dict[str, dict[str, Any]] = {
     "swordsman": {
         "name": "劍士",
         "emoji": "⚔️",
@@ -220,7 +229,7 @@ CLASSES: Dict[str, Dict[str, Any]] = {
     },
 }
 
-PROMOTION_REQUIREMENTS: Dict[int, Dict[str, Any]] = {
+PROMOTION_REQUIREMENTS: dict[int, dict[str, Any]] = {
     2: {"min_level": 30, "gold": 5000, "materials": {"mithril_ore": 15, "boss_essence": 5}},
     3: {"min_level": 70, "gold": 35000, "materials": {"dragon_crystal": 20, "boss_essence": 20}},
 }
@@ -228,7 +237,7 @@ PROMOTION_REQUIREMENTS: Dict[int, Dict[str, Any]] = {
 # =============================================================================
 # Items (Ores, Boss Materials, Consumables, Upgrade Materials)
 # =============================================================================
-ITEMS: Dict[str, Dict[str, Any]] = {
+ITEMS: dict[str, dict[str, Any]] = {
     # --- Ores ---
     "copper_ore": {"name": "銅礦石", "emoji": "🪨", "category": "ore", "sell": 18, "tier": 1, "desc": "淺礦坑常見的基礎金屬礦石。"},
     "iron_ore": {"name": "鐵礦石", "emoji": "⛓️", "category": "ore", "sell": 36, "tier": 2, "desc": "鍛造精良裝備與礦鎬的重要原料。"},
@@ -259,7 +268,7 @@ ITEMS: Dict[str, Dict[str, Any]] = {
 # =============================================================================
 # Pickaxes (T1 ~ T8)
 # =============================================================================
-PICKAXES: Dict[int, Dict[str, Any]] = {
+PICKAXES: dict[int, dict[str, Any]] = {
     1: {
         "name": "新手木鎬",
         "emoji": "🪵",
@@ -337,7 +346,7 @@ PICKAXES: Dict[int, Dict[str, Any]] = {
 # =============================================================================
 # Mining Zones (6 Progressive Zones)
 # =============================================================================
-MINE_ZONES: List[Dict[str, Any]] = [
+MINE_ZONES: list[dict[str, Any]] = [
     {
         "id": "emerald_pit",
         "name": "翠綠淺礦坑",
@@ -430,12 +439,12 @@ MINE_ZONES: List[Dict[str, Any]] = [
     },
 ]
 
-MINE_ZONES_BY_ID: Dict[str, Dict[str, Any]] = {z["id"]: z for z in MINE_ZONES}
+MINE_ZONES_BY_ID: dict[str, dict[str, Any]] = {z["id"]: z for z in MINE_ZONES}
 
 # =============================================================================
 # Equipment Sets & Affixes
 # =============================================================================
-EQUIPMENT_SETS: Dict[str, Dict[str, Any]] = {
+EQUIPMENT_SETS: dict[str, dict[str, Any]] = {
     "pioneer": {
         "name": "拓荒者套裝",
         "emoji": "🌿",
@@ -488,7 +497,7 @@ EQUIPMENT_SETS: Dict[str, Dict[str, Any]] = {
     },
 }
 
-AFFIX_DEFS: Dict[str, Dict[str, Any]] = {
+AFFIX_DEFS: dict[str, dict[str, Any]] = {
     "atk_pct": {"name": "攻擊力", "fmt": "pct", "base_range": (0.03, 0.08)},
     "def_pct": {"name": "防禦力", "fmt": "pct", "base_range": (0.03, 0.08)},
     "hp_pct": {"name": "最大生命", "fmt": "pct", "base_range": (0.04, 0.10)},
@@ -502,7 +511,7 @@ AFFIX_DEFS: Dict[str, Dict[str, Any]] = {
 }
 
 # Equipment Tiers (T1 ~ T6): defines base stats per slot & forging recipes
-GEAR_TIERS: Dict[int, Dict[str, Any]] = {
+GEAR_TIERS: dict[int, dict[str, Any]] = {
     1: {
         "name": "青銅拓荒",
         "prefix": "青銅",
@@ -565,7 +574,7 @@ GEAR_TIERS: Dict[int, Dict[str, Any]] = {
     },
 }
 
-SLOT_BASE_STATS: Dict[str, Dict[str, int]] = {
+SLOT_BASE_STATS: dict[str, dict[str, int]] = {
     "weapon": {"hp": 10, "mp": 6, "atk": 18, "def": 2},
     "helmet": {"hp": 42, "mp": 10, "atk": 4, "def": 9},
     "armor": {"hp": 72, "mp": 6, "atk": 3, "def": 14},
@@ -574,7 +583,7 @@ SLOT_BASE_STATS: Dict[str, Dict[str, int]] = {
     "accessory": {"hp": 30, "mp": 18, "atk": 10, "def": 5},
 }
 
-SLOT_NAMES_BY_TIER: Dict[int, Dict[str, str]] = {
+SLOT_NAMES_BY_TIER: dict[int, dict[str, str]] = {
     1: {"weapon": "青銅長刃", "helmet": "青銅戰盔", "armor": "青銅胸甲", "gloves": "青銅護手", "boots": "青銅輕靴", "accessory": "旅人護符"},
     2: {"weapon": "拓荒白銀劍", "helmet": "拓荒頭盔", "armor": "拓荒鎖甲", "gloves": "拓荒戰手套", "boots": "拓荒疾靴", "accessory": "拓荒星紋戒"},
     3: {"weapon": "熔炎破滅刃", "helmet": "熔炎戰神盔", "armor": "熔炎重鎧", "gloves": "熔炎拳鎧", "boots": "熔炎烈焰靴", "accessory": "炎核吊墜"},
@@ -584,7 +593,7 @@ SLOT_NAMES_BY_TIER: Dict[int, Dict[str, str]] = {
 }
 
 # Enhancement table: target_level -> (success_rate, gold_mult, stone_item, stone_qty, ore_qty)
-ENHANCE_TABLE: Dict[int, Dict[str, Any]] = {
+ENHANCE_TABLE: dict[int, dict[str, Any]] = {
     1: {"rate": 1.00, "gold": 120, "stone": "enhance_stone", "stone_qty": 1, "downgrade": False},
     2: {"rate": 1.00, "gold": 220, "stone": "enhance_stone", "stone_qty": 2, "downgrade": False},
     3: {"rate": 1.00, "gold": 360, "stone": "enhance_stone", "stone_qty": 3, "downgrade": False},
@@ -605,7 +614,7 @@ ENHANCE_TABLE: Dict[int, Dict[str, Any]] = {
 # =============================================================================
 # 8 Progressive Dungeons × 3 Difficulties
 # =============================================================================
-DIFFICULTIES: Dict[str, Dict[str, Any]] = {
+DIFFICULTIES: dict[str, dict[str, Any]] = {
     "normal": {
         "name": "普通",
         "emoji": "🟢",
@@ -635,7 +644,7 @@ DIFFICULTIES: Dict[str, Dict[str, Any]] = {
     },
 }
 
-DUNGEONS: List[Dict[str, Any]] = [
+DUNGEONS: list[dict[str, Any]] = [
     {
         "id": "goblin_woods",
         "name": "哥布林密林",
@@ -774,12 +783,12 @@ DUNGEONS: List[Dict[str, Any]] = [
     },
 ]
 
-DUNGEONS_BY_ID: Dict[str, Dict[str, Any]] = {d["id"]: d for d in DUNGEONS}
+DUNGEONS_BY_ID: dict[str, dict[str, Any]] = {d["id"]: d for d in DUNGEONS}
 
 # =============================================================================
 # World Boss Templates (Rotating & Infinite Tier Scaling)
 # =============================================================================
-WORLD_BOSS_POOL: List[Dict[str, Any]] = [
+WORLD_BOSS_POOL: list[dict[str, Any]] = [
     {"id": "abyss_wyrm", "name": "深淵噬界魔龍・尼德霍格", "emoji": "🐉", "base_hp": 50000, "base_atk": 160, "base_def": 65},
     {"id": "star_titan", "name": "星穹毀滅泰坦・克羅諾斯", "emoji": "🗿", "base_hp": 65000, "base_atk": 185, "base_def": 80},
     {"id": "void_empress", "name": "永恆虛空女皇・瑟拉菲娜", "emoji": "👑", "base_hp": 58000, "base_atk": 210, "base_def": 70},
@@ -789,7 +798,7 @@ WORLD_BOSS_POOL: List[Dict[str, Any]] = [
 # =============================================================================
 # Permanent Supply Shop
 # =============================================================================
-SUPPLY_SHOP: List[Dict[str, Any]] = [
+SUPPLY_SHOP: list[dict[str, Any]] = [
     {"id": "buy_hp_s", "item_id": "hp_potion_s", "qty": 3, "currency": "gold", "price": 240, "daily_limit": 0},
     {"id": "buy_hp_m", "item_id": "hp_potion_m", "qty": 3, "currency": "gold", "price": 850, "daily_limit": 0},
     {"id": "buy_hp_l", "item_id": "hp_potion_l", "qty": 2, "currency": "gold", "price": 1800, "daily_limit": 0},
@@ -801,12 +810,12 @@ SUPPLY_SHOP: List[Dict[str, Any]] = [
     {"id": "buy_emblem", "item_id": "class_emblem", "qty": 1, "currency": "gold", "price": 6000, "daily_limit": 1},
 ]
 
-SUPPLY_SHOP_BY_ID: Dict[str, Dict[str, Any]] = {s["id"]: s for s in SUPPLY_SHOP}
+SUPPLY_SHOP_BY_ID: dict[str, dict[str, Any]] = {s["id"]: s for s in SUPPLY_SHOP}
 
 # =============================================================================
 # Daily Check-in 7-Day Cycle
 # =============================================================================
-DAILY_CHECKIN_REWARDS: List[Dict[str, Any]] = [
+DAILY_CHECKIN_REWARDS: list[dict[str, Any]] = [
     {"day": 1, "gold": 600, "gems": 25, "items": {"hp_potion_s": 3}},
     {"day": 2, "gold": 1000, "gems": 30, "items": {"stamina_elixir": 1}},
     {"day": 3, "gold": 1500, "gems": 40, "items": {"enhance_stone": 6}},
@@ -819,27 +828,27 @@ DAILY_CHECKIN_REWARDS: List[Dict[str, Any]] = [
 # =============================================================================
 # Daily & Weekly Quests
 # =============================================================================
-DAILY_QUESTS: List[Dict[str, Any]] = [
+DAILY_QUESTS: list[dict[str, Any]] = [
     {"id": "daily_mine", "name": "勤勞礦工", "desc": "前往礦場挖礦 5 次", "event": "mine", "target": 5, "gold": 800, "gems": 20, "exp": 200, "items": {"enhance_stone": 3}},
     {"id": "daily_dungeon", "name": "副本清道夫", "desc": "通關任意副本 2 次", "event": "dungeon_clear", "target": 2, "gold": 1400, "gems": 30, "exp": 450, "items": {"stamina_elixir": 1}},
     {"id": "daily_enhance", "name": "鐵匠常客", "desc": "強化裝備或鍛造 1 次", "event": "forge_or_enhance", "target": 1, "gold": 1000, "gems": 20, "exp": 250, "items": {"enhance_stone": 4}},
     {"id": "daily_boss", "name": "討伐先鋒", "desc": "挑戰世界王或無盡深淵 1 次", "event": "boss_or_abyss", "target": 1, "gold": 1200, "gems": 25, "exp": 350, "items": {"hp_potion_m": 2}},
 ]
 
-WEEKLY_QUESTS: List[Dict[str, Any]] = [
+WEEKLY_QUESTS: list[dict[str, Any]] = [
     {"id": "weekly_mine", "name": "礦脈開拓大師", "desc": "本週累計挖礦 35 次", "event": "mine", "target": 35, "gold": 6500, "gems": 100, "exp": 2200, "items": {"adv_enhance_stone": 3}},
     {"id": "weekly_dungeon", "name": "百戰勇者", "desc": "本週累計通關副本 12 次", "event": "dungeon_clear", "target": 12, "gold": 9500, "gems": 130, "exp": 3600, "items": {"relic_key": 2}},
     {"id": "weekly_boss", "name": "世界王剋星", "desc": "本週挑戰世界王或無盡深淵 8 次", "event": "boss_or_abyss", "target": 8, "gold": 8000, "gems": 120, "exp": 3000, "items": {"protect_scroll": 2}},
 ]
 
-ALL_QUESTS_BY_ID: Dict[str, Dict[str, Any]] = {
+ALL_QUESTS_BY_ID: dict[str, dict[str, Any]] = {
     q["id"]: q for q in (DAILY_QUESTS + WEEKLY_QUESTS)
 }
 
 # =============================================================================
 # Timed Idle Expeditions (Restart-Safe Timestamp Progression)
 # =============================================================================
-EXPEDITIONS: List[Dict[str, Any]] = [
+EXPEDITIONS: list[dict[str, Any]] = [
     {
         "id": "forest_patrol",
         "name": "森林邊境巡邏",
@@ -890,12 +899,12 @@ EXPEDITIONS: List[Dict[str, Any]] = [
     },
 ]
 
-EXPEDITIONS_BY_ID: Dict[str, Dict[str, Any]] = {e["id"]: e for e in EXPEDITIONS}
+EXPEDITIONS_BY_ID: dict[str, dict[str, Any]] = {e["id"]: e for e in EXPEDITIONS}
 
 # =============================================================================
 # Achievements & Titles (Account-Wide Permanent Bonuses!)
 # =============================================================================
-ACHIEVEMENTS: List[Dict[str, Any]] = [
+ACHIEVEMENTS: list[dict[str, Any]] = [
     {"id": "ach_mine_10", "name": "初入礦坑", "title": "⛏️ 掘金學徒", "desc": "累計挖礦達 10 次", "gems": 30, "bonus": {"mine_bonus": 0.03}},
     {"id": "ach_mine_100", "name": "地脈掘進者", "title": "💎 礦脈獵人", "desc": "累計挖礦達 100 次", "gems": 100, "bonus": {"mine_bonus": 0.08}},
     {"id": "ach_mine_500", "name": "傳奇礦神", "title": "👑 傳奇礦神", "desc": "累計挖礦達 500 次", "gems": 250, "bonus": {"mine_bonus": 0.15, "gold_bonus": 0.05}},
@@ -915,7 +924,7 @@ ACHIEVEMENTS: List[Dict[str, Any]] = [
     {"id": "ach_checkin_7", "name": "持之以恆", "title": "📅 永恆旅人", "desc": "累計簽到滿 7 天", "gems": 100, "bonus": {"exp_bonus": 0.05, "gold_bonus": 0.05}},
 ]
 
-ACHIEVEMENTS_BY_ID: Dict[str, Dict[str, Any]] = {a["id"]: a for a in ACHIEVEMENTS}
+ACHIEVEMENTS_BY_ID: dict[str, dict[str, Any]] = {a["id"]: a for a in ACHIEVEMENTS}
 
 
 def exp_needed_for_level(level: int) -> int:
@@ -930,12 +939,98 @@ def max_stamina_for_player(level: int, rebirth_count: int) -> int:
 
 
 def format_affix(key: str, value: float) -> str:
-    meta = AFFIX_DEFS.get(key, {"name": key, "fmt": "pct"})
+    meta = AFFIX_DEFS.get(key) or SAO_AFFIX_POOL.get(key) or {"name": key, "fmt": "pct"}
     if meta.get("fmt") == "pct":
         return f"{meta['name']} +{value * 100:.1f}%"
     return f"{meta['name']} +{value:.0f}"
 
 
 def get_class_title(class_id: str, promo_tier: int) -> str:
-    cls_def = CLASSES.get(class_id, CLASSES["swordsman"])
-    return cls_def["tiers"].get(promo_tier, cls_def["name"])
+    if class_id in CLASSES:
+        cls_def = CLASSES[class_id]
+        return str(cls_def["tiers"].get(promo_tier, cls_def["name"]))
+    if class_id in SAO_WEAPON_CLASSES:
+        return str(SAO_WEAPON_CLASSES[class_id]["name"])
+    if class_id in SAO_UNIQUE_SKILLS:
+        return str(SAO_UNIQUE_SKILLS[class_id]["name"])
+    cls_def = CLASSES["swordsman"]
+    return str(cls_def["tiers"].get(promo_tier, cls_def["name"]))
+
+
+# =============================================================================
+# SAO Aincrad JSON-Driven Content Facade (backed by src/rpg/content/loader.py)
+# =============================================================================
+_SAO_BUNDLE: SAOContentBundle = load_content()
+
+SAO_BIOMES: dict[str, Any] = _SAO_BUNDLE.biomes
+SAO_FLOORS_OVERRIDE: dict[str, Any] = _SAO_BUNDLE.floors_override
+SAO_BOSSES: dict[str, Any] = _SAO_BUNDLE.bosses
+SAO_MONSTERS: dict[str, Any] = _SAO_BUNDLE.monsters
+SAO_CHESTS_LOOT: dict[str, Any] = _SAO_BUNDLE.chests_loot
+SAO_WEAPONS_EQUIPMENT: dict[str, Any] = _SAO_BUNDLE.weapons_equipment
+SAO_WEAPON_CLASSES: dict[str, Any] = _SAO_BUNDLE.weapons_equipment["weapon_classes"]
+SAO_UNIQUE_SKILLS: dict[str, Any] = _SAO_BUNDLE.weapons_equipment["unique_skills"]
+SAO_SLOTS: dict[str, Any] = _SAO_BUNDLE.weapons_equipment["slots"]
+SAO_SLOT_ORDER: list[str] = list(_SAO_BUNDLE.weapons_equipment["slot_order"])
+SAO_RARITIES: dict[str, Any] = _SAO_BUNDLE.chests_loot["rarities"]
+SAO_RARITY_ORDER: list[str] = list(_SAO_BUNDLE.chests_loot["rarity_order"])
+SAO_AFFIX_POOL: dict[str, Any] = _SAO_BUNDLE.chests_loot["affix_pool"]
+SAO_EQUIPMENT_SETS: dict[str, Any] = _SAO_BUNDLE.weapons_equipment["sets"]
+SAO_NAMED_ITEMS: dict[str, Any] = _SAO_BUNDLE.weapons_equipment["named_items"]
+SAO_SWORD_SKILLS: dict[str, Any] = _SAO_BUNDLE.sword_skills
+SAO_ITEMS: dict[str, Any] = _SAO_BUNDLE.items_crystals
+SAO_RECIPES: dict[str, Any] = _SAO_BUNDLE.recipes
+SAO_QUESTS_EVENTS: dict[str, Any] = _SAO_BUNDLE.quests_events
+
+SAO_DAMAGE_TYPES: dict[str, dict[str, str]] = {
+    "slash": {"name": "斬擊", "emoji": "🗡️"},
+    "pierce": {"name": "穿刺", "emoji": "🏹"},
+    "blunt": {"name": "打擊", "emoji": "🔨"},
+    "dragon": {"name": "龍息", "emoji": "🐉"},
+}
+
+
+def get_sao_content(force_reload: bool = False) -> SAOContentBundle:
+    """Return the cached (or freshly reloaded) SAO Aincrad JSON content bundle."""
+    return load_content(force_reload=force_reload)
+
+
+def get_floor_config(floor: int) -> dict[str, Any]:
+    """Resolve full deterministic configuration for any Aincrad floor (1..100)."""
+    return resolve_floor_config(floor)
+
+
+def get_boss_spec(boss_id: str) -> dict[str, Any] | None:
+    val = load_content().bosses.get(boss_id)
+    return dict(val) if isinstance(val, dict) else None
+
+
+def get_monster_spec(mob_id: str) -> dict[str, Any] | None:
+    val = load_content().monsters.get(mob_id)
+    return dict(val) if isinstance(val, dict) else None
+
+
+def get_sword_skill(skill_id: str) -> dict[str, Any] | None:
+    val = load_content().sword_skills.get(skill_id)
+    return dict(val) if isinstance(val, dict) else None
+
+
+def get_sao_item(item_id: str) -> dict[str, Any] | None:
+    val = load_content().items_crystals.get(item_id)
+    return dict(val) if isinstance(val, dict) else None
+
+
+def get_weapon_class(weapon_style: str) -> dict[str, Any] | None:
+    weq = load_content().weapons_equipment
+    val = weq["weapon_classes"].get(weapon_style) or weq["unique_skills"].get(weapon_style)
+    return dict(val) if isinstance(val, dict) else None
+
+
+def get_sao_rarity(rarity_id: str) -> dict[str, Any] | None:
+    val = load_content().chests_loot["rarities"].get(rarity_id)
+    return dict(val) if isinstance(val, dict) else None
+
+
+def validate_sao_content(force_reload: bool = False) -> SAOContentBundle:
+    """Load and run strict startup/test schema validation on all SAO JSON files."""
+    return load_and_validate_all(force_reload=force_reload)

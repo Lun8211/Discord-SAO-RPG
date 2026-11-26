@@ -1,0 +1,229 @@
+{
+  "1": {
+    "town_name": "起始之鎮（Town of Beginnings）",
+    "landmark": "黑鐵宮・生命之碑",
+    "field_name": "托爾巴納草原",
+    "labyrinth_name": "第一層迷宮塔",
+    "boss_id": "illfang_kobold_lord",
+    "hidden_dungeon_id": "black_iron_roguelike",
+    "lore_unlock_id": "yui_log_f01",
+    "special_rules": ["safe_starter_zone", "has_monument_of_life"],
+    "flavor_desc": "艾恩葛朗特最底層的宏偉白城，一萬名玩家曾在此聆聽死亡遊戲的宣告。黑鐵宮大廳佇立著刻錄全體玩家生死的生命之碑。"
+  },
+  "2": {
+    "town_name": "烏爾巴斯（Urbus）",
+    "landmark": "牛頭人競技場遺跡",
+    "field_name": "防風蜂高地",
+    "labyrinth_name": "烏爾巴斯石窟迷宮",
+    "special_rules": ["field_boss_wind_wasp"],
+    "flavor_desc": "懸崖與荒原交錯的開拓第二層，攻略組在此首次面臨重裝牛頭人與裝備強化詐欺風波。"
+  },
+  "5": {
+    "town_name": "卡爾魯因（Karluin）",
+    "landmark": "古代遺跡工坊",
+    "field_name": "巨像荒原",
+    "labyrinth_name": "卡爾魯因地下遺跡",
+    "special_rules": ["armor_durability_check"],
+    "flavor_desc": "黃沙與古石柱林立的遺跡樓層，地下迷宮藏有豐富的鍛造圖紙與高純度礦脈。"
+  },
+  "10": {
+    "town_name": "千蛇城（Sensha-jou）",
+    "landmark": "東方城下町・櫻花武道館",
+    "field_name": "竹林古道",
+    "labyrinth_name": "千蛇天守閣迷宮",
+    "boss_id": "kagachi_samurai_lord",
+    "lore_unlock_id": "yui_log_f10",
+    "special_rules": ["milestone_boss_floor"],
+    "flavor_desc": "洋溢和風氣息的櫻花與城郭樓層，太刀劍技的發源地，天守閣深處盤踞著武士領主加賀智。"
+  },
+  "20": {
+    "town_name": "森羅鎮（Shinra）",
+    "landmark": "翡翠古樹廣場",
+    "field_name": "深霧瘴氣林",
+    "labyrinth_name": "瓦爾多拉斯樹根迷宮",
+    "boss_id": "valdoras_miasma_ent",
+    "special_rules": ["milestone_boss_floor", "miasma_spores_ambient"],
+    "flavor_desc": "巨木參天、林霧終年不散的翡翠秘境，唯有備妥解毒水晶的攻略隊才能突破深淵巨樹的瘴氣。"
+  },
+  "22": {
+    "town_name": "珊瑚村（Coral Village）",
+    "landmark": "森林湖畔小屋",
+    "field_name": "清澈森林湖畔",
+    "labyrinth_name": "湖底珊瑚洞窟",
+    "special_rules": ["fishing_and_cooking_bonus", "peaceful_sanctuary"],
+    "flavor_desc": "遠離前線喧囂的寧靜森林與湖畔，許多玩家在此休養、釣魚並研習高階料理技藝。"
+  },
+  "25": {
+    "town_name": "極光港（Aurora Port）",
+    "landmark": "攻略組慰靈碑",
+    "field_name": "白金雪岸",
+    "labyrinth_name": "極光冰淵迷宮",
+    "boss_id": "abyssward_twin_mouthed",
+    "lore_unlock_id": "yui_log_f25",
+    "special_rules": ["milestone_boss_floor", "coop_callout_required"],
+    "flavor_desc": "傳說中曾讓軍隊攻略團遭受重創的試煉樓層，唯有團隊彼此回報弱點與精密交換才能生還。"
+  },
+  "27": {
+    "town_name": "第 27 層・寒霜驛站",
+    "landmark": "月夜黑貓團追憶石碑",
+    "field_name": "霜凍針葉林",
+    "labyrinth_name": "迷宮區・水晶無效化迴廊",
+    "lore_unlock_id": "yui_log_f27_black_cats",
+    "special_rules": ["crystal_null_trap_chest_chance:0.20"],
+    "flavor_desc": "藏有致命水晶無效化陷阱房的冰霜迷宮，索敵技能不足者貿然開啟隱藏寶箱將陷入絕境。"
+  },
+  "30": {
+    "town_name": "霜冠城（Frostcrown）",
+    "landmark": "永凍冰冠祭壇",
+    "field_name": "極寒冰原",
+    "labyrinth_name": "霜冠冰宮迷宮",
+    "boss_id": "frost_kaiser",
+    "special_rules": ["milestone_boss_floor"],
+    "flavor_desc": "終年降雪的白金冰城，極寒冰甲會反震尋常普攻，唯有連綿劍技方能擊碎冰冠霸主的防線。"
+  },
+  "35": {
+    "town_name": "迷途營地（Mishe Outpost）",
+    "landmark": "聖誕冷杉林",
+    "field_name": "迷途魔森",
+    "labyrinth_name": "迷霧樹海迷宮",
+    "special_rules": ["special_event_nicholas_renegade"],
+    "flavor_desc": "幽暗的迷途森林深處流傳著背叛者尼古拉斯與甦生道具的傳聞，吸引無數獨行玩家前來探索。"
+  },
+  "40": {
+    "town_name": "暗影堡（Shadow Keep）",
+    "landmark": "幽影獄門",
+    "field_name": "枯骨幽谷",
+    "labyrinth_name": "狂暴獄卒地牢",
+    "boss_id": "feral_warder_chief",
+    "special_rules": ["milestone_boss_floor"],
+    "flavor_desc": "陰沉鐵鎖遍布的死靈古堡，狂暴獄卒長與四名暗影獄卒鎮守通往艾恩葛朗特中層的關口。"
+  },
+  "47": {
+    "town_name": "芙羅莉亞（Floria）",
+    "landmark": "回憶之丘・靈魂之花花海",
+    "field_name": "繁花丘陵",
+    "labyrinth_name": "花妖溫室迷宮",
+    "special_rules": ["revival_flower_lore", "gathering_bonus"],
+    "flavor_desc": "開滿奇花異草的芬芳樓層，回憶之丘上盛放著傳說能喚回使魔的靈魂之花。"
+  },
+  "48": {
+    "town_name": "林達斯（Lindarth）",
+    "landmark": "莉茲貝特鍛造屋",
+    "field_name": "鍛鐵山麓",
+    "labyrinth_name": "鋼鐵礦道迷宮",
+    "special_rules": ["blacksmith_mastery_bonus"],
+    "flavor_desc": "聚集艾恩葛朗特頂尖工匠的鍛造聖地，叮噹不絕的鐵砧聲見證無數神兵利器的誕生。"
+  },
+  "50": {
+    "town_name": "阿爾格特（Algade）",
+    "landmark": "艾基爾商店・血盟騎士團前線部",
+    "field_name": "鋼鐵商道",
+    "labyrinth_name": "阿爾格特審判之塔",
+    "boss_id": "steel_arbiter_algade",
+    "lore_unlock_id": "yui_log_f50",
+    "special_rules": ["milestone_boss_floor", "unlocks_unique_skill_trials"],
+    "flavor_desc": "貫穿浮游城腰部的龐大鋼鐵商業都市，突破此層頭目後將開啟隱藏獨有劍技的試煉門檻。"
+  },
+  "55": {
+    "town_name": "格蘭薩姆（Grandzam）",
+    "landmark": "西山白龍巢穴・水晶石英礦脈",
+    "field_name": "西山結晶雪嶺",
+    "labyrinth_name": "白龍結晶洞窟",
+    "special_rules": ["crystallite_mining_vein", "dragon_habitat"],
+    "flavor_desc": "白龍盤踞的險峻結晶山脈，深穴內蘊藏著足以鍛造名品魔劍「逐闇者」的稀有水晶石英。"
+  },
+  "60": {
+    "town_name": "炎獄要塞（Caldera Bastion）",
+    "landmark": "熔核鍛爐",
+    "field_name": "黑曜熔岩原",
+    "labyrinth_name": "伊格尼斯龍炎迷宮",
+    "boss_id": "ignis_crystallite_wyrm",
+    "special_rules": ["milestone_boss_floor", "dragon_breath_zone"],
+    "flavor_desc": "熔岩奔流的灼熱要塞，龍息抗性將在此層首次成為決定攻略隊存亡的關鍵指標。"
+  },
+  "61": {
+    "town_name": "賽爾姆布魯克（Selmburg）",
+    "landmark": "天空運河商業街",
+    "field_name": "浮空翠原",
+    "labyrinth_name": "天界迴廊迷宮",
+    "special_rules": ["market_hub_flavor"],
+    "flavor_desc": "以璀璨運河與繁華市集聞名的高層名城，高階玩家與大型公會在此雲集交易名品與結晶。"
+  },
+  "70": {
+    "town_name": "潮汐聖殿（Tidal Sanctum）",
+    "landmark": "蒼穹雷霆尖塔",
+    "field_name": "暴風天空庭園",
+    "labyrinth_name": "雷神雲巔迷宮",
+    "boss_id": "astraea_sky_warden",
+    "special_rules": ["milestone_boss_floor", "s_rank_ingredient_unlock"],
+    "flavor_desc": "雲海與雷暴交織的空中聖殿，從此層起可狩獵 S 級夢幻食材並面對同步擊破機制。"
+  },
+  "74": {
+    "town_name": "卡姆戴特（Kamdet）",
+    "landmark": "通往煉獄迷宮的大門",
+    "field_name": "赤岩峽谷",
+    "labyrinth_name": "第 74 層深層迷宮",
+    "boss_id": "gleam_eyes",
+    "special_rules": ["milestone_boss_floor", "no_teleport_crystal"],
+    "flavor_desc": "惡名昭彰的煉獄迷宮所在地，閃耀魔眼在此以十六連擊星爆氣流斬的傳說載入攻略史冊。"
+  },
+  "75": {
+    "town_name": "柯林尼亞（Collinia）",
+    "landmark": "前線最後防線營地",
+    "field_name": "蒼白荒骨原",
+    "labyrinth_name": "第 75 層骸骨死域迷宮",
+    "boss_id": "skull_reaper",
+    "lore_unlock_id": "yui_log_f75",
+    "special_rules": ["milestone_boss_floor", "no_teleport_crystal", "ceiling_ambush_opening"],
+    "flavor_desc": "轉移水晶徹底失效的死鬥殿堂，倒懸於天花板的骸骨獵殺者以一擊即死級鐮刀斬擊令攻略組聞風喪膽。"
+  },
+  "80": {
+    "town_name": "蒼白要塞（Pale Bastion）",
+    "landmark": "鎮魂鐘樓",
+    "field_name": "白骨死原",
+    "labyrinth_name": "莫爾提斯收割迷宮",
+    "boss_id": "mortis_pale_harvester",
+    "special_rules": ["milestone_boss_floor"],
+    "flavor_desc": "終結煉獄骨域的蒼白尖塔，莫爾提斯的死神宣告與抗性剝離考驗著每位前線攻略者的回復時機。"
+  },
+  "85": {
+    "town_name": "星輝鎮（Starlight Keep）",
+    "landmark": "星象觀測台",
+    "field_name": "星辰裂谷",
+    "labyrinth_name": "星輝迷宮",
+    "special_rules": ["astral_ore_rich"],
+    "flavor_desc": "漂浮於星空裂谷中的銀白觀星小鎮，蘊含星辰原晶與高密度虛空礦石。"
+  },
+  "90": {
+    "town_name": "虛空大教堂（Void Cathedral）",
+    "landmark": "時空渾天儀",
+    "field_name": "無重力星廊",
+    "labyrinth_name": "克羅諾斯相位聖殿",
+    "boss_id": "chronos_astral_archon",
+    "special_rules": ["milestone_boss_floor", "tri_shield_phase_boss"],
+    "flavor_desc": "重力與時間交錯的星辰聖殿，克羅諾斯的斬・刺・打三屬性相位護盾迫使團隊配置多元武器系統。"
+  },
+  "95": {
+    "town_name": "誓約之城（City of Vows）",
+    "landmark": "攻略組最終集結廣場",
+    "field_name": "神域天階",
+    "labyrinth_name": "紅玉外城迴廊",
+    "special_rules": ["final_preparation_hub"],
+    "flavor_desc": "距離頂層僅五層的莊嚴白金聖都，所有攻略組與公會在此備齊大鍋料理與最高階結晶迎接終戰。"
+  },
+  "100": {
+    "town_name": "紅玉宮前殿（Ruby Palace）",
+    "landmark": "艾恩葛朗特頂層・紅玉王座",
+    "field_name": "紅玉宮外庭",
+    "labyrinth_name": "紅玉宮最終迴廊",
+    "boss_id": "f100_incarnation_and_heathcliff",
+    "lore_unlock_id": "yui_log_f100",
+    "special_rules": [
+      "milestone_boss_floor",
+      "final_floor",
+      "dual_stage_boss",
+      "no_teleport_crystal"
+    ],
+    "flavor_desc": "浮游城艾恩葛朗特的最頂端。半徑的化身與最終創造者希茲克利夫在此靜候超越系統界限的劍士。"
+  }
+}

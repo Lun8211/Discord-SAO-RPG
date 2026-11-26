@@ -11,7 +11,9 @@ ENV/
 
 # Environment variables & secrets
 .env
+.env.*
 *.env
+!.env.example
 
 # IDE & OS
 .vscode/
@@ -19,17 +21,25 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Pytest
+# Test, lint & typecheck caches
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .coverage
+.coverage.*
+htmlcov/
 
-# RPG persistent database & backups (do not commit player data to public repo)
-data/
+# RPG persistent database & backups (anchored to repo root; never ignore src/rpg/content/ or nested folders)
+/data/
 *.db
 *.db-wal
 *.db-shm
+*.sqlite
+*.sqlite3
 
 # Local bot runtime logs
 logs/
 *.log
 
+# Agent & teamwork metadata (never commit to public repo)
+.agents/

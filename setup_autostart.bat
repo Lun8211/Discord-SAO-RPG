@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title 星界紀元 RPG 機器人 — Windows 開機無黑窗自啟動管理工具
+title 刀劍神域 SAO 艾恩葛朗特 RPG 機器人 — Windows 開機無黑窗自啟動管理工具
 cd /d "%~dp0"
 
 set "STARTUP_LNK=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\RPG_Discord_Bot.lnk"
@@ -8,7 +8,7 @@ set "STARTUP_LNK=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\RPG_Dis
 :menu
 cls
 echo ============================================================
-echo   星界紀元 RPG Discord 機器人 — 開機無黑窗自啟動管理工具
+echo   刀劍神域 SAO 艾恩葛朗特 RPG Discord 機器人 — 開機無黑窗自啟動管理工具
 echo ============================================================
 echo.
 

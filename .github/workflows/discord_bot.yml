@@ -1,4 +1,4 @@
-name: 啟動星界紀元 RPG Discord 機器人 (Interactive RPG Bot)
+name: 啟動刀劍神域 SAO 艾恩葛朗特 RPG Discord 機器人 (SAO Aincrad Bot)
 
 on:
   workflow_dispatch:
@@ -38,15 +38,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Start Discord RPG Bot
+      - name: Validate SAO JSON content before startup
+        run: |
+          python -c "from src.rpg.content.loader import load_and_validate_all; load_and_validate_all()"
+
+      - name: Start SAO Aincrad Discord Bot
         env:
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           TIMEZONE_OFFSET_HOURS: ${{ secrets.TIMEZONE_OFFSET_HOURS || '8' }}
-          # RPG 永久存檔設定（設定 RPG_BACKUP_CHANNEL_ID 可在每次 Actions 重啟時自動還原與備份所有人進度）
           RPG_DB_PATH: ${{ secrets.RPG_DB_PATH || 'data/rpg.db' }}
           RPG_BACKUP_CHANNEL_ID: ${{ secrets.RPG_BACKUP_CHANNEL_ID }}
           RPG_BACKUP_INTERVAL_MINUTES: ${{ secrets.RPG_BACKUP_INTERVAL_MINUTES || '15' }}
-          # 透過環境變數傳入 workflow 輸入值，避免直接把 ${{ }} 插入 shell 指令（script injection）
           RUN_MINUTES: ${{ inputs.run_minutes || '30' }}
         run: |
           python bot.py --run-minutes "$RUN_MINUTES"
