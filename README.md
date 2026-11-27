@@ -74,7 +74,7 @@ cp .env.example .env
 python bot.py
 ```
 
-Windows 使用者可直接雙擊 `start_bot.bat` 啟動、`stop_bot.bat` 安全存檔停止，或執行 `setup_autostart.bat` 設定開機無黑窗自動常駐。
+Windows 使用者可直接雙擊 `start_bot.bat` 啟動、`stop_bot.bat` 安全存檔停止、`update_bot.bat` 一鍵從 GitHub 更新至最新版（自動備份存檔並保留 `.env` 與 `data/rpg.db`，支援 Git 與免 Git 下載兩種環境），或執行 `setup_autostart.bat` 設定開機無黑窗自動常駐。
 
 ### 測試與建置驗證
 ```bash

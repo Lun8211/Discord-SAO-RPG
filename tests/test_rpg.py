@@ -276,6 +276,7 @@ def test_windows_autostart_scripts_format_and_encoding() -> None:
         "start_bot_hidden.vbs",
         "stop_bot.bat",
         "setup_autostart.bat",
+        "update_bot.bat",
     ]
     for name in scripts:
         p = repo_root / name
@@ -283,6 +284,11 @@ def test_windows_autostart_scripts_format_and_encoding() -> None:
         raw = p.read_bytes()
         assert b"\r\n" in raw, f"{name} must use CRLF line endings for Windows"
         assert b"\n" not in raw.replace(b"\r\n", b""), f"{name} contains bare LF"
+
+    update_text = (repo_root / "update_bot.bat").read_text(encoding="utf-8")
+    assert "Lun8211/RPG" in update_text
+    assert ".env" in update_text
+    assert "load_and_validate_all" in update_text
 
     vbs_raw = (repo_root / "start_bot_hidden.vbs").read_bytes()
     vbs_raw.decode("ascii")
