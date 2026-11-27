@@ -36,6 +36,7 @@ from src.rpg.ui.embeds_tower import (
     build_argo_intel_embed,
     build_combat_embed,
     build_roguelike_embed,
+    build_secret_realm_embed,
     build_tower_embed,
 )
 
@@ -62,6 +63,7 @@ __all__ = [
     "build_profile_embed",
     "build_quests_embed",
     "build_roguelike_embed",
+    "build_secret_realm_embed",
     "build_shop_embed",
     "build_skills_embed",
     "build_start_embed",

@@ -13,8 +13,11 @@ from src.rpg.models import (
     BossMode,
     CombatSession,
     CursorColor,
+    DamageType,
+    EquipmentItem,
     GameError,
     GameMode,
+    Rarity,
     RoguelikeRun,
     ZoneType,
 )
@@ -133,6 +136,40 @@ class RPGEngine:
         player.world_boss_attempts = 3
         player.world_boss_attempts_date = time.strftime("%Y-%m-%d", time.gmtime(ts))
 
+        # Modest style-authentic starter weapon (base_atk<=10, base_hp<=15, base_def<=2)
+        t1_cfg = self.content.weapons_equipment.get("base_gear", {}).get("1", {})
+        wstyle_names = t1_cfg.get("weapon_style_names") or {}
+        starter_base_name = str(wstyle_names.get(style) or f"起始{wspec.get('name', '武器')}")
+        starter_weapon = EquipmentItem(
+            id=0,
+            user_id=uid,
+            template_id=f"starter_{style}_t1",
+            name=f"【初心】{starter_base_name}",
+            slot="weapon",
+            rarity=Rarity.PLAIN,
+            tier=1,
+            set_id="",
+            enhance_level=0,
+            enhance_pity=0,
+            base_hp=12,
+            base_mp=5,
+            base_atk=8,
+            base_def=2,
+            affixes={},
+            is_equipped=True,
+            is_locked=False,
+            created_at=ts,
+            weapon_style=style,
+            damage_type=str(wspec.get("dmg_type", DamageType.SLASH)),
+            named_passive="",
+            is_bound=False,
+            min_level=1,
+            escrow_state="",
+            base_sp=5,
+            base_spd=2,
+        )
+        created_starter = self.db.add_equipment(starter_weapon)
+
         stats = combat_sys.compute_full_player_stats(self.db, self.content, player, floor=1, now_ts=ts)
         player.hp = stats.max_hp
         player.sp = stats.max_sp
@@ -143,6 +180,7 @@ class RPGEngine:
 
         # Starter supplies + 7 life skills initialized at Lv.1 + Yui F1 log
         self.db.add_item(uid, "hp_potion_t1", 3)
+        self.db.add_item(uid, "bright_crystal_shard", 2)
         self.db.upsert_mastery(uid, style, 1, 0)
         for sk in _SEVEN_LIFE_SKILLS:
             self.db.upsert_mastery(uid, sk, 1, 0)
@@ -162,12 +200,13 @@ class RPGEngine:
             "col": player.col,
             "cursor_color": CursorColor.GREEN,
             "skill_slots": list(player.skill_slots),
+            "starter_weapon": created_starter,
             "player": player,
             "stats": stats,
             "message": (
                 f"⚔️ 【Link Start！】歡迎登入浮游城艾恩葛朗特第 1 層【起始之鎮】！\n"
                 f"卡迪納爾系統已登錄攻略者【{clean_name}】｜流派：{wspec.get('name', style)}｜模式：{mode_zh}｜"
-                f"初始資金 500 柯爾（本世界不存在玩家魔法，以純粹劍技攻略至第 100 層紅玉宮吧！）。"
+                f"配發初始武器【{created_starter.name}】、輝石碎片 x2 與 500 柯爾（本世界不存在玩家魔法，以純粹劍技攻略至第 100 層紅玉宮吧！）。"
             ),
         }
 
@@ -375,7 +414,12 @@ class RPGEngine:
 
     def extract_roguelike(self, user_id: str, now_ts: int | None = None) -> dict[str, Any]:
         return tower_sys.extract_roguelike(
-            self.db, self.active_roguelikes, self.active_combats, user_id, now_ts=now_ts
+            self.db,
+            self.active_roguelikes,
+            self.active_combats,
+            user_id,
+            content=self.content,
+            now_ts=now_ts,
         )
 
     # =========================================================================
@@ -591,8 +635,17 @@ class RPGEngine:
             self.db, self.content, self.active_combats, user_id, floor=floor, now_ts=now_ts, rng_seed=rng_seed
         )
 
-    def forge_craft(self, user_id: str, recipe_id: str, now_ts: int | None = None) -> dict[str, Any]:
-        return economy_sys.forge_craft(self.db, self.content, user_id, recipe_id, now_ts=now_ts)
+    def forge_craft(
+        self,
+        user_id: str,
+        recipe_id: str,
+        slot: str | None = None,
+        now_ts: int | None = None,
+        rng_seed: int | None = None,
+    ) -> dict[str, Any]:
+        return economy_sys.forge_craft(
+            self.db, self.content, user_id, recipe_id, slot=slot, now_ts=now_ts, rng_seed=rng_seed
+        )
 
     def enhance_equipment(
         self,
@@ -612,11 +665,146 @@ class RPGEngine:
             rng_seed=rng_seed,
         )
 
+    def batch_enhance_equipment(
+        self,
+        user_id: str,
+        item_uid: int,
+        target_level: int = 5,
+        use_protection: bool = False,
+        now_ts: int | None = None,
+        rng_seed: int | None = None,
+    ) -> dict[str, Any]:
+        return economy_sys.batch_enhance_equipment(
+            self.db,
+            self.content,
+            user_id,
+            item_uid,
+            target_level=target_level,
+            use_protection=use_protection,
+            now_ts=now_ts,
+            rng_seed=rng_seed,
+        )
+
     def apply_magic_stone(
-        self, user_id: str, item_uid: int, stone_id: str, rng_seed: int | None = None
+        self,
+        user_id: str,
+        item_uid: int,
+        stone_id: str,
+        target_affix_key: str | None = None,
+        rng_seed: int | None = None,
     ) -> dict[str, Any]:
         return economy_sys.apply_magic_stone(
-            self.db, self.content, user_id, item_uid, stone_id, rng_seed=rng_seed
+            self.db,
+            self.content,
+            user_id,
+            item_uid,
+            stone_id,
+            target_affix_key=target_affix_key,
+            rng_seed=rng_seed,
+        )
+
+    def dismantle_equipment(
+        self, user_id: str, item_uid: int, now_ts: int | None = None
+    ) -> dict[str, Any]:
+        return economy_sys.dismantle_equipment(self.db, self.content, user_id, item_uid, now_ts=now_ts)
+
+    def bulk_dismantle_equipment(
+        self, user_id: str, max_rarity: str = "fine", now_ts: int | None = None
+    ) -> dict[str, Any]:
+        return economy_sys.bulk_dismantle_equipment(
+            self.db, self.content, user_id, max_rarity=max_rarity, now_ts=now_ts
+        )
+
+    def temper_equipment(
+        self, user_id: str, item_uid: int, now_ts: int | None = None
+    ) -> dict[str, Any]:
+        return economy_sys.temper_equipment(self.db, self.content, user_id, item_uid, now_ts=now_ts)
+
+    def evolve_equipment_tier(
+        self, user_id: str, item_uid: int, now_ts: int | None = None
+    ) -> dict[str, Any]:
+        return economy_sys.evolve_equipment_tier(self.db, self.content, user_id, item_uid, now_ts=now_ts)
+
+    def promote_equipment_rarity(
+        self,
+        user_id: str,
+        item_uid: int,
+        now_ts: int | None = None,
+        rng_seed: int | None = None,
+    ) -> dict[str, Any]:
+        return economy_sys.promote_equipment_rarity(
+            self.db, self.content, user_id, item_uid, now_ts=now_ts, rng_seed=rng_seed
+        )
+
+    def socket_equipment_crystal(
+        self, user_id: str, item_uid: int, crystal_id: str, now_ts: int | None = None
+    ) -> dict[str, Any]:
+        return economy_sys.socket_equipment_crystal(
+            self.db, self.content, user_id, item_uid, crystal_id, now_ts=now_ts
+        )
+
+    def unsocket_equipment_crystal(
+        self, user_id: str, item_uid: int, now_ts: int | None = None
+    ) -> dict[str, Any]:
+        return economy_sys.unsocket_equipment_crystal(self.db, self.content, user_id, item_uid, now_ts=now_ts)
+
+    def transfer_enhance(
+        self,
+        user_id: str,
+        source_uid: int,
+        target_uid: int,
+        include_temper: bool = True,
+        now_ts: int | None = None,
+    ) -> dict[str, Any]:
+        return economy_sys.transfer_enhance(
+            self.db,
+            self.content,
+            user_id,
+            source_uid,
+            target_uid,
+            include_temper=include_temper,
+            now_ts=now_ts,
+        )
+
+    def auto_equip_best(self, user_id: str, now_ts: int | None = None) -> dict[str, Any]:
+        return economy_sys.auto_equip_best(
+            self.db, self.content, self.active_combats, user_id, now_ts=now_ts
+        )
+
+    def open_supply_crate(
+        self,
+        user_id: str,
+        crate_item_id: str,
+        slot: str | None = None,
+        now_ts: int | None = None,
+        rng_seed: int | None = None,
+    ) -> dict[str, Any]:
+        return economy_sys.open_supply_crate(
+            self.db,
+            self.content,
+            user_id,
+            crate_item_id,
+            slot=slot,
+            now_ts=now_ts,
+            rng_seed=rng_seed,
+        )
+
+    def buy_shop_equipment(
+        self,
+        user_id: str,
+        slot: str = "weapon",
+        tier: int | None = None,
+        now_ts: int | None = None,
+        rng_seed: int | None = None,
+    ) -> dict[str, Any]:
+        return economy_sys.buy_shop_equipment(
+            self.db,
+            self.content,
+            user_id,
+            slot=slot,
+            tier=tier,
+            now_ts=now_ts,
+            rng_seed=rng_seed,
         )
 
     def fuse_items(self, user_id: str, recipe_id: str, now_ts: int | None = None) -> dict[str, Any]:
@@ -659,9 +847,17 @@ class RPGEngine:
         count: int = 1,
         now_ts: int | None = None,
         rng_seed: int | None = None,
+        use_ticket: bool = False,
     ) -> dict[str, Any]:
         return economy_sys.gacha_pull(
-            self.db, self.content, user_id, chest_type=chest_type, count=count, now_ts=now_ts, rng_seed=rng_seed
+            self.db,
+            self.content,
+            user_id,
+            chest_type=chest_type,
+            count=count,
+            now_ts=now_ts,
+            rng_seed=rng_seed,
+            use_ticket=use_ticket,
         )
 
     # =========================================================================

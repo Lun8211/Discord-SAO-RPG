@@ -45,6 +45,32 @@ def _tier_for_floor(floor: int) -> int:
     return max(1, min(10, (int(floor) - 1) // 10 + 1))
 
 
+def enhance_crystal_for_tier(tier: int) -> str:
+    """Return the tier-appropriate SAO enhancement crystal item ID."""
+    t = max(1, int(tier))
+    if t <= 2:
+        return "bright_crystal_shard"
+    if t <= 4:
+        return "bright_crystal"
+    if t <= 6:
+        return "dark_crystal_shard"
+    if t <= 8:
+        return "dark_crystal"
+    return "dark_crystal_pure"
+
+
+SOCKET_CRYSTAL_IDS: tuple[str, ...] = (
+    "socket_crystal_crimson",
+    "socket_crystal_azure",
+    "socket_crystal_gale",
+    "socket_crystal_vampiric",
+    "socket_crystal_breaker",
+    "socket_crystal_aegis",
+    "socket_crystal_fortune",
+    "socket_crystal_starlight",
+)
+
+
 def _rarity_index(rarity: str) -> int:
     r = str(rarity or Rarity.PLAIN).lower()
     if r in SAO_RARITY_ORDER:
@@ -132,8 +158,31 @@ def generate_equipment_item(
     if chosen_slot not in SAO_SLOT_ORDER:
         chosen_slot = "weapon"
 
+    norm_style = str(weapon_style or "sword").strip().lower()
+    style_name_key = (
+        "sword" if norm_style == "dual_blades" else ("holy" if norm_style == "holy_sword" else norm_style)
+    )
     slot_names = tier_cfg.get("slot_names") or {}
-    base_name = str(slot_names.get(chosen_slot) or f"T{tier} {chosen_slot}")
+    wstyle_names = tier_cfg.get("weapon_style_names") or {}
+    is_offhand_weapon = False
+    if chosen_slot == "weapon":
+        base_name = str(wstyle_names.get(style_name_key) or slot_names.get("weapon") or f"T{tier} weapon")
+    elif chosen_slot == "offhand":
+        off_raw = tier_cfg.get("offhand_weapon_names")
+        prefer_offhand_blade = norm_style in ("dagger", "dual_blades") or (
+            norm_style not in ("mace", "holy", "holy_sword") and rgen.random() < 0.35
+        )
+        if prefer_offhand_blade and off_raw:
+            is_offhand_weapon = True
+            if isinstance(off_raw, list):
+                base_name = str(rgen.choice(off_raw))
+            else:
+                base_name = str(off_raw)
+        else:
+            base_name = str(slot_names.get("offhand") or f"T{tier} offhand")
+    else:
+        base_name = str(slot_names.get(chosen_slot) or f"T{tier} {chosen_slot}")
+
     prefix = str(rarities_cfg.get(chosen_rarity, {}).get("name") or "")
     chosen_set = set_id or (str(tier_cfg.get("set_id") or "") if chosen_rarity == Rarity.SET else "")
     full_name = f"【{prefix}】{base_name}" if prefix else base_name
@@ -145,9 +194,15 @@ def generate_equipment_item(
         sp = round((12 + floor * 1.0) * rmult)
         spd = round((4 + tier * 2) * rmult)
     elif chosen_slot == "offhand":
-        atk = round((12 + floor * 3.0) * rmult)
-        defense = round((16 + floor * 4.2) * rmult)
-        hp = round((65 + floor * 16) * rmult)
+        if is_offhand_weapon:
+            atk = round((18 + floor * 4.2) * rmult)
+            defense = round((10 + floor * 2.5) * rmult)
+            hp = round((50 + floor * 12) * rmult)
+            spd = round((6 + tier * 2) * rmult)
+        else:
+            atk = round((12 + floor * 3.0) * rmult)
+            defense = round((16 + floor * 4.2) * rmult)
+            hp = round((65 + floor * 16) * rmult)
     elif chosen_slot in ("helmet", "armor"):
         defense = round((18 + floor * 5.0) * rmult * (1.25 if chosen_slot == "armor" else 0.85))
         hp = round((95 + floor * 26) * rmult * (1.3 if chosen_slot == "armor" else 0.85))
@@ -175,13 +230,18 @@ def generate_equipment_item(
             affixes[str(ak)] = round(val, 4)
 
     w_classes = bundle.weapons_equipment.get("weapon_classes", {})
-    wstyle = weapon_style if chosen_slot == "weapon" else ""
-    dtype = str(w_classes.get(weapon_style, {}).get("dmg_type", DamageType.SLASH)) if chosen_slot == "weapon" else ""
+    wstyle = norm_style if chosen_slot == "weapon" else ""
+    dtype = (
+        str(w_classes.get(style_name_key, {}).get("dmg_type", DamageType.SLASH))
+        if chosen_slot == "weapon"
+        else ""
+    )
+    tpl_slot = "offhand_blade" if is_offhand_weapon else chosen_slot
 
     return EquipmentItem(
         id=0,
         user_id=str(user_id),
-        template_id=f"t{tier}_{chosen_slot}_{chosen_rarity}",
+        template_id=f"t{tier}_{tpl_slot}_{chosen_rarity}",
         name=full_name,
         slot=chosen_slot,
         rarity=chosen_rarity,
@@ -245,8 +305,11 @@ def grant_or_queue_equipment(
         return {
             "status": "filtered",
             "salvage_col": salvage_col,
+            "item_uid": None,
             "item_name": item.name,
             "rarity": item.rarity,
+            "slot": item.slot,
+            "tier": item.tier,
         }
 
     bag_used = count_unequipped_bag_items(db, player.user_id)
@@ -259,6 +322,8 @@ def grant_or_queue_equipment(
             "tier": item.tier,
             "set_id": item.set_id,
             "enhance_level": item.enhance_level,
+            "temper_level": item.temper_level,
+            "socket_crystal_id": item.socket_crystal_id,
             "base_hp": item.base_hp,
             "base_mp": item.base_mp,
             "base_atk": item.base_atk,
@@ -278,8 +343,11 @@ def grant_or_queue_equipment(
         return {
             "status": "pending_mailbox",
             "pending_loot_id": loot_id,
+            "item_uid": None,
             "item_name": item.name,
             "rarity": item.rarity,
+            "slot": item.slot,
+            "tier": item.tier,
         }
 
     created = db.add_equipment(item)
@@ -289,6 +357,8 @@ def grant_or_queue_equipment(
         "item": created,
         "item_name": created.name,
         "rarity": created.rarity,
+        "slot": created.slot,
+        "tier": created.tier,
     }
 
 
@@ -298,7 +368,7 @@ def claim_pending_loot(
     *,
     now_ts: int | None = None,
 ) -> dict[str, Any]:
-    """Claim pending mailbox items into bag while bag slots are available."""
+    """Claim pending mailbox items into bag (prioritizing Named/Legendary/Set gear when bag space is limited)."""
     ts = _now(now_ts)
     player = db.get_player(user_id)
     if player is None:
@@ -315,11 +385,20 @@ def claim_pending_loot(
             "message": "📬 待領取戰利品信箱目前沒有物品。",
         }
 
+    # Claim highest-rarity equipment first so LA Named/Legendary drops are never stuck behind low-tier trash
+    def _claim_priority(entry: dict[str, Any]) -> tuple[int, int, int]:
+        if entry["item_type"] == "equipment":
+            r = str((entry.get("payload") or {}).get("rarity", Rarity.PLAIN)).lower()
+            return (0, -_rarity_index(r), int(entry["id"]))
+        return (1, 0, int(entry["id"]))
+
+    ordered_pending = sorted(pending, key=_claim_priority)
+
     claimed_items: list[dict[str, Any]] = []
     remaining = 0
     bag_used = count_unequipped_bag_items(db, user_id)
 
-    for entry in pending:
+    for entry in ordered_pending:
         if entry["item_type"] == "equipment":
             if bag_used >= MAX_BAG_CAPACITY:
                 remaining += 1
@@ -355,6 +434,8 @@ def claim_pending_loot(
                 escrow_state="",
                 base_sp=int(p.get("base_sp", 0)),
                 base_spd=int(p.get("base_spd", 0)),
+                temper_level=int(p.get("temper_level", 0)),
+                socket_crystal_id=str(p.get("socket_crystal_id", "")),
             )
             created = db.add_equipment(eq)
             bag_used += 1
@@ -679,6 +760,8 @@ def explore_floor(
     combat_session: CombatSession | None = None
     col_gain = 0
     exp_gain = 0
+    items_gained: dict[str, int] = {}
+    equipment_drops: list[dict[str, Any]] = []
 
     for _ in range(steps):
         gain = rgen.randint(14, 24)
@@ -698,17 +781,22 @@ def explore_floor(
             logs.append(f"👹 發現樓層野外頭目【{combat_session.enemy_name}】！擊敗後將敞開頭目房大門！")
             break
         if roll < 0.30:
-            # Treasure chest (includes Mimic / F27 Crystal-Null Trap Room)
+            # Treasure chest (parse chests_loot.json `weights` list cleanly!)
             ctable = content.chests_loot["tier_tables"].get(fcfg["chest_table_id"], {})
-            tier_weights = ctable.get("tier_weights", {"wooden": 50, "iron": 30, "silver": 15, "gold": 5})
-            c_tiers = list(tier_weights.keys())
-            c_w = [float(tier_weights[k]) for k in c_tiers]
+            raw_weights = ctable.get("weights")
+            if isinstance(raw_weights, list) and raw_weights:
+                c_tiers = [str(entry["chest_tier"]) for entry in raw_weights]
+                c_w = [max(0.01, float(entry.get("weight", 1))) for entry in raw_weights]
+            else:
+                tier_weights = ctable.get("tier_weights", {"wooden": 50, "iron": 30, "silver": 15, "gold": 5})
+                c_tiers = list(tier_weights.keys())
+                c_w = [max(0.01, float(tier_weights[k])) for k in c_tiers]
             chosen_tier = rgen.choices(c_tiers, weights=c_w, k=1)[0]
             trap_type = "none"
             if floor == 27:
                 if chosen_tier == "mimic_trap" or rgen.random() < 0.65:
                     trap_type = "crystal_null_room"
-            elif chosen_tier == "mimic_trap" or rgen.random() < 0.22:
+            elif chosen_tier == "mimic_trap" or rgen.random() < 0.18:
                 trap_type = "mimic"
             chest_info = {
                 "chest_id": f"chest_{floor}_{rgen.randint(1000, 9999)}",
@@ -733,15 +821,42 @@ def explore_floor(
             event_type = "elite_combat" if is_elite else "monster_combat"
             logs.append(combat_session.logs[0])
             break
-        # Road event / safe discovery
+        # Road event / safe discovery (grants JSON reward_items + shrine heal + equipment chance!)
         ev_list = content.quests_events.get("events", [])
         evt = rgen.choice(ev_list) if ev_list else {"name": "前進偵查", "reward_col": 60}
         bonus_col = max(20, round(int(fcfg["col_base"]) * 1.4))
         bonus_exp = max(10, round(int(fcfg["exp_base"]) * 0.8))
         col_gain += bonus_col
         exp_gain += bonus_exp
+        ev_item_labels: list[str] = []
+        raw_reward_items = evt.get("reward_items")
+        if isinstance(raw_reward_items, dict):
+            for riid, rqty in raw_reward_items.items():
+                if str(riid) in content.items_crystals and int(rqty) > 0:
+                    db.add_item(user_id, str(riid), int(rqty))
+                    items_gained[str(riid)] = items_gained.get(str(riid), 0) + int(rqty)
+                    iname = content.items_crystals[str(riid)].get("name", riid)
+                    ev_item_labels.append(f"{iname}x{rqty}")
+        if str(evt.get("type", "")) == "shrine":
+            player.hp = stats.max_hp
+            player.sp = stats.max_sp
+        ev_gear_chance = min(0.65, 0.25 + stats.drop_bonus)
+        ev_gear_note = ""
+        if rgen.random() < ev_gear_chance:
+            ev_rarity = Rarity.RARE if rgen.random() < 0.38 else Rarity.FINE
+            ev_gear = generate_equipment_item(
+                user_id, floor, content, rarity=ev_rarity, weapon_style=player.weapon_style, now_ts=ts, rng=rgen
+            )
+            gres = grant_or_queue_equipment(
+                db, player, ev_gear, source=f"第{floor}層路途事件({evt.get('id', 'event')})", now_ts=ts, apply_filter=True
+            )
+            equipment_drops.append(gres)
+            ev_gear_note = f"、裝備【{ev_gear.name}】"
+        item_note = f"、道具 {', '.join(ev_item_labels)}" if ev_item_labels else ""
         event_type = "event"
-        logs.append(f"✨ 觸發事件【{evt.get('name', '前沿巡查')}】：獲得 {bonus_col} 柯爾與 {bonus_exp} 經驗！")
+        logs.append(
+            f"✨ 觸發事件【{evt.get('name', '前沿巡查')}】：獲得 {bonus_col} 柯爾、{bonus_exp} 經驗{item_note}{ev_gear_note}！"
+        )
 
     if progress >= 100:
         gate_unlocked = True
@@ -779,6 +894,8 @@ def explore_floor(
         "chest": chest_info,
         "col_gain": col_gain,
         "exp_gain": exp_gain,
+        "items": items_gained,
+        "equipment_drops": equipment_drops,
         "logs": logs,
         "message": logs[-1] if logs else f"🧭 第 {floor} 層探索度推進至 {progress}%。",
     }
@@ -826,6 +943,9 @@ def open_chest(
         return {
             "ok": True,
             "action": "leave",
+            "floor": floor,
+            "exploration_pct": int(exp_state["progress_pct"]),
+            "boss_gate_unlocked": bool(exp_state["boss_gate_unlocked"]),
             "in_combat": False,
             "message": "🚪 你謹慎地離開了寶箱所在房間。",
         }
@@ -860,6 +980,7 @@ def open_chest(
         return {
             "ok": True,
             "action": "inspect",
+            "floor": floor,
             "trap_detected": detected,
             "trap_type": trap_type if detected else "unknown",
             "searching_level": new_lv,
@@ -906,6 +1027,7 @@ def open_chest(
         return {
             "ok": True,
             "action": "open",
+            "floor": floor,
             "chest_tier": c_tier,
             "outcome": "crystal_null_room",
             "trap_triggered": "crystal_null_room",
@@ -933,6 +1055,7 @@ def open_chest(
         return {
             "ok": True,
             "action": "open",
+            "floor": floor,
             "chest_tier": c_tier,
             "outcome": "mimic",
             "trap_triggered": "mimic",
@@ -957,11 +1080,23 @@ def open_chest(
     guaranteed = list(ctable.get("guaranteed_pool") or [])
     items_gained: dict[str, int] = {}
     if guaranteed:
-        pick = rgen.choice(guaranteed)
+        g_weights = [max(0.01, float(p.get("weight", 1))) for p in guaranteed]
+        pick = rgen.choices(guaranteed, weights=g_weights, k=1)[0]
         iid = str(pick["item_id"])
         qty = rgen.randint(int(pick.get("min", 1)), int(pick.get("max", 1)))
-        db.add_item(user_id, iid, qty)
-        items_gained[iid] = qty
+        if iid in content.items_crystals:
+            db.add_item(user_id, iid, qty)
+            items_gained[iid] = items_gained.get(iid, 0) + qty
+
+    # Bonus crystal/shard roll driven by chest_tiers[c_tier]["crystal_chance"]
+    tier = _tier_for_floor(floor)
+    crys_chance = min(1.0, float(c_spec.get("crystal_chance", 0.25)) + stats.drop_bonus * 0.5)
+    if rgen.random() < crys_chance:
+        bonus_crys = enhance_crystal_for_tier(tier)
+        if bonus_crys in content.items_crystals:
+            bqty = 2 if c_tier in ("gold", "boss_relic") else 1
+            db.add_item(user_id, bonus_crys, bqty)
+            items_gained[bonus_crys] = items_gained.get(bonus_crys, 0) + bqty
 
     # Chest gear drop (respects loot filter & overflows to pending mailbox when bag full)
     tier_to_rarity = {
@@ -971,28 +1106,62 @@ def open_chest(
         "gold": Rarity.SET,
         "boss_relic": Rarity.LEGENDARY,
     }
+    set_ids = list(ctable.get("set_ids") or [])
+    chosen_rarity = tier_to_rarity.get(c_tier, Rarity.FINE)
+    chosen_set = rgen.choice(set_ids) if (chosen_rarity == Rarity.SET and set_ids) else ""
     gear = generate_equipment_item(
         user_id,
         floor,
         content,
-        rarity=tier_to_rarity.get(c_tier, Rarity.FINE),
+        rarity=chosen_rarity,
         weapon_style=player.weapon_style,
+        set_id=chosen_set,
         now_ts=ts,
         rng=rgen,
     )
     gear_res = grant_or_queue_equipment(
         db, player, gear, source=f"第{floor}層寶箱({c_tier})", now_ts=ts, apply_filter=True
     )
+    equipment_drops: list[dict[str, Any]] = [gear_res]
+
+    # Gold & Boss Relic chests yield an extra socket crystal or bonus Rare/Set equipment roll!
+    if c_tier in ("gold", "boss_relic"):
+        if rgen.random() < 0.55:
+            sock_id = rgen.choice(SOCKET_CRYSTAL_IDS)
+            if sock_id in content.items_crystals:
+                db.add_item(user_id, sock_id, 1)
+                items_gained[sock_id] = items_gained.get(sock_id, 0) + 1
+        else:
+            bonus_rarity = Rarity.SET if c_tier == "boss_relic" else Rarity.RARE
+            bonus_gear = generate_equipment_item(
+                user_id,
+                floor,
+                content,
+                rarity=bonus_rarity,
+                weapon_style=player.weapon_style,
+                set_id=rgen.choice(set_ids) if (bonus_rarity == Rarity.SET and set_ids) else "",
+                now_ts=ts,
+                rng=rgen,
+            )
+            equipment_drops.append(
+                grant_or_queue_equipment(
+                    db, player, bonus_gear, source=f"第{floor}層寶箱追加({c_tier})", now_ts=ts, apply_filter=True
+                )
+            )
 
     cname = str(c_spec.get("name", c_tier))
     return {
         "ok": True,
         "action": "open",
+        "floor": floor,
         "chest_tier": c_tier,
+        "exploration_pct": int(exp_state["progress_pct"]),
+        "boss_gate_unlocked": bool(exp_state["boss_gate_unlocked"]),
         "in_combat": False,
         "col_gain": col_reward,
         "items": items_gained,
         "equipment_result": gear_res,
+        "equipment_drops": equipment_drops,
         "message": f"🎁 開啟【{cname}】獲得 {col_reward} 柯爾與裝備【{gear.name}】！",
     }
 
@@ -1006,7 +1175,7 @@ def enter_secret_realm(
     now_ts: int | None = None,
     rng_seed: int | None = None,
 ) -> dict[str, Any]:
-    """Secret Realm & Miasma (`秘境與瘴氣`): enter, explore (stack Miasma + EXP), or leave."""
+    """Secret Realm & Miasma (`秘境與瘴氣`): enter, explore (stack Miasma + EXP + high-miasma gear), or leave."""
     ts = _now(now_ts)
     act = str(action or "explore").strip().lower()
     if act not in ("enter", "explore", "leave"):
@@ -1029,6 +1198,7 @@ def enter_secret_realm(
         return {
             "ok": True,
             "action": "enter",
+            "floor": player.current_floor,
             "zone": player.zone,
             "miasma_stacks": player.miasma_stacks,
             "miasma_exp_stacks": player.miasma_exp_stacks,
@@ -1048,6 +1218,7 @@ def enter_secret_realm(
         return {
             "ok": True,
             "action": "leave",
+            "floor": player.current_floor,
             "zone": player.zone,
             "miasma_stacks": player.miasma_stacks,
             "miasma_exp_stacks": 0,
@@ -1061,6 +1232,9 @@ def enter_secret_realm(
         raise GameError("請先進入秘境（enter）才能進行秘境深入探索！", code="NOT_IN_SECRET_REALM")
 
     rgen = _rng(rng_seed)
+    eqs = db.get_equipment(user_id, equipped_only=True)
+    stats = compute_player_stats(player, eqs, content, floor=player.current_floor)
+
     player.miasma_stacks = min(MAX_MIASMA_STACKS, player.miasma_stacks + 1)
     player.miasma_exp_stacks = min(MAX_MIASMA_STACKS, player.miasma_exp_stacks + 1)
     exp_mult = 1.0 + player.miasma_exp_stacks * 0.15
@@ -1073,9 +1247,47 @@ def enter_secret_realm(
     player.updated_at = ts
     db.save_player(player)
 
+    items_gained: dict[str, int] = {}
+    equipment_drops: list[dict[str, Any]] = []
+    loot_note = ""
+    if player.miasma_stacks >= 3:
+        tier = _tier_for_floor(player.current_floor)
+        crys_id = enhance_crystal_for_tier(tier)
+        if crys_id in content.items_crystals:
+            db.add_item(user_id, crys_id, 1)
+            items_gained[crys_id] = 1
+        gear_chance = min(0.85, 0.20 + player.miasma_stacks * 0.05 + stats.drop_bonus)
+        if rgen.random() < gear_chance:
+            if player.miasma_stacks >= 10:
+                sr_rarity = Rarity.LEGENDARY if rgen.random() < 0.30 else Rarity.SET
+            elif player.miasma_stacks >= 6:
+                sr_rarity = Rarity.SET if rgen.random() < 0.45 else Rarity.RARE
+            else:
+                sr_rarity = Rarity.RARE if rgen.random() < 0.45 else Rarity.FINE
+            sr_gear = generate_equipment_item(
+                user_id,
+                player.current_floor,
+                content,
+                rarity=sr_rarity,
+                weapon_style=player.weapon_style,
+                now_ts=ts,
+                rng=rgen,
+            )
+            gres = grant_or_queue_equipment(
+                db, player, sr_gear, source=f"第{player.current_floor}層秘境(瘴氣{player.miasma_stacks})", now_ts=ts, apply_filter=True
+            )
+            equipment_drops.append(gres)
+            loot_note = f"、秘境異寶【{sr_gear.name}】"
+        if player.miasma_stacks >= 6 and rgen.random() < 0.25:
+            sock_id = rgen.choice(SOCKET_CRYSTAL_IDS)
+            if sock_id in content.items_crystals:
+                db.add_item(user_id, sock_id, 1)
+                items_gained[sock_id] = items_gained.get(sock_id, 0) + 1
+
     return {
         "ok": True,
         "action": "explore",
+        "floor": player.current_floor,
         "zone": player.zone,
         "miasma_stacks": player.miasma_stacks,
         "miasma_exp_stacks": player.miasma_exp_stacks,
@@ -1083,9 +1295,11 @@ def enter_secret_realm(
         "dmg_taken_multiplier": round(dmg_taken_mult, 2),
         "exp_gain": exp_gain,
         "col_gain": col_gain,
+        "items": items_gained,
+        "equipment_drops": equipment_drops,
         "message": (
             f"🌫️ 深入【{fcfg['secret_realm_name']}】！瘴氣疊至 {player.miasma_stacks} 層"
-            f"（經驗 {exp_mult:.2f}x／受傷 {dmg_taken_mult:.2f}x），獲得 {exp_gain} EXP 與 {col_gain} 柯爾！"
+            f"（經驗 {exp_mult:.2f}x／受傷 {dmg_taken_mult:.2f}x），獲得 {exp_gain} EXP、{col_gain} 柯爾{loot_note}！"
         ),
     }
 
@@ -1199,6 +1413,7 @@ def step_roguelike(
     rgen = random.Random(zlib.crc32(f"{run.run_id}:{run.depth}:{node_index}".encode()))
     in_combat = False
     combat_session: CombatSession | None = None
+    items_gained: dict[str, int] = {}
     msg = ""
 
     if kind in ("battle", "warden"):
@@ -1246,7 +1461,21 @@ def step_roguelike(
         run.score += 100
         run.tokens += 8
         run.col_earned += bonus_col
-        msg = f"🎁 開啟地下迷宮遺跡寶箱！獲得 {bonus_col} 柯爾、8 迷宮代幣與 100 積分。"
+        crys_id = enhance_crystal_for_tier(_tier_for_floor(player.current_floor))
+        if crys_id in content.items_crystals:
+            db.add_item(user_id, crys_id, 2)
+            items_gained[crys_id] = 2
+        if rgen.random() < 0.35:
+            sock_id = rgen.choice(SOCKET_CRYSTAL_IDS)
+            if sock_id in content.items_crystals:
+                db.add_item(user_id, sock_id, 1)
+                items_gained[sock_id] = 1
+        extra_lbl = "、".join(
+            f"{content.items_crystals.get(k, {}).get('name', k)}x{v}" for k, v in items_gained.items()
+        )
+        msg = f"🎁 開啟地下迷宮遺跡寶箱！獲得 {bonus_col} 柯爾、8 迷宮代幣、100 積分" + (
+            f"與【{extra_lbl}】。" if extra_lbl else "。"
+        )
     elif kind == "merchant":
         spent = min(run.tokens, 5)
         run.tokens -= spent
@@ -1273,6 +1502,7 @@ def step_roguelike(
         "tokens": run.tokens,
         "col_earned": run.col_earned,
         "nodes": run.pending_nodes,
+        "items": items_gained,
         "in_combat": in_combat,
         "combat": combat_session,
         "roguelike": run,
@@ -1286,9 +1516,10 @@ def extract_roguelike(
     active_combats: dict[str, CombatSession],
     user_id: str,
     *,
+    content: SAOContentBundle | None = None,
     now_ts: int | None = None,
 ) -> dict[str, Any]:
-    """Safely extract from Underground Roguelike, settling score, Col, and best score record."""
+    """Safely extract from Underground Roguelike, settling score, Col, depth-scaled equipment, and quests."""
     ts = _now(now_ts)
     run = active_runs.get(user_id)
     if run is None or run.finished:
@@ -1311,17 +1542,64 @@ def extract_roguelike(
     db.save_player(player)
     active_runs.pop(user_id, None)
 
+    items_gained: dict[str, int] = {}
+    equipment_drops: list[dict[str, Any]] = []
+    if content is not None:
+        rgen = random.Random(zlib.crc32(f"extract:{run.run_id}:{run.depth}:{run.score}".encode()))
+        crys_id = enhance_crystal_for_tier(_tier_for_floor(player.current_floor))
+        crys_qty = max(1, min(6, run.depth))
+        if crys_id in content.items_crystals:
+            db.add_item(user_id, crys_id, crys_qty)
+            items_gained[crys_id] = crys_qty
+        if "forge_scrap" in content.items_crystals:
+            scrap_qty = max(1, run.depth)
+            db.add_item(user_id, "forge_scrap", scrap_qty)
+            items_gained["forge_scrap"] = scrap_qty
+        if run.depth >= 2 or run.score >= 60:
+            if run.depth >= 8 or run.score >= 800:
+                ext_rarity = Rarity.LEGENDARY
+            elif run.depth >= 5 or run.score >= 350:
+                ext_rarity = Rarity.SET
+            elif run.depth >= 3 or run.score >= 150:
+                ext_rarity = Rarity.RARE
+            else:
+                ext_rarity = Rarity.FINE
+            ext_gear = generate_equipment_item(
+                user_id,
+                max(1, player.current_floor),
+                content,
+                rarity=ext_rarity,
+                weapon_style=player.weapon_style,
+                now_ts=ts,
+                rng=rgen,
+            )
+            equipment_drops.append(
+                grant_or_queue_equipment(
+                    db, player, ext_gear, source=f"黑鐵宮迷宮撤離(深層{run.depth})", now_ts=ts, apply_filter=False
+                )
+            )
+
+    week_key = time.strftime("%Y-W%W", time.gmtime(ts))
+    db.increment_quest(user_id, "weekly", week_key, "wq_roguelike_3", 3, delta=1)
+
+    gear_note = f"、裝備【{equipment_drops[0]['item_name']}】" if equipment_drops else ""
     return {
         "ok": True,
         "run_id": run.run_id,
+        "floor": player.current_floor,
         "extracted": True,
         "depth_reached": run.depth,
         "score": run.score,
         "best_score": player.roguelike_best_score,
         "col_gain": total_col,
         "exp_gain": exp_gain,
+        "items": items_gained,
+        "equipment_drops": equipment_drops,
         "zone": player.zone,
-        "message": f"🏛️ 成功撤離黑鐵宮地下迷宮！結算積分 {run.score}（最高 {player.roguelike_best_score}），獲得 {total_col} 柯爾與 {exp_gain} EXP！",
+        "message": (
+            f"🏛️ 成功撤離黑鐵宮地下迷宮！結算積分 {run.score}（最高 {player.roguelike_best_score}），"
+            f"獲得 {total_col} 柯爾、{exp_gain} EXP{gear_note}！"
+        ),
     }
 
 

@@ -352,6 +352,7 @@ def compute_player_stats(
 
     weq = _get_section(content, "weapons_equipment")
     named_items = weq.get("named_items", {})
+    items_catalog = _get_section(content, "items_crystals")
 
     for eq in equipped_items:
         raw_hp += _safe_float(_read_attr_or_key(eq, "hp", "base_hp", default=0))
@@ -370,6 +371,31 @@ def compute_player_stats(
             nspec = named_items.get(tpl_id)
             if isinstance(nspec, Mapping) and isinstance(nspec.get("passive_bonuses"), Mapping):
                 _merge_mod_bucket(mods, nspec["passive_bonuses"])
+
+        # Tempering / Awakening milestone passives (★3 & ★5)
+        t_lv = int(_safe_float(_read_attr_or_key(eq, "temper_level", default=0), 0.0))
+        if t_lv >= 3:
+            _merge_mod_bucket(
+                mods,
+                {
+                    "crit_rate": 0.03,
+                    "res_slash": 0.03,
+                    "res_pierce": 0.03,
+                    "res_blunt": 0.03,
+                    "res_dragon": 0.03,
+                },
+            )
+        if t_lv >= 5:
+            _merge_mod_bucket(mods, {"skill_dmg_bonus": 0.08, "dmg_reduction": 0.05})
+
+        # Socketed Combat Crystal bonuses
+        sock_id = str(_read_attr_or_key(eq, "socket_crystal_id", default="") or "").strip()
+        if sock_id and isinstance(items_catalog, Mapping):
+            cspec = items_catalog.get(sock_id)
+            if isinstance(cspec, Mapping):
+                eff = cspec.get("effect")
+                if isinstance(eff, Mapping) and isinstance(eff.get("socket_bonuses"), Mapping):
+                    _merge_mod_bucket(mods, eff["socket_bonuses"])
 
     # 2pc / 4pc Equipment Set bonuses
     active_sets, set_bonuses = compute_set_bonuses(equipped_items, content)

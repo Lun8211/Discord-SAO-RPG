@@ -93,6 +93,125 @@ class PartyLobbyView(discord.ui.View):
                 await interaction.response.send_message(embed=build_error_embed("離隊失敗", str(exc)), ephemeral=True)
 
 
+class _CallbackButton(discord.ui.Button[Any]):
+    """Typed dynamic Button avoiding mypy method-assign errors."""
+
+    def __init__(
+        self,
+        *,
+        label: str,
+        style: discord.ButtonStyle,
+        custom_id: str,
+        row: int,
+        on_click: Any,
+    ) -> None:
+        super().__init__(label=label, style=style, custom_id=custom_id, row=row)
+        self._on_click = on_click
+
+    async def callback(self, interaction: discord.Interaction) -> None:
+        await self._on_click(interaction)
+
+
+class PostCoopRaidView(discord.ui.View):
+    """PUBLIC post-raid continuation panel: return to Party Lobby, warp party to next floor, or open personal Tower HUD."""
+
+    def __init__(
+        self,
+        engine: RPGEngine,
+        party_id: str,
+        *,
+        floor: int = 1,
+        victory: bool = True,
+        timeout: float = 600.0,
+    ) -> None:
+        super().__init__(timeout=timeout)
+        self.engine = engine
+        self.party_id = str(party_id)
+        self.floor = max(1, min(100, int(floor)))
+        self.victory = bool(victory)
+        self._ui_lock = asyncio.Lock()
+
+        self.add_item(
+            _CallbackButton(
+                label="🚩 返回隊伍大廳",
+                style=discord.ButtonStyle.primary,
+                custom_id="sao_post_raid:lobby",
+                row=0,
+                on_click=self._on_lobby,
+            )
+        )
+
+        if self.victory and self.floor < 100:
+            self.add_item(
+                _CallbackButton(
+                    label=f"⬆️ 全隊傳送第 {self.floor + 1} 層",
+                    style=discord.ButtonStyle.success,
+                    custom_id="sao_post_raid:next_floor",
+                    row=0,
+                    on_click=self._on_next_floor,
+                )
+            )
+
+        self.add_item(
+            _CallbackButton(
+                label="🏰 開啟我的爬塔面板",
+                style=discord.ButtonStyle.secondary,
+                custom_id="sao_post_raid:my_tower",
+                row=0,
+                on_click=self._on_my_tower,
+            )
+        )
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return True
+
+    async def _on_lobby(self, interaction: discord.Interaction) -> None:
+        async with self._ui_lock:
+            lobby = self.engine.db.get_party(self.party_id)
+            if lobby is None:
+                await interaction.response.send_message(
+                    embed=build_error_embed("隊伍已解散", f"隊伍 `{self.party_id}` 已不存在。"),
+                    ephemeral=True,
+                )
+                return
+            self.stop()
+            await interaction.response.edit_message(
+                embed=build_party_lobby_embed({"party": lobby, "message": f"🚩 已返回第 {lobby.floor} 層隊伍大廳！"}),
+                view=PartyLobbyView(self.engine, self.party_id),
+            )
+
+    async def _on_next_floor(self, interaction: discord.Interaction) -> None:
+        async with self._ui_lock:
+            try:
+                target_f = min(100, self.floor + 1)
+                res = self.engine.party_group_teleport(self.party_id, str(interaction.user.id), target_f)
+                lobby = self.engine.db.get_party(self.party_id)
+                self.stop()
+                await interaction.response.edit_message(
+                    embed=build_party_lobby_embed({"party": lobby, "floor": target_f, "message": res["message"]}),
+                    view=PartyLobbyView(self.engine, self.party_id),
+                )
+            except GameError as exc:
+                await interaction.response.send_message(embed=build_error_embed("集體傳送失敗", str(exc)), ephemeral=True)
+
+    async def _on_my_tower(self, interaction: discord.Interaction) -> None:
+        from src.rpg.ui.embeds_tower import build_tower_embed
+        from src.rpg.ui.views_tower import TowerFloorView
+
+        uid = str(interaction.user.id)
+        try:
+            prof = self.engine.get_profile(uid)
+            cur_f = int(prof.get("current_floor", 1))
+            info = self.engine.get_floor_info(cur_f, user_id=uid)
+            await interaction.response.send_message(
+                embed=build_tower_embed(info),
+                view=TowerFloorView(self.engine, uid, cur_f),
+                ephemeral=True,
+            )
+        except GameError as exc:
+            await interaction.response.send_message(embed=build_error_embed("開啟爬塔面板失敗", str(exc)), ephemeral=True)
+
+
 class CoopRaidView(discord.ui.View):
     """PUBLIC synchronized multi-human co-op Boss Raid HUD with per-raid `asyncio.Lock`."""
 
@@ -104,6 +223,13 @@ class CoopRaidView(discord.ui.View):
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return True
+
+    def _build_post_view(self, res: dict[str, Any]) -> discord.ui.View:
+        raid = res.get("raid")
+        pid = str(getattr(raid, "party_id", "") or "")
+        fl = int(getattr(raid, "floor", res.get("floor", 1)))
+        self.stop()
+        return PostCoopRaidView(self.engine, pid, floor=fl, victory=bool(res.get("victory", False)))
 
     async def _submit(
         self,
@@ -122,7 +248,7 @@ class CoopRaidView(discord.ui.View):
                     skill_id=skill_id,
                     item_id=item_id,
                 )
-                next_view = None if res.get("finished") else self
+                next_view: discord.ui.View = self._build_post_view(res) if res.get("finished") else self
                 await interaction.response.edit_message(embed=build_coop_raid_embed(res), view=next_view)
             except GameError as exc:
                 await interaction.response.send_message(embed=build_error_embed("行動受阻", str(exc)), ephemeral=True)
@@ -165,7 +291,7 @@ class CoopRaidView(discord.ui.View):
                 res = self.engine.resolve_raid_round(
                     self.raid_id, requester_id=str(interaction.user.id), force_timeout=True
                 )
-                next_view = None if res.get("finished") else self
+                next_view: discord.ui.View = self._build_post_view(res) if res.get("finished") else self
                 await interaction.response.edit_message(embed=build_coop_raid_embed(res), view=next_view)
             except GameError as exc:
                 await interaction.response.send_message(embed=build_error_embed("無法結算回合", str(exc)), ephemeral=True)

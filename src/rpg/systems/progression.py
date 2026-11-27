@@ -14,12 +14,18 @@ from src.rpg.models import (
     CursorColor,
     GameError,
     PlayerProfile,
+    Rarity,
     ZoneType,
 )
 from src.rpg.systems.combat import (
     apply_exp_and_level_up,
     compute_full_player_stats,
     start_floor_boss,
+)
+from src.rpg.systems.tower import (
+    enhance_crystal_for_tier,
+    generate_equipment_item,
+    grant_or_queue_equipment,
 )
 
 VALID_STAT_KEYS: dict[str, str] = {
@@ -289,6 +295,9 @@ def mine_gather(
     player.updated_at = ts
     db.save_player(player)
 
+    today_key = time.strftime("%Y-%m-%d", time.gmtime(ts))
+    db.increment_quest(user_id, "daily", today_key, "dq_mine_3", 3, delta=1)
+
     names = ", ".join(
         f"{content.items_crystals.get(oid, {}).get('name', oid)} x{q}" for oid, q in ores_gained.items()
     )
@@ -381,7 +390,7 @@ def get_quests(
 
     daily_state = db.get_quests(user_id, "daily", today)
     weekly_state = db.get_quests(user_id, "weekly", week)
-    bounty_state = db.get_quests(user_id, "bounty", f"tier_{tier}")
+    bounty_cache: dict[int, dict[str, Any]] = {}
 
     daily_list = []
     for q in content.quests_events.get("daily_quests", []):
@@ -398,7 +407,10 @@ def get_quests(
     bounty_list = []
     for q in content.quests_events.get("bounties", []):
         qid = str(q["id"])
-        st = bounty_state.get(qid, {"progress": 0, "target": int(q["target"]), "claimed": False})
+        q_tier = int(q.get("tier", tier))
+        if q_tier not in bounty_cache:
+            bounty_cache[q_tier] = db.get_quests(user_id, "bounty", f"tier_{q_tier}")
+        st = bounty_cache[q_tier].get(qid, {"progress": 0, "target": int(q["target"]), "claimed": False})
         bounty_list.append({**q, **st})
 
     story_list = []
@@ -629,12 +641,14 @@ def claim_expedition(
         emin, emax = espec.get("exp_range", [120, 240])
         ore_pool = list(espec.get("ore_pool") or ["copper_vein_ore"])
         ename = str(espec.get("name", exp_rec.expedition_id))
+        exp_floor = max(1, int(espec.get("min_floor", player.current_floor)))
     else:
         # Support legacy v1 migrated expeditions cleanly
         cmin, cmax = 350, 650
         emin, emax = 150, 280
         ore_pool = ["copper_vein_ore", "iron_vein_ore"]
         ename = exp_rec.expedition_id
+        exp_floor = max(1, player.current_floor)
 
     col_gain = rgen.randint(int(cmin), int(cmax))
     exp_gain = rgen.randint(int(emin), int(emax))
@@ -642,18 +656,53 @@ def claim_expedition(
     ore_qty = rgen.randint(2, 4)
 
     db.clear_expedition(user_id)
+    items_gained: dict[str, int] = {ore_id: ore_qty}
     db.add_item(user_id, ore_id, ore_qty)
+    tier = max(1, min(10, (exp_floor - 1) // 10 + 1))
+    crys_id = enhance_crystal_for_tier(tier)
+    if crys_id in content.items_crystals:
+        crys_qty = 1 + (1 if exp_floor >= 45 else 0)
+        db.add_item(user_id, crys_id, crys_qty)
+        items_gained[crys_id] = items_gained.get(crys_id, 0) + crys_qty
+
     apply_exp_and_level_up(player, exp_gain)
     player.col += col_gain
     player.updated_at = ts
     db.save_player(player)
+
+    # 45%–100% tier-scaled equipment drop on offline expedition completion!
+    equipment_drops: list[dict[str, Any]] = []
+    drop_chance = min(1.0, 0.45 + (tier - 1) * 0.08)
+    if rgen.random() < drop_chance:
+        roll = rgen.random()
+        if exp_floor >= 80:
+            ex_rarity = Rarity.LEGENDARY if roll < 0.25 else (Rarity.SET if roll < 0.70 else Rarity.RARE)
+        elif exp_floor >= 45:
+            ex_rarity = Rarity.SET if roll < 0.35 else (Rarity.RARE if roll < 0.80 else Rarity.FINE)
+        else:
+            ex_rarity = Rarity.RARE if roll < 0.35 else Rarity.FINE
+        eq = generate_equipment_item(
+            user_id,
+            max(exp_floor, player.current_floor),
+            content,
+            rarity=ex_rarity,
+            weapon_style=player.weapon_style,
+            now_ts=ts,
+            rng=rgen,
+        )
+        equipment_drops.append(
+            grant_or_queue_equipment(db, player, eq, source=f"離線遠征({ename})", now_ts=ts, apply_filter=True)
+        )
+
+    gear_note = f"、裝備【{equipment_drops[0]['item_name']}】" if equipment_drops else ""
     return {
         "ok": True,
         "expedition_id": exp_rec.expedition_id,
         "col_gain": col_gain,
         "exp_gain": exp_gain,
-        "items": {ore_id: ore_qty},
-        "message": f"🏕️ 遠征【{ename}】凱旋歸來！獲得 {col_gain} 柯爾、{exp_gain} EXP 與礦材 {ore_id} x{ore_qty}！",
+        "items": items_gained,
+        "equipment_drops": equipment_drops,
+        "message": f"🏕️ 遠征【{ename}】凱旋歸來！獲得 {col_gain} 柯爾、{exp_gain} EXP、礦材 {ore_id} x{ore_qty}{gear_note}！",
     }
 
 
@@ -739,14 +788,20 @@ def _check_achievement_condition(
         return db.get_max_enhance_level(player.user_id) >= 10
     if ach_id == "sao_ach_enhance_15":
         return db.get_max_enhance_level(player.user_id) >= 15
-    if ach_id == "sao_ach_guild":
+    if ach_id == "sao_ach_forge_master":
+        m = db.get_mastery(player.user_id)
+        return int(m.get("blacksmithing", {}).get("level", 1)) >= 40 or db.get_max_enhance_level(player.user_id) >= 15
+    if ach_id == "sao_ach_cook_master":
+        m = db.get_mastery(player.user_id)
+        return int(m.get("cooking", {}).get("level", 1)) >= 40
+    if ach_id in ("sao_ach_guild", "sao_ach_guild_leader"):
         return player.guild_id is not None
     if ach_id == "sao_ach_rebirth":
         return player.rebirth_count >= 1
     if ach_id == "sao_ach_mine_50":
         return player.total_mines >= 50
-    if ach_id == "sao_ach_roguelike":
-        return player.roguelike_best_score >= 300
+    if ach_id in ("sao_ach_roguelike", "sao_ach_roguelike_boss"):
+        return player.roguelike_best_score >= 180
     if ach_id == "sao_ach_turnin":
         return len(db.get_achievement_turnins(player.user_id)) >= 1
     if ach_id == "sao_ach_first_step":

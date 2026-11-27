@@ -35,16 +35,24 @@ from src.rpg.ui.embeds_tower import (
     build_argo_intel_embed,
     build_combat_embed,
     build_roguelike_embed,
+    build_secret_realm_embed,
     build_tower_embed,
 )
-from src.rpg.ui.views_core import ProfileView
+from src.rpg.ui.views_core import BagEquipView, ProfileView
 from src.rpg.ui.views_party import CoopRaidView, DuelView, PartyLobbyView, WorldBossView
-from src.rpg.ui.views_social import DailyQuestView, LeaderboardView, ShopView
+from src.rpg.ui.views_social import (
+    DailyQuestView,
+    LeaderboardView,
+    ShopView,
+    WorkshopView,
+)
 from src.rpg.ui.views_tower import (
     ChestView,
     RoguelikeView,
+    SecretRealmView,
     SoloCombatView,
     TowerFloorView,
+    _build_post_combat_view_for_player,
 )
 
 
@@ -149,7 +157,13 @@ def register_rpg_commands(tree: app_commands.CommandTree, engine: RPGEngine) -> 
                 )
             elif action == "town":
                 res = engine.travel_zone(uid, "town")
-                await interaction.response.send_message(res["message"])
+                fl = int(res.get("floor", 1))
+                info = engine.get_floor_info(fl, user_id=uid)
+                info["flavor_desc"] = res["message"]
+                await interaction.response.send_message(
+                    embed=build_tower_embed(info),
+                    view=TowerFloorView(engine, uid, fl),
+                )
             elif action == "explore":
                 res = engine.explore_floor(uid, steps=steps)
                 if res.get("in_combat"):
@@ -163,23 +177,34 @@ def register_rpg_commands(tree: app_commands.CommandTree, engine: RPGEngine) -> 
                         view=ChestView(engine, uid),
                     )
                 else:
-                    info = engine.get_floor_info(int(res["floor"]), user_id=uid)
-                    info["flavor_desc"] = res["message"]
+                    fl = int(res.get("floor", 1))
+                    info = engine.get_floor_info(fl, user_id=uid)
+                    post_view = _build_post_combat_view_for_player(
+                        engine,
+                        uid,
+                        combat_mode="field",
+                        floor=fl,
+                        outcome="event",
+                        dropped_equipment=bool(res.get("equipment_drops")),
+                    )
                     await interaction.response.send_message(
-                        embed=build_tower_embed(info),
-                        view=TowerFloorView(engine, uid, int(res["floor"])),
+                        embed=build_combat_embed(res, floor_info=info),
+                        view=post_view,
                     )
             elif action == "secret_realm":
                 prof = engine.get_profile(uid)
                 if prof["zone"] != "secret_realm":
                     engine.enter_secret_realm(uid, action="enter")
                 res = engine.enter_secret_realm(uid, action="explore")
-                await interaction.response.send_message(res["message"])
+                await interaction.response.send_message(
+                    embed=build_secret_realm_embed(res),
+                    view=SecretRealmView(engine, uid),
+                )
             elif action == "roguelike":
                 res = engine.start_roguelike(uid)
                 await interaction.response.send_message(
                     embed=build_roguelike_embed(res),
-                    view=RoguelikeView(engine, uid),
+                    view=RoguelikeView(engine, uid, nodes=res.get("nodes")),
                 )
             else:
                 prof = engine.get_profile(uid)
@@ -361,7 +386,7 @@ def register_rpg_commands(tree: app_commands.CommandTree, engine: RPGEngine) -> 
         except GameError as exc:
             await _send_error(interaction, "劍技／天賦操作失敗", exc)
 
-    @tree.command(name="bag", description="開啟裝備背包、消耗品快取袋、待領取信箱與戰利品過濾設定")
+    @tree.command(name="bag", description="開啟互動裝備背包、穿戴／一鍵最強／分解、消耗品與待領信箱")
     async def cmd_bag(interaction: discord.Interaction, claim_mailbox: bool = False) -> None:
         uid = str(interaction.user.id)
         try:
@@ -372,22 +397,29 @@ def register_rpg_commands(tree: app_commands.CommandTree, engine: RPGEngine) -> 
             prof = engine.get_profile(uid)
             await interaction.response.send_message(
                 embed=build_bag_embed(prof, engine.content),
-                view=ProfileView(engine, uid),
+                view=BagEquipView(engine, uid),
             )
         except GameError as exc:
             await _send_error(interaction, "背包開啟失敗", exc)
 
-    @tree.command(name="equip", description="穿戴裝備、鎖定裝備、儲存或一鍵套用裝備方案（1～5）")
+    @tree.command(name="equip", description="穿戴裝備、一鍵最強換裝、鎖定裝備或套用裝備方案（1～5）")
     async def cmd_equip(
         interaction: discord.Interaction,
         item_uid: int | None = None,
         toggle_lock: bool = False,
         loadout_slot: int | None = None,
         save_name: str | None = None,
+        auto_best: bool = False,
     ) -> None:
         uid = str(interaction.user.id)
         try:
-            if loadout_slot is not None:
+            if auto_best:
+                res = engine.auto_equip_best(uid)
+                prof = engine.get_profile(uid)
+                embed = build_bag_embed(prof, engine.content)
+                embed.description = f"{res['message']}\n\n{embed.description or ''}"
+                await interaction.response.send_message(embed=embed, view=BagEquipView(engine, uid))
+            elif loadout_slot is not None:
                 res = (
                     engine.save_loadout(uid, loadout_slot, save_name)
                     if save_name
@@ -399,7 +431,10 @@ def register_rpg_commands(tree: app_commands.CommandTree, engine: RPGEngine) -> 
                 await interaction.response.send_message(res["message"])
             else:
                 prof = engine.get_profile(uid)
-                await interaction.response.send_message(embed=build_bag_embed(prof, engine.content))
+                await interaction.response.send_message(
+                    embed=build_bag_embed(prof, engine.content),
+                    view=BagEquipView(engine, uid),
+                )
         except GameError as exc:
             await _send_error(interaction, "裝備操作失敗", exc)
 
@@ -412,43 +447,126 @@ def register_rpg_commands(tree: app_commands.CommandTree, engine: RPGEngine) -> 
         except GameError as exc:
             await _send_error(interaction, "檢視玩家失敗", exc)
 
-    @tree.command(name="forge", description="莉茲貝特工坊：鍛造裝備、強化 +1～+15、魔石洗詞綴與結晶融合")
+    @tree.command(name="forge", description="莉茲貝特互動工坊：鍛造、強化+15、鍛星★5、升階、升品、鑲嵌、轉移與分解")
     @app_commands.choices(
         action=[
+            app_commands.Choice(name="🔨 互動工坊面板 (panel)", value="panel"),
             app_commands.Choice(name="🔨 鍛造配方 (craft)", value="craft"),
             app_commands.Choice(name="✨ 強化裝備 +1~+15 (enhance)", value="enhance"),
-            app_commands.Choice(name="💎 魔石重鑄詞綴 (stone)", value="stone"),
+            app_commands.Choice(name="⚡ 批量強化至目標等級 (batch_enhance)", value="batch_enhance"),
+            app_commands.Choice(name="⭐ 鍛星淬鍊 ★1~★5 (temper)", value="temper"),
+            app_commands.Choice(name="⬆️ 裝備升階 T1~T10 (evolve)", value="evolve"),
+            app_commands.Choice(name="🌟 裝備升品 (promote)", value="promote"),
+            app_commands.Choice(name="💠 鑲嵌戰鬥結晶 (socket)", value="socket"),
+            app_commands.Choice(name="🔓 拆下鑲嵌結晶 (unsocket)", value="unsocket"),
+            app_commands.Choice(name="🔁 強化與鍛星轉移 (transfer)", value="transfer"),
+            app_commands.Choice(name="💎 魔石重鑄／擴孔詞綴 (stone)", value="stone"),
             app_commands.Choice(name="⚗️ 結晶與素材融合 (fuse)", value="fuse"),
+            app_commands.Choice(name="♻️ 分解指定裝備 (dismantle)", value="dismantle"),
+            app_commands.Choice(name="🧹 批量分解裝備 (bulk_dismantle)", value="bulk_dismantle"),
         ]
     )
     async def cmd_forge(
         interaction: discord.Interaction,
-        action: str = "craft",
+        action: str = "panel",
         recipe_id: str | None = None,
         item_uid: int | None = None,
         stone_id: str = "reroll_stone",
         use_protection: bool = False,
+        slot: str | None = None,
+        target_uid: int | None = None,
+        crystal_id: str | None = None,
+        target_level: int = 5,
+        max_rarity: str = "fine",
     ) -> None:
         uid = str(interaction.user.id)
         try:
-            if action == "enhance":
+            # Backward compatibility: passing recipe_id with default action executes craft directly.
+            eff_action = "craft" if (action == "panel" and recipe_id) else action
+            if eff_action == "panel":
+                prof = engine.get_profile(uid)
+                wview = WorkshopView(engine, uid, selected_item_uid=item_uid)
+                sel = wview.get_selected_item(prof)
+                embed = build_workshop_embed(
+                    prof,
+                    prof.get("equipment") or [],
+                    prof.get("inventory") or {},
+                    selected_item=sel,
+                    protection_on=wview.protection_on,
+                )
+                await interaction.response.send_message(embed=embed, view=wview)
+                return
+
+            if eff_action == "enhance":
                 if item_uid is None:
                     raise GameError("請輸入欲強化的裝備編號 item_uid。", code="MISSING_ITEM_UID")
                 res = engine.enhance_equipment(uid, item_uid, use_protection=use_protection)
-                await interaction.response.send_message(embed=build_workshop_embed("裝備強化", res))
-            elif action == "stone":
+                title = "裝備強化"
+            elif eff_action == "batch_enhance":
+                if item_uid is None:
+                    raise GameError("請輸入欲批量強化的裝備編號 item_uid。", code="MISSING_ITEM_UID")
+                res = engine.batch_enhance_equipment(
+                    uid, item_uid, target_level=target_level, use_protection=use_protection
+                )
+                title = "批量強化"
+            elif eff_action == "temper":
+                if item_uid is None:
+                    raise GameError("請輸入欲鍛星淬鍊的裝備編號 item_uid。", code="MISSING_ITEM_UID")
+                res = engine.temper_equipment(uid, item_uid)
+                title = "鍛星淬鍊"
+            elif eff_action == "evolve":
+                if item_uid is None:
+                    raise GameError("請輸入欲升階的裝備編號 item_uid。", code="MISSING_ITEM_UID")
+                res = engine.evolve_equipment_tier(uid, item_uid)
+                title = "裝備升階"
+            elif eff_action == "promote":
+                if item_uid is None:
+                    raise GameError("請輸入欲升品的裝備編號 item_uid。", code="MISSING_ITEM_UID")
+                res = engine.promote_equipment_rarity(uid, item_uid)
+                title = "裝備升品"
+            elif eff_action == "socket":
+                if item_uid is None:
+                    raise GameError("請輸入欲鑲嵌結晶的裝備編號 item_uid。", code="MISSING_ITEM_UID")
+                if not crystal_id:
+                    raise GameError("請指定欲鑲嵌的戰鬥結晶 crystal_id。", code="MISSING_CRYSTAL_ID")
+                res = engine.socket_equipment_crystal(uid, item_uid, crystal_id)
+                title = "結晶鑲嵌"
+            elif eff_action == "unsocket":
+                if item_uid is None:
+                    raise GameError("請輸入欲拆下結晶的裝備編號 item_uid。", code="MISSING_ITEM_UID")
+                res = engine.unsocket_equipment_crystal(uid, item_uid)
+                title = "結晶拆卸"
+            elif eff_action == "transfer":
+                if item_uid is None or target_uid is None:
+                    raise GameError("強化轉移須同時提供來源裝備 item_uid 與目標裝備 target_uid。", code="MISSING_ITEM_UID")
+                res = engine.transfer_enhance(uid, item_uid, target_uid)
+                title = "強化轉移"
+            elif eff_action == "stone":
                 if item_uid is None:
                     raise GameError("請輸入欲使用魔石的裝備編號 item_uid。", code="MISSING_ITEM_UID")
                 res = engine.apply_magic_stone(uid, item_uid, stone_id)
-                await interaction.response.send_message(embed=build_workshop_embed("魔石洗煉", res))
-            elif action == "fuse":
+                title = "魔石洗煉"
+            elif eff_action == "fuse":
                 rid = recipe_id or "fuse_bright_crystal"
                 res = engine.fuse_items(uid, rid)
-                await interaction.response.send_message(embed=build_workshop_embed("結晶融合", res))
+                title = "結晶融合"
+            elif eff_action == "dismantle":
+                if item_uid is None:
+                    raise GameError("請輸入欲分解的裝備編號 item_uid。", code="MISSING_ITEM_UID")
+                res = engine.dismantle_equipment(uid, item_uid)
+                title = "裝備分解"
+            elif eff_action == "bulk_dismantle":
+                res = engine.bulk_dismantle_equipment(uid, max_rarity=max_rarity)
+                title = "批量分解"
             else:
                 rid = recipe_id or "forge_t1_gear"
-                res = engine.forge_craft(uid, rid)
-                await interaction.response.send_message(embed=build_workshop_embed("鍛造打造", res))
+                res = engine.forge_craft(uid, rid, slot=slot)
+                title = "鍛造打造"
+
+            await interaction.response.send_message(
+                embed=build_workshop_embed(title, res),
+                view=WorkshopView(engine, uid, selected_item_uid=item_uid),
+            )
         except GameError as exc:
             await _send_error(interaction, "工坊操作失敗", exc)
 
@@ -488,25 +606,46 @@ def register_rpg_commands(tree: app_commands.CommandTree, engine: RPGEngine) -> 
         except GameError as exc:
             await _send_error(interaction, "採礦受阻", exc)
 
-    @tree.command(name="shop", description="起始之鎮補給商店：購買回復藥水、四大 SAO 水晶或抽取秘寶箱")
+    @tree.command(name="shop", description="艾恩葛朗特商會：水晶藥水、強化石、鑲嵌結晶、補給箱、樓層裝備與秘寶抽獎")
     async def cmd_shop(
         interaction: discord.Interaction,
         item_id: str | None = None,
         qty: int = 1,
         gacha_count: int = 0,
+        use_ticket: bool = False,
+        buy_gear_slot: str | None = None,
+        open_crate_id: str | None = None,
     ) -> None:
         uid = str(interaction.user.id)
         try:
-            if gacha_count > 0:
-                res = engine.gacha_pull(uid, chest_type="standard", count=gacha_count)
-                await interaction.response.send_message(embed=build_shop_embed(res), view=ShopView(engine, uid))
+            sview = ShopView(engine, uid)
+            if use_ticket or gacha_count > 0:
+                cnt = max(1, gacha_count) if gacha_count > 0 else 1
+                res = engine.gacha_pull(uid, chest_type="standard", count=cnt, use_ticket=use_ticket)
+            elif open_crate_id:
+                res = engine.open_supply_crate(uid, open_crate_id)
+            elif buy_gear_slot:
+                res = engine.buy_shop_equipment(uid, slot=buy_gear_slot)
             elif item_id:
                 res = engine.buy_shop_item(uid, item_id, qty=qty)
-                await interaction.response.send_message(embed=build_shop_embed(res), view=ShopView(engine, uid))
             else:
                 prof = engine.get_profile(uid)
-                res = {"message": f"歡迎光臨艾恩葛朗特補給商店！點擊下方按鈕快速購買回復藥水或四大水晶（目前持有 {prof['col']:,} 柯爾）。", "col_remaining": prof["col"]}
-                await interaction.response.send_message(embed=build_shop_embed(res), view=ShopView(engine, uid))
+                res = {
+                    "message": (
+                        f"歡迎光臨艾恩葛朗特商會！可透過下方分類選單購買藥水水晶、強化石、鑲嵌結晶、"
+                        f"裝備補給箱、樓層武器裝備或抽取秘寶（目前持有 {prof['col']:,} 柯爾）。"
+                    ),
+                    "col_remaining": prof["col"],
+                    "tickets_remaining": int((prof.get("inventory") or {}).get("gacha_relic_ticket", 0)),
+                }
+            await interaction.response.send_message(
+                embed=build_shop_embed(
+                    res,
+                    category_label=sview.current_category_label(),
+                    catalog_lines=sview.build_catalog_lines(),
+                ),
+                view=sview,
+            )
         except GameError as exc:
             await _send_error(interaction, "商店交易失敗", exc)
 

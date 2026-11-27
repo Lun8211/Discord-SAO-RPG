@@ -1060,3 +1060,155 @@ def test_gitignore_hygiene_with_git_check_ignore() -> None:
             check=False,
         )
         assert res.returncode == 1, f"Expected '{path}' NOT to be gitignored (exit 1), got {res.returncode}"
+
+
+# =============================================================================
+# Group 5: Round 2 Expanded Catalog, 5-Axis Model/DB/Stats & Domain Purity
+# =============================================================================
+def test_r2_expanded_content_catalog_and_assets() -> None:
+    bundle = load_and_validate_all(force_reload=True)
+
+    # Hard backward-compatibility counts preserved
+    assert len(bundle.bosses) == 34
+    assert len(bundle.monsters) == 77
+    assert len(bundle.sword_skills) == 34
+    assert len(bundle.chests_loot["chest_tiers"]) == 6
+
+    # Round 2 catalog expansions
+    weq = bundle.weapons_equipment
+    assert len(weq["named_items"]) == 30
+    assert len(bundle.items_crystals) == 105
+    assert len(bundle.recipes["blacksmithing"]) == 22
+    assert len(bundle.recipes["fusion"]) == 10
+
+    # Style-authentic weapon names & non-shield offhand names across all 10 tiers
+    for tier_idx in range(1, 11):
+        bg = weq["base_gear"][str(tier_idx)]
+        assert set(bg["weapon_style_names"].keys()) == VALID_WEAPON_CLASSES
+        assert bg.get("offhand_weapon_names")
+
+    # New Round 2 items present and have valid non-SVG pinned Wesnoth CDN asset URLs
+    prefix = f"https://raw.githubusercontent.com/wesnoth/wesnoth/{assets.WESNOTH_COMMIT}/"
+    socket_ids = [iid for iid, spec in bundle.items_crystals.items() if spec.get("category") == "socket_crystal"]
+    assert len(socket_ids) == 8
+    for req_id in (
+        "forge_scrap",
+        "expand_stone",
+        "gear_supply_crate_t1",
+        "gear_supply_crate_t2",
+        "gear_supply_crate_t3",
+        *socket_ids,
+    ):
+        assert req_id in bundle.items_crystals
+        akey = bundle.items_crystals[req_id].get("asset_key", "")
+        resolved = assets.resolve_asset_key(akey)
+        assert resolved is not None and resolved.startswith(prefix)
+        assert ".svg" not in resolved.lower()
+
+    for nspec in weq["named_items"].values():
+        resolved = assets.resolve_asset_key(nspec["asset_key"])
+        assert resolved is not None and resolved.startswith(prefix)
+        assert ".svg" not in resolved.lower()
+
+
+def test_r2_equipment_temper_socket_persistence_and_stats(tmp_path: Path) -> None:
+    bundle = load_and_validate_all()
+    db_path = tmp_path / "r2_persist.db"
+    db = RPGDatabase(db_path)
+    try:
+        now = int(time.time())
+        player = db.create_player("u_r2", "LisbethTester", "sword", now)
+        eq = db.add_equipment(
+            EquipmentItem(
+                id=0,
+                user_id="u_r2",
+                template_id="tpl_sword",
+                name="青銅長劍",
+                slot="weapon",
+                rarity="plain",
+                tier=1,
+                set_id="",
+                enhance_level=0,
+                enhance_pity=0,
+                base_hp=40,
+                base_mp=10,
+                base_atk=100,
+                base_def=20,
+                affixes={"atk_pct": 0.05},
+                weapon_style="sword",
+                damage_type="slash",
+                is_equipped=True,
+                created_at=now,
+            )
+        )
+        # Verify exact temper_multiplier() and enhance_multiplier() formulas
+        assert eq.enhance_multiplier() == pytest.approx(1.00)
+        assert eq.temper_multiplier() == pytest.approx(1.00)
+        s0 = compute_player_stats(player, [eq], bundle)
+
+        eq.name = "秘銀星輝劍"
+        eq.rarity = "rare"
+        eq.tier = 3
+        eq.base_atk = 180
+        eq.temper_level = 3
+        eq.socket_crystal_id = "socket_crystal_crimson"
+        assert eq.temper_multiplier() == pytest.approx(1.36)
+        s3 = compute_player_stats(player, [eq], bundle)
+        assert s3.atk > s0.atk
+        assert s3.crit_rate >= s0.crit_rate + 0.03 - 1e-6
+        assert s3.res_slash >= s0.res_slash + 0.03 - 1e-6
+
+        eq.temper_level = 5
+        assert eq.temper_multiplier() == pytest.approx(1.60)
+        s5 = compute_player_stats(player, [eq], bundle)
+        assert s5.skill_dmg_bonus >= s3.skill_dmg_bonus + 0.08 - 1e-6
+        assert s5.dmg_reduction >= s3.dmg_reduction + 0.05 - 1e-6
+
+        db.update_equipment(eq)
+    finally:
+        db.close()
+
+    # Reopen DB to verify full persistence of all Round 2 columns & mutated metadata
+    db2 = RPGDatabase(db_path)
+    try:
+        reloaded = db2.get_equipment("u_r2")
+        assert len(reloaded) == 1
+        r = reloaded[0]
+        assert r.name == "秘銀星輝劍"
+        assert r.rarity == "rare"
+        assert r.tier == 3
+        assert r.base_atk == 180
+        assert r.temper_level == 5
+        assert r.socket_crystal_id == "socket_crystal_crimson"
+    finally:
+        db2.close()
+
+
+def test_r2_all_pure_domain_modules_zero_discord_imports() -> None:
+    strict_pure_paths = [
+        REPO_ROOT / "src/rpg/models.py",
+        REPO_ROOT / "src/rpg/engine.py",
+        REPO_ROOT / "src/rpg/data.py",
+        REPO_ROOT / "src/rpg/assets.py",
+        *(REPO_ROOT / "src/rpg/content").glob("*.py"),
+        *(REPO_ROOT / "src/rpg/systems").glob("*.py"),
+    ]
+    for path in strict_pure_paths:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    assert not alias.name.startswith("discord"), f"Forbidden discord import in {path}"
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                assert not node.module.startswith("discord"), f"Forbidden discord import in {path}"
+
+    # Top-level database.py must also have zero discord imports
+    db_path = REPO_ROOT / "src/rpg/database.py"
+    db_tree = ast.parse(db_path.read_text(encoding="utf-8"), filename=str(db_path))
+    for stmt in db_tree.body:
+        if isinstance(stmt, ast.Import):
+            for alias in stmt.names:
+                assert not alias.name.startswith("discord"), "Forbidden top-level discord import in database.py"
+        elif isinstance(stmt, ast.ImportFrom) and stmt.module:
+            assert not stmt.module.startswith("discord"), "Forbidden top-level discord import in database.py"
+
