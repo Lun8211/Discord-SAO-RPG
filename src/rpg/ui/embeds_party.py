@@ -89,7 +89,39 @@ def build_coop_raid_embed(res: dict[str, Any]) -> discord.Embed:
             st = "💀倒地" if m.is_downed else ("🏃撤退" if m.is_retreated else f"HP {m.hp}/{m.max_hp} SP {m.sp}/{m.max_sp}")
             mlines.append(f"{acted} {vg}**{m.display_name}**（{m.role}）：{st}｜輸出 `{m.damage_dealt:,}`")
         embed.add_field(name="👥 真人攻略團狀態", value=_clamp_str("\n".join(mlines), 1024), inline=False)
-    embed.set_footer(text="全員鎖定指令後立即結算；25 秒逾時自動防禦不卡死！")
+
+    rewards_by_user = res.get("rewards_by_user")
+    if victory and isinstance(rewards_by_user, dict) and rewards_by_user:
+        drop_lines: list[str] = []
+        if res.get("is_first_kill"):
+            drop_lines.append("👑 **【全服首殺榮譽留名！】**")
+        for uid, rw in list(rewards_by_user.items())[:10]:
+            m_obj = raid.members.get(uid) if raid is not None else None
+            m_name = m_obj.display_name if m_obj is not None else str(uid)
+            la_tag = " 🏆LA" if rw.get("is_la") else ""
+            eq_names: list[str] = []
+            for d in list(rw.get("equipment_drops") or []):
+                if isinstance(d, dict) and d.get("item_name"):
+                    eq_names.append(str(d["item_name"]))
+            if not eq_names and isinstance(rw.get("la_reward"), dict) and rw["la_reward"].get("item_name"):
+                eq_names.append(str(rw["la_reward"]["item_name"]))
+            gear_txt = "、".join(eq_names) if eq_names else "攻略紋章與結晶"
+            drop_lines.append(
+                f"• **{m_name}**{la_tag}：+{int(rw.get('exp_gain', 0)):,} EXP／+{int(rw.get('col_gain', 0)):,} 柯爾｜🎁 {gear_txt}"
+            )
+        embed.add_field(
+            name="🏆 共鬥戰利品與尾刀獎勵（LA）",
+            value=_clamp_str("\n".join(drop_lines), 1024),
+            inline=False,
+        )
+
+    embed.set_footer(
+        text=(
+            "共鬥結束！點擊下方按鈕返回隊伍大廳、全隊傳送下一層或開啟個人爬塔面板！"
+            if res.get("finished")
+            else "全員鎖定指令後立即結算；25 秒逾時自動防禦不卡死！"
+        )
+    )
     return embed
 
 
@@ -107,6 +139,17 @@ def build_world_boss_embed(res: dict[str, Any]) -> discord.Embed:
             value=f"HP `{wb.current_hp:,}/{wb.max_hp:,}`\n{hp_bar(wb.current_hp, wb.max_hp, 14)}",
             inline=False,
         )
+    drops = list(res.get("equipment_drops") or [])
+    items = res.get("items") or {}
+    if res.get("defeated") and (drops or items):
+        llines: list[str] = []
+        if isinstance(items, dict) and items:
+            llines.append("📦 素材：" + "、".join(f"`{k}` x{v}" for k, v in list(items.items())[:6]))
+        for d in drops[:4]:
+            if isinstance(d, dict) and d.get("item_name"):
+                llines.append(f"⚔️ 裝備：**{d['item_name']}**（{d.get('rarity', '')}）")
+        if llines:
+            embed.add_field(name="🎁 世界王討伐戰利品", value=_clamp_str("\n".join(llines), 1024), inline=False)
     rankings = list(res.get("rankings") or [])[:5]
     if rankings:
         rlines = [f"**#{i + 1}** {r['display_name']} — 總傷害 `{int(r['total_damage']):,}`" for i, r in enumerate(rankings)]

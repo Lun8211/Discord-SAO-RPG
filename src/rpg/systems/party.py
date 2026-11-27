@@ -24,6 +24,7 @@ from src.rpg.models import (
     PartyLobby,
     PartyMemberState,
     PlayerProfile,
+    Rarity,
     ZoneType,
 )
 from src.rpg.systems.boss_engine import (
@@ -44,6 +45,7 @@ from src.rpg.systems.combat import (
     compute_full_player_stats,
 )
 from src.rpg.systems.tower import (
+    enhance_crystal_for_tier,
     generate_equipment_item,
     generate_named_equipment,
     grant_or_queue_equipment,
@@ -1159,13 +1161,37 @@ class MultiplayerCoordinator:
             p.survival_streak += 1
             p.highest_cleared_floor = max(p.highest_cleared_floor, raid.floor)
 
-            # Materials
+            # Materials + enhance crystals + forge scraps
+            tier = int(fcfg["tier"])
+            crys_id = enhance_crystal_for_tier(tier)
             mats: dict[str, int] = {}
             for mat in fcfg["boss"].get("guaranteed_materials", []):
                 mid = str(mat["item_id"])
                 qty = max(1, round(rgen.randint(int(mat.get("min", 1)), int(mat.get("max", 1))) * drop_mult))
                 self.db.add_item(uid, mid, qty)
-                mats[mid] = qty
+                mats[mid] = mats.get(mid, 0) + qty
+            if crys_id in self.content.items_crystals:
+                cqty = 3 if team_boosted else 2
+                self.db.add_item(uid, crys_id, cqty)
+                mats[crys_id] = mats.get(crys_id, 0) + cqty
+            if "forge_scrap" in self.content.items_crystals:
+                self.db.add_item(uid, "forge_scrap", 2)
+                mats["forge_scrap"] = mats.get("forge_scrap", 0) + 2
+
+            # Guaranteed per-member co-op participation equipment drop (never Named so LA stays strictly exclusive!)
+            member_drops: list[dict[str, Any]] = []
+            m_roll = rgen.random()
+            if team_boosted:
+                m_rarity = Rarity.LEGENDARY if m_roll < 0.25 else (Rarity.SET if m_roll < 0.65 else Rarity.RARE)
+            else:
+                m_rarity = Rarity.LEGENDARY if m_roll < 0.12 else (Rarity.SET if m_roll < 0.45 else (Rarity.RARE if m_roll < 0.85 else Rarity.FINE))
+            coop_eq = generate_equipment_item(
+                uid, raid.floor, self.content, rarity=m_rarity, weapon_style=p.weapon_style, now_ts=ts, rng=rgen
+            )
+            member_drop = grant_or_queue_equipment(
+                self.db, p, coop_eq, source=f"第{raid.floor}層共鬥頭目討伐", now_ts=ts, apply_filter=True
+            )
+            member_drops.append(member_drop)
 
             # Last Attack (LA) Named Bonus drop strictly to la_user_id
             la_drop: dict[str, Any] | None = None
@@ -1177,11 +1203,12 @@ class MultiplayerCoordinator:
                     )
                 else:
                     eq = generate_equipment_item(
-                        uid, raid.floor, self.content, rarity="legendary", weapon_style=p.weapon_style, now_ts=ts, rng=rgen
+                        uid, raid.floor, self.content, rarity=Rarity.LEGENDARY, weapon_style=p.weapon_style, now_ts=ts, rng=rgen
                     )
                     la_drop = grant_or_queue_equipment(
                         self.db, p, eq, source=f"第{raid.floor}層共鬥尾刀獎勵(LA)", now_ts=ts, apply_filter=False
                     )
+                member_drops.append(la_drop)
 
             # Unlock Yui logs & milestone achievements
             for log_id, lspec in self.content.quests_events.get("yui_logs", {}).items():
@@ -1192,7 +1219,10 @@ class MultiplayerCoordinator:
                 self.db.unlock_achievement(uid, ach_map[raid.floor], ts)
             for obs in raid.boss.observed_skills:
                 self.db.record_boss_intel_seen(uid, raid.boss.boss_id, obs, ts)
+            self.db.increment_quest(uid, "daily", today_key, "dq_boss_1", 1, delta=1)
             self.db.increment_quest(uid, "weekly", week_key, "wq_boss_10", 10, delta=1)
+            if len(raid.members) >= 2:
+                self.db.increment_quest(uid, "weekly", week_key, "wq_coop_5", 5, delta=1)
 
             st = compute_full_player_stats(self.db, self.content, p, floor=raid.floor, now_ts=ts)
             p.combat_power = st.combat_power
@@ -1206,6 +1236,7 @@ class MultiplayerCoordinator:
                 "materials": mats,
                 "is_la": uid == raid.la_user_id,
                 "la_reward": la_drop,
+                "equipment_drops": member_drops,
                 "team_boosted": team_boosted,
                 "daily_team_clears": int(clear_info.get("daily_team_clears", 0)),
                 "damage_dealt": m.damage_dealt,
@@ -1512,9 +1543,13 @@ class MultiplayerCoordinator:
             player.col += col_gain
 
             self.db.record_world_boss_damage(wb.id, user_id, player.display_name, dmg, ts)
+            week_key = time.strftime("%Y-W%W", time.gmtime(ts))
+            self.db.increment_quest(user_id, "weekly", week_key, "wq_world_boss_5", 5, delta=1)
 
             defeated = wb.current_hp <= 0
             accelerated_buff_id: int | None = None
+            items_gained: dict[str, int] = {}
+            equipment_drops: list[dict[str, Any]] = []
             if defeated:
                 wb.status = "defeated"
                 wb.defeated_at = ts
@@ -1531,13 +1566,42 @@ class MultiplayerCoordinator:
                     created_by=user_id,
                     charges=-1,
                 )
+                rgen = random.Random(ts + wb.id + wb.floor)
+                wspec = self.content.bosses.get(wb.boss_id, {})
+                crys_id = enhance_crystal_for_tier(wb.tier)
+                rankings_all = self.db.get_world_boss_rankings(wb.id, limit=50)
+                participant_uids = {str(r["user_id"]) for r in rankings_all} | {str(user_id)}
+                for puid in participant_uids:
+                    for mat in wspec.get("guaranteed_materials", []):
+                        mid = str(mat["item_id"])
+                        if mid in self.content.items_crystals:
+                            qty = rgen.randint(int(mat.get("min", 1)), int(mat.get("max", 1)))
+                            self.db.add_item(puid, mid, qty)
+                            if puid == str(user_id):
+                                items_gained[mid] = items_gained.get(mid, 0) + qty
+                    if crys_id in self.content.items_crystals:
+                        self.db.add_item(puid, crys_id, 3)
+                        if puid == str(user_id):
+                            items_gained[crys_id] = items_gained.get(crys_id, 0) + 3
+                    tp = player if puid == str(user_id) else self.db.get_player(puid)
+                    if tp is not None:
+                        wb_rarity = Rarity.LEGENDARY if (puid == str(user_id) or rgen.random() < 0.35) else Rarity.SET
+                        wb_gear = generate_equipment_item(
+                            puid, max(1, wb.floor), self.content, rarity=wb_rarity, weapon_style=tp.weapon_style, now_ts=ts, rng=rgen
+                        )
+                        gres = grant_or_queue_equipment(
+                            self.db, tp, wb_gear, source=f"第{wb.floor}層世界王討伐({wb.name})", now_ts=ts, apply_filter=False
+                        )
+                        if puid == str(user_id):
+                            equipment_drops.append(gres)
             self.db.update_world_boss(wb)
             player.updated_at = ts
             self.db.save_player(player)
 
             rankings = self.db.get_world_boss_rankings(wb.id, limit=10)
+            gear_note = f"，並獲得【{equipment_drops[0]['item_name']}】" if equipment_drops else ""
             msg = (
-                f"🌍 【樓層世界王討伐完成！】{player.display_name} 造成 {dmg} 傷害並擊殺【{wb.name}】，全服啟動【加速世界】增益 2 小時！"
+                f"🌍 【樓層世界王討伐完成！】{player.display_name} 造成 {dmg} 傷害並擊殺【{wb.name}】{gear_note}，全服啟動【加速世界】增益 2 小時！"
                 if defeated
                 else f"🌍 對第 {wb.floor} 層世界王【{wb.name}】造成 {dmg} 傷害！（剩餘 HP {wb.current_hp}/{wb.max_hp}，剩餘次數 {player.world_boss_attempts}）"
             )
@@ -1551,6 +1615,8 @@ class MultiplayerCoordinator:
                 "attempts_remaining": player.world_boss_attempts,
                 "col_gain": col_gain,
                 "exp_gain": exp_gain,
+                "items": items_gained,
+                "equipment_drops": equipment_drops,
                 "rankings": rankings,
                 "message": msg,
             }

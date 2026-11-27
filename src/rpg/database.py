@@ -552,6 +552,8 @@ _EQUIPMENT_V2_COLUMNS: tuple[tuple[str, str], ...] = (
     ("escrow_state", "TEXT NOT NULL DEFAULT ''"),
     ("base_sp", "INTEGER NOT NULL DEFAULT 0"),
     ("base_spd", "INTEGER NOT NULL DEFAULT 0"),
+    ("temper_level", "INTEGER NOT NULL DEFAULT 0"),
+    ("socket_crystal_id", "TEXT NOT NULL DEFAULT ''"),
 )
 
 _WORLD_BOSS_V2_COLUMNS: tuple[tuple[str, str], ...] = (
@@ -1249,6 +1251,7 @@ class RPGDatabase:
     @staticmethod
     def _row_to_equipment(row: sqlite3.Row) -> EquipmentItem:
         affixes = _safe_json_dict(row["affixes_json"])
+        keys = row.keys()
         return EquipmentItem(
             id=int(row["id"]),
             user_id=row["user_id"],
@@ -1276,6 +1279,8 @@ class RPGDatabase:
             escrow_state=str(row["escrow_state"]),
             base_sp=int(row["base_sp"]),
             base_spd=int(row["base_spd"]),
+            temper_level=int(row["temper_level"]) if "temper_level" in keys else 0,
+            socket_crystal_id=str(row["socket_crystal_id"]) if "socket_crystal_id" in keys else "",
         )
 
     def add_equipment(self, item: EquipmentItem) -> EquipmentItem:
@@ -1287,8 +1292,9 @@ class RPGDatabase:
                     enhance_level, enhance_pity, base_hp, base_mp, base_atk, base_def,
                     affixes_json, is_equipped, is_locked, created_at,
                     weapon_style, damage_type, named_passive, is_bound,
-                    min_level, escrow_state, base_sp, base_spd
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    min_level, escrow_state, base_sp, base_spd,
+                    temper_level, socket_crystal_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     item.user_id,
@@ -1316,6 +1322,8 @@ class RPGDatabase:
                     item.escrow_state,
                     item.base_sp,
                     item.base_spd,
+                    int(item.temper_level),
+                    str(item.socket_crystal_id or ""),
                 ),
             )
             assert cur.lastrowid is not None
@@ -1360,13 +1368,25 @@ class RPGDatabase:
             self._conn.execute(
                 """
                 UPDATE equipment SET
+                    template_id = ?, name = ?, rarity = ?, tier = ?, set_id = ?,
+                    base_hp = ?, base_mp = ?, base_atk = ?, base_def = ?,
                     enhance_level = ?, enhance_pity = ?, is_equipped = ?, is_locked = ?,
                     affixes_json = ?, weapon_style = ?, damage_type = ?,
                     named_passive = ?, is_bound = ?, min_level = ?,
-                    escrow_state = ?, base_sp = ?, base_spd = ?
+                    escrow_state = ?, base_sp = ?, base_spd = ?,
+                    temper_level = ?, socket_crystal_id = ?
                 WHERE id = ? AND user_id = ?
                 """,
                 (
+                    item.template_id,
+                    item.name,
+                    item.rarity,
+                    item.tier,
+                    item.set_id,
+                    item.base_hp,
+                    item.base_mp,
+                    item.base_atk,
+                    item.base_def,
                     item.enhance_level,
                     item.enhance_pity,
                     1 if item.is_equipped else 0,
@@ -1380,6 +1400,8 @@ class RPGDatabase:
                     item.escrow_state,
                     item.base_sp,
                     item.base_spd,
+                    int(item.temper_level),
+                    str(item.socket_crystal_id or ""),
                     item.id,
                     item.user_id,
                 ),

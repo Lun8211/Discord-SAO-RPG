@@ -6,7 +6,10 @@
       "min_floor": 1,
       "min_skill_level": 1,
       "col_cost": 150,
-      "ingredients": {"copper_vein_ore": 4, "iron_vein_ore": 2},
+      "ingredients": {
+        "copper_vein_ore": 4,
+        "iron_vein_ore": 2
+      },
       "output_type": "tiered_gear",
       "output_tier": 1,
       "mastery_exp": 15
@@ -17,7 +20,11 @@
       "min_floor": 11,
       "min_skill_level": 5,
       "col_cost": 350,
-      "ingredients": {"emerald_ore": 4, "iron_vein_ore": 3, "tier_crest_low": 1},
+      "ingredients": {
+        "emerald_ore": 4,
+        "iron_vein_ore": 3,
+        "tier_crest_low": 1
+      },
       "output_type": "tiered_gear",
       "output_tier": 2,
       "mastery_exp": 24
@@ -28,7 +35,11 @@
       "min_floor": 21,
       "min_skill_level": 10,
       "col_cost": 720,
-      "ingredients": {"silver_vein_ore": 4, "aurora_ice_crystal": 3, "tier_crest_low": 1},
+      "ingredients": {
+        "silver_vein_ore": 4,
+        "aurora_ice_crystal": 3,
+        "tier_crest_low": 1
+      },
       "output_type": "tiered_gear",
       "output_tier": 3,
       "mastery_exp": 35
@@ -39,7 +50,11 @@
       "min_floor": 31,
       "min_skill_level": 16,
       "col_cost": 1400,
-      "ingredients": {"shadow_steel_ore": 5, "dark_crystal_shard": 2, "tier_crest_mid": 1},
+      "ingredients": {
+        "shadow_steel_ore": 5,
+        "dark_crystal_shard": 2,
+        "tier_crest_mid": 1
+      },
       "output_type": "tiered_gear",
       "output_tier": 4,
       "mastery_exp": 48
@@ -50,7 +65,11 @@
       "min_floor": 41,
       "min_skill_level": 22,
       "col_cost": 2600,
-      "ingredients": {"mithril_vein_ore": 5, "soul_blossom_ore": 3, "tier_crest_mid": 1},
+      "ingredients": {
+        "mithril_vein_ore": 5,
+        "soul_blossom_ore": 3,
+        "tier_crest_mid": 1
+      },
       "output_type": "tiered_gear",
       "output_tier": 5,
       "mastery_exp": 65
@@ -61,7 +80,11 @@
       "min_floor": 51,
       "min_skill_level": 30,
       "col_cost": 4800,
-      "ingredients": {"volcanic_adamant_ore": 5, "crystallite_ingot": 2, "tier_crest_mid": 2},
+      "ingredients": {
+        "volcanic_adamant_ore": 5,
+        "crystallite_ingot": 2,
+        "tier_crest_mid": 2
+      },
       "output_type": "tiered_gear",
       "output_tier": 6,
       "mastery_exp": 85
@@ -72,7 +95,11 @@
       "min_floor": 61,
       "min_skill_level": 38,
       "col_cost": 8200,
-      "ingredients": {"celestial_mithril_ore": 5, "tide_pearl_ore": 3, "tier_crest_high": 1},
+      "ingredients": {
+        "celestial_mithril_ore": 5,
+        "tide_pearl_ore": 3,
+        "tier_crest_high": 1
+      },
       "output_type": "tiered_gear",
       "output_tier": 7,
       "mastery_exp": 110
@@ -83,7 +110,11 @@
       "min_floor": 71,
       "min_skill_level": 46,
       "col_cost": 14000,
-      "ingredients": {"abyssal_crystal_ore": 5, "obsidian_dragonsteel": 3, "tier_crest_high": 2},
+      "ingredients": {
+        "abyssal_crystal_ore": 5,
+        "obsidian_dragonsteel": 3,
+        "tier_crest_high": 2
+      },
       "output_type": "tiered_gear",
       "output_tier": 8,
       "mastery_exp": 140
@@ -94,7 +125,11 @@
       "min_floor": 81,
       "min_skill_level": 56,
       "col_cost": 24000,
-      "ingredients": {"astral_origin_crystal": 5, "void_prism_ore": 4, "tier_crest_apex": 1},
+      "ingredients": {
+        "astral_origin_crystal": 5,
+        "void_prism_ore": 4,
+        "tier_crest_apex": 1
+      },
       "output_type": "tiered_gear",
       "output_tier": 9,
       "mastery_exp": 180
@@ -105,7 +140,11 @@
       "min_floor": 91,
       "min_skill_level": 68,
       "col_cost": 42000,
-      "ingredients": {"ruby_core_crystal": 6, "world_seed_shard": 4, "tier_crest_apex": 2},
+      "ingredients": {
+        "ruby_core_crystal": 6,
+        "world_seed_shard": 4,
+        "tier_crest_apex": 2
+      },
       "output_type": "tiered_gear",
       "output_tier": 10,
       "mastery_exp": 240
@@ -116,7 +155,11 @@
       "min_floor": 55,
       "min_skill_level": 35,
       "col_cost": 25000,
-      "ingredients": {"crystallite_ingot": 5, "algade_arbiter_plate": 2, "dark_crystal": 3},
+      "ingredients": {
+        "crystallite_ingot": 5,
+        "algade_arbiter_plate": 2,
+        "dark_crystal": 3
+      },
       "output_type": "named_item",
       "output_item_id": "dark_repulser",
       "mastery_exp": 220
@@ -127,7 +170,11 @@
       "min_floor": 61,
       "min_skill_level": 42,
       "col_cost": 36000,
-      "ingredients": {"celestial_mithril_ore": 8, "ignis_dragon_scale": 3, "dark_crystal": 5},
+      "ingredients": {
+        "celestial_mithril_ore": 8,
+        "ignis_dragon_scale": 3,
+        "dark_crystal": 5
+      },
       "output_type": "named_item",
       "output_item_id": "lambent_light",
       "mastery_exp": 280
@@ -138,7 +185,11 @@
       "min_floor": 74,
       "min_skill_level": 52,
       "col_cost": 52000,
-      "ingredients": {"obsidian_dragonsteel": 8, "astraea_thunder_crest": 3, "dark_crystal_pure": 2},
+      "ingredients": {
+        "obsidian_dragonsteel": 8,
+        "astraea_thunder_crest": 3,
+        "dark_crystal_pure": 2
+      },
       "output_type": "named_item",
       "output_item_id": "liberator_shield",
       "mastery_exp": 340
@@ -149,10 +200,134 @@
       "min_floor": 51,
       "min_skill_level": 32,
       "col_cost": 22000,
-      "ingredients": {"volcanic_adamant_ore": 6, "warder_iron_shackle": 3, "dark_crystal": 4},
+      "ingredients": {
+        "volcanic_adamant_ore": 6,
+        "warder_iron_shackle": 3,
+        "dark_crystal": 4
+      },
       "output_type": "named_item",
       "output_item_id": "reapers_crescent",
       "mastery_exp": 200
+    },
+    "forge_anneal_blade": {
+      "id": "forge_anneal_blade",
+      "name": "莉茲貝特初階名品鍛造・【韌煉之劍】",
+      "min_floor": 1,
+      "min_skill_level": 1,
+      "col_cost": 450,
+      "ingredients": {
+        "iron_vein_ore": 4,
+        "bright_crystal_shard": 2
+      },
+      "output_type": "named_item",
+      "output_item_id": "anneal_blade",
+      "mastery_exp": 45
+    },
+    "forge_kobold_sentinel_helm": {
+      "id": "forge_kobold_sentinel_helm",
+      "name": "莉茲貝特名品鍛造・【遺跡狗頭人統帥戰盔】",
+      "min_floor": 1,
+      "min_skill_level": 3,
+      "col_cost": 800,
+      "ingredients": {
+        "iron_vein_ore": 5,
+        "kobold_lord_crest": 1,
+        "forge_scrap": 3
+      },
+      "output_type": "named_item",
+      "output_item_id": "kobold_sentinel_helm",
+      "mastery_exp": 60
+    },
+    "forge_iron_oath_mace": {
+      "id": "forge_iron_oath_mace",
+      "name": "莉茲貝特名品鍛造・【鐵誓破城戰槌】",
+      "min_floor": 10,
+      "min_skill_level": 8,
+      "col_cost": 2200,
+      "ingredients": {
+        "emerald_ore": 5,
+        "samurai_lord_crest": 1,
+        "forge_scrap": 5
+      },
+      "output_type": "named_item",
+      "output_item_id": "iron_oath_mace",
+      "mastery_exp": 85
+    },
+    "forge_shadow_fang_dagger": {
+      "id": "forge_shadow_fang_dagger",
+      "name": "莉茲貝特名品鍛造・【影牙連刺短刀】",
+      "min_floor": 10,
+      "min_skill_level": 8,
+      "col_cost": 2200,
+      "ingredients": {
+        "silver_vein_ore": 5,
+        "samurai_lord_crest": 1,
+        "forge_scrap": 5
+      },
+      "output_type": "named_item",
+      "output_item_id": "shadow_fang_dagger",
+      "mastery_exp": 85
+    },
+    "forge_wind_fleuret_rapier": {
+      "id": "forge_wind_fleuret_rapier",
+      "name": "莉茲貝特名品鍛造・【疾風細劍】",
+      "min_floor": 20,
+      "min_skill_level": 15,
+      "col_cost": 4800,
+      "ingredients": {
+        "silver_vein_ore": 6,
+        "miasma_heartwood": 1,
+        "bright_crystal": 2
+      },
+      "output_type": "named_item",
+      "output_item_id": "wind_fleuret_rapier",
+      "mastery_exp": 120
+    },
+    "forge_frostbite_warhammer": {
+      "id": "forge_frostbite_warhammer",
+      "name": "莉茲貝特名品鍛造・【極寒碎冰聖槌】",
+      "min_floor": 30,
+      "min_skill_level": 22,
+      "col_cost": 9500,
+      "ingredients": {
+        "aurora_ice_crystal": 6,
+        "frost_kaiser_core": 2,
+        "forge_scrap": 8
+      },
+      "output_type": "named_item",
+      "output_item_id": "frostbite_warhammer",
+      "mastery_exp": 160
+    },
+    "forge_lindarth_master_gauntlets": {
+      "id": "forge_lindarth_master_gauntlets",
+      "name": "第48層林達斯秘傳・【林達斯鍛匠護手】",
+      "min_floor": 48,
+      "min_skill_level": 28,
+      "col_cost": 16000,
+      "ingredients": {
+        "mithril_vein_ore": 6,
+        "algade_arbiter_plate": 1,
+        "forge_scrap": 10
+      },
+      "output_type": "named_item",
+      "output_item_id": "lindarth_master_gauntlets",
+      "mastery_exp": 210
+    },
+    "forge_cardinal_genesis_crown": {
+      "id": "forge_cardinal_genesis_crown",
+      "name": "終極秘傳鍛造・【卡迪納爾創世王冠】",
+      "min_floor": 90,
+      "min_skill_level": 60,
+      "col_cost": 75000,
+      "ingredients": {
+        "ruby_core_crystal": 6,
+        "cardinal_ruby_core": 2,
+        "dark_crystal_pure": 3,
+        "forge_scrap": 18
+      },
+      "output_type": "named_item",
+      "output_item_id": "cardinal_genesis_crown",
+      "mastery_exp": 420
     }
   },
   "cooking": {
@@ -161,7 +336,10 @@
       "name": "烹調・炙烤野豬排",
       "min_skill_level": 1,
       "col_cost": 30,
-      "ingredients": {"boar_meat": 2, "spice_pack": 1},
+      "ingredients": {
+        "boar_meat": 2,
+        "spice_pack": 1
+      },
       "output_type": "item",
       "output_item_id": "dish_boar_roast",
       "output_qty": 1,
@@ -172,7 +350,11 @@
       "name": "烹調・香草燉狼肉",
       "min_skill_level": 5,
       "col_cost": 60,
-      "ingredients": {"wolf_haunch": 2, "basilisk_tail": 1, "spice_pack": 1},
+      "ingredients": {
+        "wolf_haunch": 2,
+        "basilisk_tail": 1,
+        "spice_pack": 1
+      },
       "output_type": "item",
       "output_item_id": "dish_herb_wolf_stew",
       "output_qty": 1,
@@ -183,7 +365,10 @@
       "name": "烹調・珊瑚湖鮮魚刺身",
       "min_skill_level": 12,
       "col_cost": 120,
-      "ingredients": {"coral_lake_fish": 2, "spice_pack": 1},
+      "ingredients": {
+        "coral_lake_fish": 2,
+        "spice_pack": 1
+      },
       "output_type": "item",
       "output_item_id": "dish_coral_sashimi",
       "output_qty": 1,
@@ -194,7 +379,11 @@
       "name": "烹調・幽影煙燻鹿排",
       "min_skill_level": 20,
       "col_cost": 220,
-      "ingredients": {"shadow_venison": 2, "ogre_rib": 1, "spice_pack": 2},
+      "ingredients": {
+        "shadow_venison": 2,
+        "ogre_rib": 1,
+        "spice_pack": 2
+      },
       "output_type": "item",
       "output_item_id": "dish_shadow_steak",
       "output_qty": 1,
@@ -205,7 +394,11 @@
       "name": "烹調・阿爾格特攻略肉宴",
       "min_skill_level": 28,
       "col_cost": 360,
-      "ingredients": {"blossom_boar_cut": 2, "gilded_poultry": 2, "spice_pack": 2},
+      "ingredients": {
+        "blossom_boar_cut": 2,
+        "gilded_poultry": 2,
+        "spice_pack": 2
+      },
       "output_type": "item",
       "output_item_id": "dish_algade_feast",
       "output_qty": 1,
@@ -216,7 +409,11 @@
       "name": "烹調・龍炎椒鹽烤翼",
       "min_skill_level": 36,
       "col_cost": 550,
-      "ingredients": {"drake_wing_meat": 2, "salamander_fillet": 2, "spice_pack": 3},
+      "ingredients": {
+        "drake_wing_meat": 2,
+        "salamander_fillet": 2,
+        "spice_pack": 3
+      },
       "output_type": "item",
       "output_item_id": "dish_dragon_pepper_grill",
       "output_qty": 1,
@@ -227,7 +424,11 @@
       "name": "烹調・雜燴兔肉濃湯（S 級）",
       "min_skill_level": 45,
       "col_cost": 1100,
-      "ingredients": {"s_rank_ragout_rabbit": 1, "s_rank_kraken_tentacle": 1, "spice_pack": 3},
+      "ingredients": {
+        "s_rank_ragout_rabbit": 1,
+        "s_rank_kraken_tentacle": 1,
+        "spice_pack": 3
+      },
       "output_type": "item",
       "output_item_id": "dish_ragout_rabbit_stew",
       "output_qty": 1,
@@ -238,7 +439,11 @@
       "name": "烹調・煉獄龍皇沙朗排（S 級）",
       "min_skill_level": 55,
       "col_cost": 1600,
-      "ingredients": {"s_rank_wyvern_sirloin": 2, "s_rank_abyss_crab": 1, "spice_pack": 4},
+      "ingredients": {
+        "s_rank_wyvern_sirloin": 2,
+        "s_rank_abyss_crab": 1,
+        "spice_pack": 4
+      },
       "output_type": "item",
       "output_item_id": "dish_wyvern_steak",
       "output_qty": 1,
@@ -249,7 +454,11 @@
       "name": "烹調・星輝澄清法式高湯（S 級）",
       "min_skill_level": 65,
       "col_cost": 2400,
-      "ingredients": {"s_rank_astral_phoenix_breast": 2, "s_rank_void_lobster": 1, "spice_pack": 4},
+      "ingredients": {
+        "s_rank_astral_phoenix_breast": 2,
+        "s_rank_void_lobster": 1,
+        "spice_pack": 4
+      },
       "output_type": "item",
       "output_item_id": "dish_astral_consomme",
       "output_qty": 1,
@@ -260,7 +469,11 @@
       "name": "烹調・紅玉宮殿卡迪納爾御膳（S 級）",
       "min_skill_level": 75,
       "col_cost": 4000,
-      "ingredients": {"s_rank_dragon_king_prime": 2, "s_rank_celestial_truffle": 2, "spice_pack": 5},
+      "ingredients": {
+        "s_rank_dragon_king_prime": 2,
+        "s_rank_celestial_truffle": 2,
+        "spice_pack": 5
+      },
       "output_type": "item",
       "output_item_id": "dish_cardinal_banquet",
       "output_qty": 1,
@@ -273,13 +486,21 @@
       "name": "架鍋燉煮・攻略組一大鍋前線肉湯",
       "min_skill_level": 15,
       "col_cost": 450,
-      "ingredients": {"ogre_rib": 3, "blossom_boar_cut": 2, "spice_pack": 3},
+      "ingredients": {
+        "ogre_rib": 3,
+        "blossom_boar_cut": 2,
+        "spice_pack": 3
+      },
       "output_type": "item",
       "output_item_id": "stew_frontline_pot",
       "output_qty": 1,
       "servings": 6,
       "buff_duration_sec": 3600,
-      "party_buff": {"atk_pct": 0.1, "hp_pct": 0.12, "def_pct": 0.1},
+      "party_buff": {
+        "atk_pct": 0.1,
+        "hp_pct": 0.12,
+        "def_pct": 0.1
+      },
       "mastery_exp": 80
     },
     "stew_dragon_ward": {
@@ -287,13 +508,22 @@
       "name": "架鍋燉煮・屠龍團一大鍋龍炎抗性鍋",
       "min_skill_level": 40,
       "col_cost": 1600,
-      "ingredients": {"drake_wing_meat": 4, "s_rank_ragout_rabbit": 2, "spice_pack": 5},
+      "ingredients": {
+        "drake_wing_meat": 4,
+        "s_rank_ragout_rabbit": 2,
+        "spice_pack": 5
+      },
       "output_type": "item",
       "output_item_id": "stew_dragon_ward_pot",
       "output_qty": 1,
       "servings": 12,
       "buff_duration_sec": 3600,
-      "party_buff": {"res_dragon": 0.2, "res_all": 0.08, "atk_pct": 0.14, "hp_pct": 0.14},
+      "party_buff": {
+        "res_dragon": 0.2,
+        "res_all": 0.08,
+        "atk_pct": 0.14,
+        "hp_pct": 0.14
+      },
       "mastery_exp": 160
     },
     "stew_ruby_apex": {
@@ -301,13 +531,24 @@
       "name": "架鍋燉煮・紅玉終戰一大鍋神域雜燴鍋",
       "min_skill_level": 70,
       "col_cost": 4500,
-      "ingredients": {"s_rank_dragon_king_prime": 3, "s_rank_celestial_truffle": 3, "s_rank_astral_phoenix_breast": 2, "spice_pack": 8},
+      "ingredients": {
+        "s_rank_dragon_king_prime": 3,
+        "s_rank_celestial_truffle": 3,
+        "s_rank_astral_phoenix_breast": 2,
+        "spice_pack": 8
+      },
       "output_type": "item",
       "output_item_id": "stew_ruby_apex_pot",
       "output_qty": 1,
       "servings": 24,
       "buff_duration_sec": 5400,
-      "party_buff": {"atk_pct": 0.2, "def_pct": 0.2, "hp_pct": 0.2, "res_all": 0.14, "skill_dmg": 0.16},
+      "party_buff": {
+        "atk_pct": 0.2,
+        "def_pct": 0.2,
+        "hp_pct": 0.2,
+        "res_all": 0.14,
+        "skill_dmg": 0.16
+      },
       "mastery_exp": 320
     }
   },
@@ -317,7 +558,9 @@
       "name": "結晶融合・光輝結晶",
       "min_skill_level": 1,
       "col_cost": 200,
-      "ingredients": {"bright_crystal_shard": 5},
+      "ingredients": {
+        "bright_crystal_shard": 5
+      },
       "output_type": "item",
       "output_item_id": "bright_crystal",
       "output_qty": 1,
@@ -328,7 +571,10 @@
       "name": "結晶融合・暗影結晶",
       "min_skill_level": 10,
       "col_cost": 650,
-      "ingredients": {"dark_crystal_shard": 4, "bright_crystal": 2},
+      "ingredients": {
+        "dark_crystal_shard": 4,
+        "bright_crystal": 2
+      },
       "output_type": "item",
       "output_item_id": "dark_crystal",
       "output_qty": 1,
@@ -339,7 +585,9 @@
       "name": "結晶融合・純粹暗影結晶",
       "min_skill_level": 25,
       "col_cost": 1800,
-      "ingredients": {"dark_crystal": 4},
+      "ingredients": {
+        "dark_crystal": 4
+      },
       "output_type": "item",
       "output_item_id": "dark_crystal_pure",
       "output_qty": 1,
@@ -350,7 +598,10 @@
       "name": "魔石融合・翻石",
       "min_skill_level": 15,
       "col_cost": 900,
-      "ingredients": {"bright_crystal": 3, "tier_crest_low": 2},
+      "ingredients": {
+        "bright_crystal": 3,
+        "tier_crest_low": 2
+      },
       "output_type": "item",
       "output_item_id": "reroll_stone",
       "output_qty": 1,
@@ -361,7 +612,10 @@
       "name": "魔石融合・替石",
       "min_skill_level": 25,
       "col_cost": 1400,
-      "ingredients": {"dark_crystal": 2, "tier_crest_mid": 2},
+      "ingredients": {
+        "dark_crystal": 2,
+        "tier_crest_mid": 2
+      },
       "output_type": "item",
       "output_item_id": "swap_stone",
       "output_qty": 1,
@@ -372,11 +626,70 @@
       "name": "魔石融合・毛石",
       "min_skill_level": 40,
       "col_cost": 2600,
-      "ingredients": {"dark_crystal_pure": 2, "tier_crest_high": 2},
+      "ingredients": {
+        "dark_crystal_pure": 2,
+        "tier_crest_high": 2
+      },
       "output_type": "item",
       "output_item_id": "refine_stone",
       "output_qty": 1,
       "mastery_exp": 80
+    },
+    "fuse_expand_stone": {
+      "id": "fuse_expand_stone",
+      "name": "魔石融合・擴孔魔石（擴石）",
+      "min_skill_level": 12,
+      "col_cost": 900,
+      "ingredients": {
+        "forge_scrap": 6,
+        "bright_crystal": 2
+      },
+      "output_type": "item",
+      "output_item_id": "expand_stone",
+      "output_qty": 1,
+      "mastery_exp": 45
+    },
+    "fuse_socket_crimson": {
+      "id": "fuse_socket_crimson",
+      "name": "結晶融合・紅蓮斬擊鑲嵌結晶",
+      "min_skill_level": 10,
+      "col_cost": 750,
+      "ingredients": {
+        "forge_scrap": 5,
+        "bright_crystal_shard": 4
+      },
+      "output_type": "item",
+      "output_item_id": "socket_crystal_crimson",
+      "output_qty": 1,
+      "mastery_exp": 40
+    },
+    "fuse_socket_aegis": {
+      "id": "fuse_socket_aegis",
+      "name": "結晶融合・四軸聖盾鑲嵌結晶",
+      "min_skill_level": 20,
+      "col_cost": 1400,
+      "ingredients": {
+        "forge_scrap": 8,
+        "dark_crystal": 2
+      },
+      "output_type": "item",
+      "output_item_id": "socket_crystal_aegis",
+      "output_qty": 1,
+      "mastery_exp": 65
+    },
+    "fuse_gear_crate_t2": {
+      "id": "fuse_gear_crate_t2",
+      "name": "補給重鑄・中階攻略裝備補給箱",
+      "min_skill_level": 15,
+      "col_cost": 1200,
+      "ingredients": {
+        "forge_scrap": 10,
+        "bright_crystal": 2
+      },
+      "output_type": "item",
+      "output_item_id": "gear_supply_crate_t2",
+      "output_qty": 1,
+      "mastery_exp": 55
     }
   }
 }

@@ -164,42 +164,57 @@ def build_bag_embed(profile: dict[str, Any], content: Any) -> discord.Embed:
     equipped = [e for e in eqs if getattr(e, "is_equipped", False)]
     unequipped = [e for e in eqs if not getattr(e, "is_equipped", False)]
 
+    def _fmt_gear(e: Any) -> str:
+        stars = f" ★{e.temper_level}" if getattr(e, "temper_level", 0) > 0 else ""
+        sock_id = str(getattr(e, "socket_crystal_id", "") or "")
+        sock = " 💠" if sock_id else ""
+        lock = " 🔒" if getattr(e, "is_locked", False) else ""
+        cp = int(getattr(e, "power_score", 0))
+        return f"`#{e.id}` **{e.name}** +{e.enhance_level}{stars}{sock}（T{e.tier}/{e.slot}/{e.rarity}｜⚡{cp}）{lock}"
+
     embed = discord.Embed(
         title=f"🎒 裝備欄與道具背包 — {profile.get('display_name', '攻略者')}",
         description=(
             f"💰 柯爾：`{int(profile.get('col', 0)):,}`｜"
+            f"⚡ 綜合戰力：`{int(profile.get('combat_power', 0)):,}`｜"
             f"裝備空間：`{len(unequipped)}/80`｜待領信箱：`{profile.get('pending_loot_count', 0)}` 件"
         ),
         color=SAO_COLOR_GOLD,
     )
-    eq_lines = [
-        f"`#{e.id}` **{e.name}** +{e.enhance_level}（{e.slot}／{e.rarity}）" for e in equipped[:8]
-    ]
+    eq_lines = [_fmt_gear(e) for e in equipped[:8]]
     embed.add_field(
         name="🛡️ 目前穿戴（8 欄位）",
         value=_clamp_str("\n".join(eq_lines) if eq_lines else "尚未穿戴裝備", 1024),
         inline=False,
     )
-    bag_lines = [
-        f"`#{e.id}` {e.name} +{e.enhance_level} ({e.slot}/{e.rarity}){' 🔒' if e.is_locked else ''}"
-        for e in unequipped[:10]
-    ]
+    bag_lines = [_fmt_gear(e) for e in unequipped[:10]]
     embed.add_field(
-        name="📦 背包裝備（前 10 件）",
+        name=f"📦 背包裝備（前 {min(len(unequipped), 10)}/{len(unequipped)} 件）",
         value=_clamp_str("\n".join(bag_lines) if bag_lines else "背包空空如也", 1024),
         inline=False,
     )
+
+    # Prioritize crates, socket crystals, enhance crystals, magic stones, then potions/materials
+    priority_cats = ("supply_crate", "socket_crystal", "enhance", "magic_stone", "crystal", "potion")
+    inv_items = [(iid, qty) for iid, qty in inv.items() if int(qty) > 0]
+    inv_items.sort(
+        key=lambda kv: (
+            priority_cats.index(str(content.items_crystals.get(kv[0], {}).get("category", "")))
+            if str(content.items_crystals.get(kv[0], {}).get("category", "")) in priority_cats
+            else 99,
+            kv[0],
+        )
+    )
     inv_lines = []
-    for iid, qty in list(inv.items())[:12]:
-        if qty <= 0:
-            continue
+    for iid, qty in inv_items[:14]:
         iname = content.items_crystals.get(iid, {}).get("name", iid)
         inv_lines.append(f"• {iname} (`{iid}`) x**{qty}**")
     embed.add_field(
-        name="💎 水晶／藥水／素材快取袋",
+        name="💎 水晶／鑲嵌石／補給箱／素材快取袋",
         value=_clamp_str("\n".join(inv_lines) if inv_lines else "尚無消耗品或素材", 1024),
         inline=False,
     )
+    embed.set_footer(text="使用下方選單穿戴、一鍵最強、鎖定、分解或直接切換至莉茲貝特工坊！")
     return embed
 
 
@@ -272,24 +287,37 @@ def build_help_embed() -> discord.Embed:
         description=(
             "歡迎進入浮游城艾恩葛朗特！本遊戲採 **JSON 資料驅動 100 層爬塔**、"
             "**14 層專屬多階段頭目（含每 10 層與 F1/25/74/75/100）**、"
-            "**純物理劍技系統（無魔法）** 與 **真人即時多人共鬥／交換（Switch）**！"
+            "**純物理劍技系統（無魔法）** 與 **真人即時多人共鬥／交換（Switch）**！\n"
+            "✨ 擊殺怪物、開箱或通關後將直接顯示 **🧭 繼續探索／挑戰頭目／一鍵換裝** 按鈕，無須重複輸入 `/tower`！"
         ),
         color=SAO_COLOR_CYAN,
     )
     embed.set_image(url=_safe_url(assets.get_biome_banner_url(100)))
     embed.add_field(
-        name="🏰 爬塔與戰鬥指令",
-        value="`/start` 創角｜`/profile` 角色面板｜`/tower` 100 層探索/秘境/迷宮/傳送｜`/boss` 頭目戰/世界王/阿爾狗情報｜`/skills` 劍技/流派/天賦",
+        name="🏰 爬塔與無縫戰鬥指令",
+        value=(
+            "`/start` 創角（附贈流派初始武器）｜`/profile` 角色面板｜"
+            "`/tower` 100 層連續探索／秘境／地下迷宮／傳送｜"
+            "`/boss` 頭目戰／世界王／阿爾狗情報｜`/skills` 劍技／流派／天賦"
+        ),
         inline=False,
     )
     embed.add_field(
         name="🤝 真人多人共鬥與社交",
-        value="`/party` 組隊大廳/攻略團/Switch 共鬥/救援｜`/guild` 公會/倉庫/集結｜`/market` 玩家交易市集｜`/duel` 初擊/完全勝負決鬥",
+        value=(
+            "`/party` 組隊大廳／攻略團／Switch 共鬥／全員掉裝／救援｜"
+            "`/guild` 公會／倉庫／集結｜`/market` 玩家交易市集｜`/duel` 圈內決鬥"
+        ),
         inline=False,
     )
     embed.add_field(
-        name="🔨 養成、工坊與終局",
-        value="`/bag` `/equip` `/inspect` 裝備與方案｜`/forge` 鍛造/強化/魔石/融合｜`/cook` 料理/一大鍋｜`/mine` 採礦｜`/shop` 商店水晶｜`/daily` `/expedition` `/achievements` `/leaderboard` `/rebirth`",
+        name="🔨 5 軸裝備養成、互動工坊與終局",
+        value=(
+            "`/bag` `/equip` 互動式穿戴／一鍵最強／批量分解｜"
+            "`/forge` 莉茲貝特互動工坊（鍛造／+15 強化／★5 鍛星／升階 T10／升品／鑲嵌結晶／強化轉移／魔石洗詞綴）｜"
+            "`/shop` 分類商會（水晶／強化石／鑲嵌結晶／裝備補給箱／樓層武器裝備／秘寶抽獎）｜"
+            "`/cook` `/mine` `/daily` `/expedition` `/achievements` `/leaderboard` `/rebirth`"
+        ),
         inline=False,
     )
     embed.set_footer(text="提示：/p 動漫梗圖指令完整保留獨立運作 • Link Start!")

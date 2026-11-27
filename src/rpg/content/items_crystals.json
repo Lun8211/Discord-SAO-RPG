@@ -10,7 +10,10 @@
     "buy_col": 80,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"heal_hp_pct": 0.3, "heal_hp_flat": 120},
+    "effect": {
+      "heal_hp_pct": 0.3,
+      "heal_hp_flat": 120
+    },
     "desc": "緩慢回復 30% + 120 點生命，適用於第 1～25 層冒險與生存自動喝藥。",
     "asset_key": "item_potion_hp"
   },
@@ -25,7 +28,10 @@
     "buy_col": 240,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"heal_hp_pct": 0.45, "heal_hp_flat": 450},
+    "effect": {
+      "heal_hp_pct": 0.45,
+      "heal_hp_flat": 450
+    },
     "desc": "回復 45% + 450 點生命，攻略組中層必備藥劑。",
     "asset_key": "item_potion_hp"
   },
@@ -40,7 +46,10 @@
     "buy_col": 680,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"heal_hp_pct": 0.6, "heal_hp_flat": 1400},
+    "effect": {
+      "heal_hp_pct": 0.6,
+      "heal_hp_flat": 1400
+    },
     "desc": "回復 60% + 1400 點生命，支援隊伍藥水共享。",
     "asset_key": "item_potion_hp"
   },
@@ -55,7 +64,10 @@
     "buy_col": 1800,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"heal_hp_pct": 0.8, "heal_hp_flat": 3800},
+    "effect": {
+      "heal_hp_pct": 0.8,
+      "heal_hp_flat": 3800
+    },
     "desc": "紅玉宮前線攻略專用特調藥劑，回復 80% + 3800 點生命。",
     "asset_key": "item_potion_hp"
   },
@@ -70,7 +82,10 @@
     "buy_col": 160,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"heal_sp_pct": 0.45, "heal_sp_flat": 35},
+    "effect": {
+      "heal_sp_pct": 0.45,
+      "heal_sp_flat": 35
+    },
     "desc": "立即補充 45% + 35 點 SP，讓劍技連段不間斷。",
     "asset_key": "item_potion_sp"
   },
@@ -85,7 +100,10 @@
     "buy_col": 820,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"heal_sp_pct": 0.8, "heal_sp_flat": 90},
+    "effect": {
+      "heal_sp_pct": 0.8,
+      "heal_sp_flat": 90
+    },
     "desc": "大幅回復 80% + 90 點 SP，專為星爆氣流斬與日蝕高消耗連發設計。",
     "asset_key": "item_potion_sp"
   },
@@ -100,7 +118,9 @@
     "buy_col": 450,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"stamina": 50},
+    "effect": {
+      "stamina": 50
+    },
     "desc": "立即回復 50 點行動體力，繼續攻略樓層或採集礦脈。",
     "asset_key": "item_potion_sp"
   },
@@ -115,7 +135,11 @@
     "buy_col": 550,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"instant_full_heal": true, "cleanse_doom": true, "blocked_by_anti_crystal": true},
+    "effect": {
+      "instant_full_heal": true,
+      "cleanse_doom": true,
+      "blocked_by_anti_crystal": true
+    },
     "desc": "高喊「Heal!」瞬間將 HP 補至全滿並淨化死神宣告。水晶無效化區域無法使用。",
     "asset_key": "item_crystal_red"
   },
@@ -130,7 +154,11 @@
     "buy_col": 650,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"escape_to_town": true, "can_rescue_downed": true, "blocked_by_anti_crystal": true},
+    "effect": {
+      "escape_to_town": true,
+      "can_rescue_downed": true,
+      "blocked_by_anti_crystal": true
+    },
     "desc": "高喊「Teleport!」瞬間撤回安全圈內城鎮，亦可於危急時救援瀕死隊友。水晶無效化區域禁用。",
     "asset_key": "item_crystal_blue"
   },
@@ -145,7 +173,16 @@
     "buy_col": 360,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"cleanse_debuffs": ["poison", "bleed", "burn", "slow", "wound"], "blocked_by_anti_crystal": false},
+    "effect": {
+      "cleanse_debuffs": [
+        "poison",
+        "bleed",
+        "burn",
+        "slow",
+        "wound"
+      ],
+      "blocked_by_anti_crystal": false
+    },
     "desc": "瞬間淨化劇毒、流血、燃燒、緩速與重傷狀態，密林與頭目戰必備。",
     "asset_key": "item_crystal_green"
   },
@@ -160,7 +197,10 @@
     "buy_col": 1500,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"group_teleport": true, "blocked_by_anti_crystal": true},
+    "effect": {
+      "group_teleport": true,
+      "blocked_by_anti_crystal": true
+    },
     "desc": "開啟空間迴廊將整支攻略隊傳送至指定已解鎖樓層或撤離現場。",
     "asset_key": "item_crystal_yellow"
   },
@@ -175,7 +215,9 @@
     "buy_col": 140,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"enhance_tier": 1},
+    "effect": {
+      "enhance_tier": 1
+    },
     "desc": "用於將裝備強化至 +1～+5，亦可於工坊融合為光輝結晶。",
     "asset_key": "item_bright_crystal"
   },
@@ -190,7 +232,9 @@
     "buy_col": 600,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"enhance_tier": 2},
+    "effect": {
+      "enhance_tier": 2
+    },
     "desc": "用於將裝備強化至 +6～+10（失敗不降級並累積保底）。",
     "asset_key": "item_bright_crystal"
   },
@@ -205,7 +249,9 @@
     "buy_col": 520,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"fusion_mat": true},
+    "effect": {
+      "fusion_mat": true
+    },
     "desc": "蘊含高階金屬能量的暗色結晶碎片，可融合為暗影結晶。",
     "asset_key": "item_dark_crystal"
   },
@@ -220,7 +266,9 @@
     "buy_col": 1800,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"enhance_tier": 3},
+    "effect": {
+      "enhance_tier": 3
+    },
     "desc": "用於 +11～+13 高風險強化與名品武器鍛造的核心結晶。",
     "asset_key": "item_dark_crystal"
   },
@@ -235,7 +283,9 @@
     "buy_col": 5200,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"enhance_tier": 4},
+    "effect": {
+      "enhance_tier": 4
+    },
     "desc": "高純度頂層結晶，衝擊 +14～+15 神兵與頂層鍛造專用。",
     "asset_key": "item_dark_crystal"
   },
@@ -250,7 +300,9 @@
     "buy_col": 3200,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"prevent_downgrade": true},
+    "effect": {
+      "prevent_downgrade": true
+    },
     "desc": "於 +11 以上強化時勾選使用，即使失敗也不會降級。",
     "asset_key": "item_talisman"
   },
@@ -265,7 +317,9 @@
     "buy_col": 2200,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"stone_action": "reroll_all_affixes"},
+    "effect": {
+      "stone_action": "reroll_all_affixes"
+    },
     "desc": "重新隨機洗鍊非名品裝備的所有附加詞條與數值。",
     "asset_key": "item_magic_stone"
   },
@@ -280,7 +334,9 @@
     "buy_col": 2800,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"stone_action": "swap_one_affix"},
+    "effect": {
+      "stone_action": "swap_one_affix"
+    },
     "desc": "保留其餘優秀屬性，僅將非名品裝備的單一詞條替換為新詞條。",
     "asset_key": "item_magic_stone"
   },
@@ -295,7 +351,9 @@
     "buy_col": 4200,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"stone_action": "refine_affix_values"},
+    "effect": {
+      "stone_action": "refine_affix_values"
+    },
     "desc": "提升非名品裝備既有詞條數值（可向上精煉至區間上限，名品不可使用）。",
     "asset_key": "item_magic_stone"
   },
@@ -310,7 +368,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "分布於第 1～10 層山壁的基礎鍛造礦石。",
     "asset_key": "item_ore_common"
   },
@@ -325,7 +385,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "第 1～20 層常見的高韌性鐵礦，鍛造初階武防必備。",
     "asset_key": "item_ore_common"
   },
@@ -340,7 +402,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "採自迷霧峽谷與森羅鎮周邊的翡翠原礦。",
     "asset_key": "item_ore_common"
   },
@@ -355,7 +419,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "珊瑚村與極光港周邊開採的純淨銀礦。",
     "asset_key": "item_ore_common"
   },
@@ -370,7 +436,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "蘊含白金凍土極光能量的寒冰結晶礦。",
     "asset_key": "item_ore_rare"
   },
@@ -385,7 +453,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "第 31～40 層幽影古城深處開採的黑鐵礦。",
     "asset_key": "item_ore_rare"
   },
@@ -400,7 +470,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "林達斯與阿爾格特工匠最推崇的高強度秘銀礦脈。",
     "asset_key": "item_ore_rare"
   },
@@ -415,7 +487,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "芙羅莉亞回憶之丘伴生的微光輝石，可賦予武器靈性。",
     "asset_key": "item_ore_rare"
   },
@@ -430,7 +504,10 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true, "canon_forge_mat": true},
+    "effect": {
+      "material": true,
+      "canon_forge_mat": true
+    },
     "desc": "源自第 55 層西山白龍巢穴的傳說級金屬！莉茲貝特鍛造「逐闇者」的必備主材。",
     "asset_key": "item_ore_crystallite"
   },
@@ -445,7 +522,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "承受炎獄高溫焠鍊的極硬精金礦石。",
     "asset_key": "item_ore_rare"
   },
@@ -460,7 +539,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "天空庭園雲海礦脈產出的輕盈高導秘銀，適合鍛造頂級細劍。",
     "asset_key": "item_ore_crystallite"
   },
@@ -475,7 +556,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "深海神殿蘊育的魔力珍珠礦，強化抗性防具的理想素材。",
     "asset_key": "item_ore_rare"
   },
@@ -490,7 +573,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "第 71～80 層煉獄迷宮岩層內結晶化的高密度魔礦。",
     "asset_key": "item_ore_rare"
   },
@@ -505,7 +590,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "兼具驚人硬度與龍息耐性的漆黑神鋼，鍛造解放者十字盾的核心材料。",
     "asset_key": "item_ore_crystallite"
   },
@@ -520,7 +607,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "星辰迴廊極罕見的原初星晶，散發著穩定時空的微光。",
     "asset_key": "item_ore_crystallite"
   },
@@ -535,7 +624,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "可折射多軸攻擊能量的虛空結晶礦石。",
     "asset_key": "item_ore_rare"
   },
@@ -550,7 +641,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "僅在紅玉宮前殿與神域天階產出的艾恩葛朗特最高階鍛造結晶。",
     "asset_key": "item_ore_crystallite"
   },
@@ -565,7 +658,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"material": true},
+    "effect": {
+      "material": true
+    },
     "desc": "承載虛擬世界核心運算密鑰的神秘結晶碎片。",
     "asset_key": "item_ore_crystallite"
   },
@@ -580,7 +675,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "擊破第 1 層頭目狗頭人領主伊爾方的榮耀戰利品。",
     "asset_key": "item_boss_crest"
   },
@@ -595,7 +692,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 10 層千蛇城武士領主加賀智留下的刀紋勳章。",
     "asset_key": "item_boss_crest"
   },
@@ -610,7 +709,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 20 層深淵巨樹核心木質，散發濃郁翡翠靈氣。",
     "asset_key": "item_boss_crest"
   },
@@ -625,7 +726,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "突破第 25 層噩夢頭目阿比斯瓦德的勇氣證明。",
     "asset_key": "item_boss_crest"
   },
@@ -640,7 +743,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 30 層冰冠霸主碎裂後遺留的永凍核心。",
     "asset_key": "item_boss_crest"
   },
@@ -655,7 +760,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 40 層狂暴獄卒長的咒鐵鎖鏈，可用於鍛造高階戰鐮。",
     "asset_key": "item_boss_crest"
   },
@@ -670,7 +777,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 50 層阿爾格特審判官卸下的超合金甲片，名劍鍛造珍材。",
     "asset_key": "item_boss_crest"
   },
@@ -685,7 +794,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 60 層熔核結晶龍的炙熱逆鱗，鍛造閃爍之光必備材料。",
     "asset_key": "item_boss_crest"
   },
@@ -700,7 +811,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 70 層蒼穹雷神遺留的雷電聖紋，可鑄造解放者十字盾。",
     "asset_key": "item_boss_crest"
   },
@@ -715,7 +828,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 74 層閃耀魔眼的斷角，象徵超越極限的獨有劍技之戰。",
     "asset_key": "item_boss_crest"
   },
@@ -730,7 +845,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 75 層骸骨獵殺者崩碎的漆黑骨鐮尖端。",
     "asset_key": "item_boss_crest"
   },
@@ -745,7 +862,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 80 層蒼白死神熄滅的魂火提燈。",
     "asset_key": "item_boss_crest"
   },
@@ -760,7 +879,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 90 層星辰執政官破碎的相位渾天儀核心。",
     "asset_key": "item_boss_crest"
   },
@@ -775,7 +896,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "通關艾恩葛朗特第 100 層紅玉宮殿的至高證明。",
     "asset_key": "item_boss_crest"
   },
@@ -790,7 +913,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 1～30 層樓層守護者與野外頭目掉落的通用攻略紋章。",
     "asset_key": "item_boss_crest"
   },
@@ -805,7 +930,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 31～60 層樓層守護者與野外頭目掉落的通用攻略紋章。",
     "asset_key": "item_boss_crest"
   },
@@ -820,7 +947,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 61～80 層前線樓層頭目掉落的高階攻略紋章。",
     "asset_key": "item_boss_crest"
   },
@@ -835,7 +964,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"boss_mat": true},
+    "effect": {
+      "boss_mat": true
+    },
     "desc": "第 81～100 層神域頭目掉落的終極攻略紋章。",
     "asset_key": "item_boss_crest"
   },
@@ -850,7 +981,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "C"},
+    "effect": {
+      "ingredient_grade": "C"
+    },
     "desc": "托爾巴納草原狩獵取得的新鮮野豬肉，炙烤後香氣四溢。",
     "asset_key": "item_meat"
   },
@@ -865,7 +998,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "C"},
+    "effect": {
+      "ingredient_grade": "C"
+    },
     "desc": "精瘦耐嚼的狼肉，適合與香草燉煮。",
     "asset_key": "item_meat"
   },
@@ -880,7 +1015,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "B"},
+    "effect": {
+      "ingredient_grade": "B"
+    },
     "desc": "去除毒腺後彈牙鮮甜的密林特色肉材。",
     "asset_key": "item_meat"
   },
@@ -895,7 +1032,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "B"},
+    "effect": {
+      "ingredient_grade": "B"
+    },
     "desc": "富含爆發力的鮮嫩紅肉，料理後可強化速度與暴擊。",
     "asset_key": "item_meat"
   },
@@ -910,7 +1049,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "B"},
+    "effect": {
+      "ingredient_grade": "B"
+    },
     "desc": "第 22 層珊瑚村名產鮮魚，入口即化。",
     "asset_key": "item_meat"
   },
@@ -925,7 +1066,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "B"},
+    "effect": {
+      "ingredient_grade": "B"
+    },
     "desc": "在低溫環境中凝結油花的優質雪原肉材。",
     "asset_key": "item_meat"
   },
@@ -940,7 +1083,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "A"},
+    "effect": {
+      "ingredient_grade": "A"
+    },
     "desc": "份量驚人的厚實肋排，燉煮大鍋料理的絕佳主肉。",
     "asset_key": "item_meat"
   },
@@ -955,7 +1100,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "A"},
+    "effect": {
+      "ingredient_grade": "A"
+    },
     "desc": "迷途魔森產出的上等野味，帶有獨特煙燻香氣。",
     "asset_key": "item_meat"
   },
@@ -970,7 +1117,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "A"},
+    "effect": {
+      "ingredient_grade": "A"
+    },
     "desc": "食用靈魂花草長大的霜降珍肉，油花細緻甘甜。",
     "asset_key": "item_meat"
   },
@@ -985,7 +1134,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "A"},
+    "effect": {
+      "ingredient_grade": "A"
+    },
     "desc": "鋼鐵商都高檔餐館指定採購的柔嫩禽肉。",
     "asset_key": "item_meat"
   },
@@ -1000,7 +1151,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "A"},
+    "effect": {
+      "ingredient_grade": "A"
+    },
     "desc": "天然帶有辛香熱度的炙肉，料理後能大幅強化龍息耐性。",
     "asset_key": "item_meat"
   },
@@ -1015,7 +1168,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "A"},
+    "effect": {
+      "ingredient_grade": "A"
+    },
     "desc": "充滿彈性的龍翼精肉，攻略組挑戰炎龍前必吃。",
     "asset_key": "item_meat"
   },
@@ -1030,7 +1185,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "S"},
+    "effect": {
+      "ingredient_grade": "S"
+    },
     "desc": "艾恩葛朗特傳說級 S 級夢幻食材！唯有頂級料理人方能發揮其極致美味與強悍增益。",
     "asset_key": "item_meat"
   },
@@ -1045,7 +1202,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "S"},
+    "effect": {
+      "ingredient_grade": "S"
+    },
     "desc": "潮汐聖殿產出的 S 級鮮甜海味。",
     "asset_key": "item_meat"
   },
@@ -1060,7 +1219,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "S"},
+    "effect": {
+      "ingredient_grade": "S"
+    },
     "desc": "第 74 層以上才可狩獵的 S 級龍族沙朗肉。",
     "asset_key": "item_meat"
   },
@@ -1075,7 +1236,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "S"},
+    "effect": {
+      "ingredient_grade": "S"
+    },
     "desc": "甲殼厚重但肉質甘美的煉獄 S 級食材。",
     "asset_key": "item_meat"
   },
@@ -1090,7 +1253,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "S"},
+    "effect": {
+      "ingredient_grade": "S"
+    },
     "desc": "星辰迴廊珍稀 S 級食材，烹調後散發星光清香。",
     "asset_key": "item_meat"
   },
@@ -1105,7 +1270,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "S"},
+    "effect": {
+      "ingredient_grade": "S"
+    },
     "desc": "蘊含高濃度星界鮮味的頂級海鮮食材。",
     "asset_key": "item_meat"
   },
@@ -1120,7 +1287,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "S"},
+    "effect": {
+      "ingredient_grade": "S"
+    },
     "desc": "紅玉宮前殿最珍貴的 S 級龍族極品霜降肉。",
     "asset_key": "item_meat"
   },
@@ -1135,7 +1304,9 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"ingredient_grade": "S"},
+    "effect": {
+      "ingredient_grade": "S"
+    },
     "desc": "能將任何終極宴席昇華至系統上限的夢幻松露。",
     "asset_key": "item_meat"
   },
@@ -1150,7 +1321,13 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"buff": {"atk_pct": 0.06, "hp_pct": 0.06}, "duration_sec": 1800},
+    "effect": {
+      "buff": {
+        "atk_pct": 0.06,
+        "hp_pct": 0.06
+      },
+      "duration_sec": 1800
+    },
     "desc": "食用後 30 分鐘內攻擊力 +6%、最大生命 +6%。",
     "asset_key": "item_dish"
   },
@@ -1165,7 +1342,14 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"buff": {"def_pct": 0.08, "res_slash": 0.06, "res_blunt": 0.06}, "duration_sec": 1800},
+    "effect": {
+      "buff": {
+        "def_pct": 0.08,
+        "res_slash": 0.06,
+        "res_blunt": 0.06
+      },
+      "duration_sec": 1800
+    },
     "desc": "食用後 30 分鐘內防禦力 +8%、斬擊與打擊抗性 +6%。",
     "asset_key": "item_dish"
   },
@@ -1180,7 +1364,14 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"buff": {"spd_flat": 14, "crit_rate": 0.06, "evasion": 0.04}, "duration_sec": 2400},
+    "effect": {
+      "buff": {
+        "spd_flat": 14,
+        "crit_rate": 0.06,
+        "evasion": 0.04
+      },
+      "duration_sec": 2400
+    },
     "desc": "食用後 40 分鐘內速度 +14、暴擊率 +6%、閃避率 +4%。",
     "asset_key": "item_dish"
   },
@@ -1195,7 +1386,14 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"buff": {"atk_pct": 0.1, "crit_dmg": 0.18, "armor_pen": 0.06}, "duration_sec": 2400},
+    "effect": {
+      "buff": {
+        "atk_pct": 0.1,
+        "crit_dmg": 0.18,
+        "armor_pen": 0.06
+      },
+      "duration_sec": 2400
+    },
     "desc": "食用後 40 分鐘內攻擊力 +10%、暴擊傷害 +18%、穿甲 +6%。",
     "asset_key": "item_dish"
   },
@@ -1210,7 +1408,14 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"buff": {"atk_pct": 0.12, "def_pct": 0.12, "hp_pct": 0.12}, "duration_sec": 3000},
+    "effect": {
+      "buff": {
+        "atk_pct": 0.12,
+        "def_pct": 0.12,
+        "hp_pct": 0.12
+      },
+      "duration_sec": 3000
+    },
     "desc": "食用後 50 分鐘內攻防生命全數 +12%。",
     "asset_key": "item_dish"
   },
@@ -1225,7 +1430,14 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"buff": {"res_dragon": 0.18, "atk_pct": 0.12, "break_bonus": 0.12}, "duration_sec": 3000},
+    "effect": {
+      "buff": {
+        "res_dragon": 0.18,
+        "atk_pct": 0.12,
+        "break_bonus": 0.12
+      },
+      "duration_sec": 3000
+    },
     "desc": "食用後 50 分鐘內龍息抗性 +18%、攻擊力 +12%、破防威力 +12%。",
     "asset_key": "item_dish"
   },
@@ -1240,7 +1452,16 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"buff": {"atk_pct": 0.16, "def_pct": 0.14, "hp_pct": 0.16, "crit_rate": 0.08, "exp_bonus": 0.15}, "duration_sec": 3600},
+    "effect": {
+      "buff": {
+        "atk_pct": 0.16,
+        "def_pct": 0.14,
+        "hp_pct": 0.16,
+        "crit_rate": 0.08,
+        "exp_bonus": 0.15
+      },
+      "duration_sec": 3600
+    },
     "desc": "以 S 級雜燴兔烹調的夢幻名菜！60 分鐘內全面強化戰鬥屬性並獲得 +15% 經驗。",
     "asset_key": "item_dish"
   },
@@ -1255,7 +1476,14 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"buff": {"atk_pct": 0.2, "crit_dmg": 0.28, "res_all": 0.1}, "duration_sec": 3600},
+    "effect": {
+      "buff": {
+        "atk_pct": 0.2,
+        "crit_dmg": 0.28,
+        "res_all": 0.1
+      },
+      "duration_sec": 3600
+    },
     "desc": "60 分鐘內攻擊力 +20%、暴擊傷害 +28%、全四軸抗性 +10%。",
     "asset_key": "item_dish"
   },
@@ -1270,7 +1498,15 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"buff": {"spd_flat": 25, "skill_dmg": 0.2, "res_all": 0.12, "sp_pct": 0.15}, "duration_sec": 3600},
+    "effect": {
+      "buff": {
+        "spd_flat": 25,
+        "skill_dmg": 0.2,
+        "res_all": 0.12,
+        "sp_pct": 0.15
+      },
+      "duration_sec": 3600
+    },
     "desc": "60 分鐘內速度 +25、劍技傷害 +20%、全四軸抗性 +12%、最大 SP +15%。",
     "asset_key": "item_dish"
   },
@@ -1285,7 +1521,17 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": true,
-    "effect": {"buff": {"atk_pct": 0.24, "def_pct": 0.24, "hp_pct": 0.24, "crit_rate": 0.1, "res_all": 0.15, "dmg_reduction": 0.08}, "duration_sec": 4200},
+    "effect": {
+      "buff": {
+        "atk_pct": 0.24,
+        "def_pct": 0.24,
+        "hp_pct": 0.24,
+        "crit_rate": 0.1,
+        "res_all": 0.15,
+        "dmg_reduction": 0.08
+      },
+      "duration_sec": 4200
+    },
     "desc": "艾恩葛朗特料理技能滿級的極致傑作！70 分鐘內全面突破戰力極限。",
     "asset_key": "item_dish"
   },
@@ -1300,7 +1546,15 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"stew_servings": 6, "buff": {"atk_pct": 0.1, "hp_pct": 0.12, "def_pct": 0.1}, "duration_sec": 3600},
+    "effect": {
+      "stew_servings": 6,
+      "buff": {
+        "atk_pct": 0.1,
+        "hp_pct": 0.12,
+        "def_pct": 0.1
+      },
+      "duration_sec": 3600
+    },
     "desc": "可於隊伍或公會大廳架起「一大鍋」供 6 位真人玩家領取前線戰意增益！",
     "asset_key": "item_stew"
   },
@@ -1315,7 +1569,16 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"stew_servings": 12, "buff": {"res_dragon": 0.2, "res_all": 0.08, "atk_pct": 0.14, "hp_pct": 0.14}, "duration_sec": 3600},
+    "effect": {
+      "stew_servings": 12,
+      "buff": {
+        "res_dragon": 0.2,
+        "res_all": 0.08,
+        "atk_pct": 0.14,
+        "hp_pct": 0.14
+      },
+      "duration_sec": 3600
+    },
     "desc": "可供 12 位團隊成員共同領取的屠龍大鍋，大幅強化龍息與全軸抗性！",
     "asset_key": "item_stew"
   },
@@ -1330,7 +1593,17 @@
     "buy_col": null,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"stew_servings": 24, "buff": {"atk_pct": 0.2, "def_pct": 0.2, "hp_pct": 0.2, "res_all": 0.14, "skill_dmg": 0.16}, "duration_sec": 5400},
+    "effect": {
+      "stew_servings": 24,
+      "buff": {
+        "atk_pct": 0.2,
+        "def_pct": 0.2,
+        "hp_pct": 0.2,
+        "res_all": 0.14,
+        "skill_dmg": 0.16
+      },
+      "duration_sec": 5400
+    },
     "desc": "足供 24 人大型攻略聯盟共享的頂級神域大鍋，決戰第 100 層必備！",
     "asset_key": "item_stew"
   },
@@ -1345,7 +1618,9 @@
     "buy_col": 60,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"cooking_catalyst": true},
+    "effect": {
+      "cooking_catalyst": true
+    },
     "desc": "烹飪各階料理與一大鍋的必備基礎香料。",
     "asset_key": "item_misc"
   },
@@ -1360,7 +1635,9 @@
     "buy_col": 5000,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"guild_creation": true},
+    "effect": {
+      "guild_creation": true
+    },
     "desc": "向起始之鎮黑鐵宮登記創立正式公會的系統憑證。",
     "asset_key": "item_talisman"
   },
@@ -1375,8 +1652,266 @@
     "buy_col": 2500,
     "stackable": true,
     "pouch_item": false,
-    "effect": {"gacha_pull": 1},
+    "effect": {
+      "gacha_pull": 1
+    },
     "desc": "可於阿爾格特商會秘寶庫進行一次高階裝備或結晶抽取。",
     "asset_key": "item_misc"
+  },
+  "forge_scrap": {
+    "id": "forge_scrap",
+    "name": "鍛造分解精鐵碎塊",
+    "en_name": "Forge Salvage Scrap",
+    "emoji": "🔩",
+    "category": "enhance",
+    "tier": 1,
+    "sell_col": 25,
+    "buy_col": 120,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "salvage_material": true
+    },
+    "desc": "拆解多餘裝備回收的鍛造精材，可用於裝備鍛星（淬鍊）、升階、升品與結晶融合。",
+    "asset_key": "item_forge_scrap"
+  },
+  "expand_stone": {
+    "id": "expand_stone",
+    "name": "擴孔魔石（擴石）",
+    "en_name": "Affix Expansion Stone",
+    "emoji": "💠",
+    "category": "magic_stone",
+    "tier": 5,
+    "sell_col": 500,
+    "buy_col": 1800,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "magic_stone_type": "expand"
+    },
+    "desc": "為非名品裝備額外開鑿 1 條新隨機詞綴（最多擴充至 4 條詞綴）。",
+    "asset_key": "item_expand_stone"
+  },
+  "socket_crystal_crimson": {
+    "id": "socket_crystal_crimson",
+    "name": "紅蓮斬擊鑲嵌結晶",
+    "en_name": "Crimson Strike Socket Crystal",
+    "emoji": "🔴",
+    "category": "socket_crystal",
+    "tier": 3,
+    "sell_col": 350,
+    "buy_col": 1400,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "socket_bonuses": {
+        "atk_pct": 0.08,
+        "crit_dmg": 0.12
+      }
+    },
+    "desc": "可鑲嵌於任意裝備插槽：攻擊力 +8%、暴擊傷害 +12%（可隨時無損替換）。",
+    "asset_key": "item_socket_crystal"
+  },
+  "socket_crystal_azure": {
+    "id": "socket_crystal_azure",
+    "name": "蒼藍鐵壁鑲嵌結晶",
+    "en_name": "Azure Bulwark Socket Crystal",
+    "emoji": "🔵",
+    "category": "socket_crystal",
+    "tier": 3,
+    "sell_col": 350,
+    "buy_col": 1400,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "socket_bonuses": {
+        "def_pct": 0.09,
+        "hp_pct": 0.06
+      }
+    },
+    "desc": "可鑲嵌於任意裝備插槽：防禦力 +9%、生命上限 +6%（可隨時無損替換）。",
+    "asset_key": "item_socket_crystal"
+  },
+  "socket_crystal_gale": {
+    "id": "socket_crystal_gale",
+    "name": "疾風閃耀鑲嵌結晶",
+    "en_name": "Gale Flash Socket Crystal",
+    "emoji": "🟢",
+    "category": "socket_crystal",
+    "tier": 4,
+    "sell_col": 420,
+    "buy_col": 1650,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "socket_bonuses": {
+        "spd_flat": 12,
+        "evasion": 0.04,
+        "crit_rate": 0.03
+      }
+    },
+    "desc": "可鑲嵌於任意裝備插槽：速度 +12、閃避率 +4%、暴擊率 +3%。",
+    "asset_key": "item_socket_crystal"
+  },
+  "socket_crystal_vampiric": {
+    "id": "socket_crystal_vampiric",
+    "name": "血月汲魂鑲嵌結晶",
+    "en_name": "Bloodmoon Leech Socket Crystal",
+    "emoji": "🟣",
+    "category": "socket_crystal",
+    "tier": 5,
+    "sell_col": 520,
+    "buy_col": 2100,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "socket_bonuses": {
+        "lifesteal": 0.05,
+        "atk_pct": 0.05
+      }
+    },
+    "desc": "可鑲嵌於任意裝備插槽：吸血 +5%、攻擊力 +5%，大幅提升長線爬塔續航。",
+    "asset_key": "item_socket_crystal"
+  },
+  "socket_crystal_breaker": {
+    "id": "socket_crystal_breaker",
+    "name": "碎甲破防鑲嵌結晶",
+    "en_name": "Armor Breaker Socket Crystal",
+    "emoji": "🟠",
+    "category": "socket_crystal",
+    "tier": 5,
+    "sell_col": 520,
+    "buy_col": 2100,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "socket_bonuses": {
+        "armor_pen": 0.08,
+        "break_bonus": 0.12
+      }
+    },
+    "desc": "可鑲嵌於任意裝備插槽：穿甲 +8%、破防倍率 +12%，頭目戰利器。",
+    "asset_key": "item_socket_crystal"
+  },
+  "socket_crystal_aegis": {
+    "id": "socket_crystal_aegis",
+    "name": "四軸聖盾鑲嵌結晶",
+    "en_name": "Four-Axis Aegis Socket Crystal",
+    "emoji": "🛡️",
+    "category": "socket_crystal",
+    "tier": 6,
+    "sell_col": 600,
+    "buy_col": 2400,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "socket_bonuses": {
+        "res_slash": 0.05,
+        "res_pierce": 0.05,
+        "res_blunt": 0.05,
+        "res_dragon": 0.05
+      }
+    },
+    "desc": "可鑲嵌於任意裝備插槽：斬／刺／打／龍四軸抗性全 +5%。",
+    "asset_key": "item_socket_crystal"
+  },
+  "socket_crystal_fortune": {
+    "id": "socket_crystal_fortune",
+    "name": "阿爾狗尋寶鑲嵌結晶",
+    "en_name": "Argo Fortune Socket Crystal",
+    "emoji": "🍀",
+    "category": "socket_crystal",
+    "tier": 4,
+    "sell_col": 450,
+    "buy_col": 1800,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "socket_bonuses": {
+        "drop_bonus": 0.12,
+        "col_bonus": 0.12,
+        "exp_bonus": 0.08
+      }
+    },
+    "desc": "可鑲嵌於任意裝備插槽：裝備掉寶率 +12%、柯爾收益 +12%、經驗 +8%。",
+    "asset_key": "item_socket_crystal"
+  },
+  "socket_crystal_starlight": {
+    "id": "socket_crystal_starlight",
+    "name": "星光劍技鑲嵌結晶",
+    "en_name": "Starlight Skill Socket Crystal",
+    "emoji": "✨",
+    "category": "socket_crystal",
+    "tier": 7,
+    "sell_col": 750,
+    "buy_col": 3000,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "socket_bonuses": {
+        "skill_dmg_bonus": 0.1,
+        "sp_pct": 0.08,
+        "crit_rate": 0.04
+      }
+    },
+    "desc": "可鑲嵌於任意裝備插槽：劍技傷害 +10%、SP 上限 +8%、暴擊率 +4%。",
+    "asset_key": "item_socket_crystal"
+  },
+  "gear_supply_crate_t1": {
+    "id": "gear_supply_crate_t1",
+    "name": "初階攻略裝備補給箱",
+    "en_name": "Tier-I Clearer Gear Supply Crate",
+    "emoji": "🎁",
+    "category": "supply_crate",
+    "tier": 2,
+    "sell_col": 250,
+    "buy_col": 800,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "crate_min_rarity": "fine",
+      "crate_tier_cap": 4,
+      "crate_set_chance": 0.2
+    },
+    "desc": "開啟後必定獲得一件符合自身樓層（最高 T4）的上品以上裝備，並可指定欄位。",
+    "asset_key": "item_supply_crate"
+  },
+  "gear_supply_crate_t2": {
+    "id": "gear_supply_crate_t2",
+    "name": "中階攻略裝備補給箱",
+    "en_name": "Tier-II Vanguard Gear Supply Crate",
+    "emoji": "🎁",
+    "category": "supply_crate",
+    "tier": 5,
+    "sell_col": 850,
+    "buy_col": 2800,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "crate_min_rarity": "rare",
+      "crate_tier_cap": 7,
+      "crate_set_chance": 0.4
+    },
+    "desc": "開啟後必定獲得一件極品／珍品套裝以上裝備（最高 T7），高機率開出套裝部位。",
+    "asset_key": "item_supply_crate"
+  },
+  "gear_supply_crate_t3": {
+    "id": "gear_supply_crate_t3",
+    "name": "高階名匠傳說裝備箱",
+    "en_name": "Tier-III Masterwork Gear Supply Crate",
+    "emoji": "👑",
+    "category": "supply_crate",
+    "tier": 8,
+    "sell_col": 2200,
+    "buy_col": 7500,
+    "stackable": true,
+    "pouch_item": false,
+    "effect": {
+      "crate_min_rarity": "set",
+      "crate_tier_cap": 10,
+      "crate_set_chance": 0.55
+    },
+    "desc": "開啟後必定獲得一件珍品套裝或傳說級裝備（最高 T10），前線攻略組必備補給！",
+    "asset_key": "item_supply_crate"
   }
 }

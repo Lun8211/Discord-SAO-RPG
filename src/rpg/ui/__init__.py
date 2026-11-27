@@ -29,19 +29,34 @@ from src.rpg.ui.embeds_tower import (
     build_argo_intel_embed,
     build_combat_embed,
     build_roguelike_embed,
+    build_secret_realm_embed,
     build_tower_embed,
 )
-from src.rpg.ui.views_core import OwnerView, ProfileView
-from src.rpg.ui.views_party import CoopRaidView, DuelView, PartyLobbyView, WorldBossView
-from src.rpg.ui.views_social import DailyQuestView, LeaderboardView, ShopView
+from src.rpg.ui.views_core import BagEquipView, OwnerView, ProfileView
+from src.rpg.ui.views_party import (
+    CoopRaidView,
+    DuelView,
+    PartyLobbyView,
+    PostCoopRaidView,
+    WorldBossView,
+)
+from src.rpg.ui.views_social import (
+    DailyQuestView,
+    LeaderboardView,
+    ShopView,
+    WorkshopView,
+)
 from src.rpg.ui.views_tower import (
     ChestView,
+    PostCombatView,
     RoguelikeView,
+    SecretRealmView,
     SoloCombatView,
     TowerFloorView,
 )
 
 __all__ = [
+    "BagEquipView",
     "ChestView",
     "CoopRaidView",
     "DailyQuestView",
@@ -49,11 +64,15 @@ __all__ = [
     "LeaderboardView",
     "OwnerView",
     "PartyLobbyView",
+    "PostCombatView",
+    "PostCoopRaidView",
     "ProfileView",
     "RoguelikeView",
+    "SecretRealmView",
     "ShopView",
     "SoloCombatView",
     "TowerFloorView",
+    "WorkshopView",
     "WorldBossView",
     "build_argo_intel_embed",
     "build_bag_embed",
@@ -71,6 +90,7 @@ __all__ = [
     "build_profile_embed",
     "build_quests_embed",
     "build_roguelike_embed",
+    "build_secret_realm_embed",
     "build_shop_embed",
     "build_skills_embed",
     "build_start_embed",

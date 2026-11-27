@@ -9,9 +9,9 @@ if /i "%~1"=="--auto" set "AUTO_MODE=1"
 
 title 刀劍神域 SAO 艾恩葛朗特 RPG Discord 機器人 — 一鍵更新工具
 
-set "REPO_URL=https://github.com/Lun8211/RPG"
+set "REPO_URL=https://github.com/Lun8211/Discord-SAO-RPG"
 set "REPO_BRANCH=main"
-set "REPO_ZIP_URL=https://github.com/Lun8211/RPG/archive/refs/heads/main.zip"
+set "REPO_ZIP_URL=https://github.com/Lun8211/Discord-SAO-RPG/archive/refs/heads/main.zip"
 set "RPG_DIR=%~dp0"
 
 if not exist "logs" mkdir "logs"

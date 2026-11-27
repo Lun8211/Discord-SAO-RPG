@@ -16,17 +16,22 @@ from src.rpg import assets
 from src.rpg.database import RPGDatabase
 from src.rpg.engine import RPGEngine
 from src.rpg.ui import (
+    BagEquipView,
     ChestView,
     CoopRaidView,
     DailyQuestView,
     DuelView,
     LeaderboardView,
     PartyLobbyView,
+    PostCombatView,
+    PostCoopRaidView,
     ProfileView,
     RoguelikeView,
+    SecretRealmView,
     ShopView,
     SoloCombatView,
     TowerFloorView,
+    WorkshopView,
     WorldBossView,
     build_argo_intel_embed,
     build_bag_embed,
@@ -44,6 +49,7 @@ from src.rpg.ui import (
     build_profile_embed,
     build_quests_embed,
     build_roguelike_embed,
+    build_secret_realm_embed,
     build_shop_embed,
     build_skills_embed,
     build_start_embed,
@@ -162,6 +168,29 @@ def test_all_embed_builders_produce_valid_discord_embeds(tmp_path: Path) -> None
         mkt = eng.search_market()
         qst = eng.get_quests("2003", now_ts=1760000000)
 
+        combat_res_with_drops = {
+            "message": "🎉 擊敗哥布林斥候！",
+            "logs": ["斬擊造成 45 點傷害！"],
+            "rewards": {
+                "exp_gain": 60,
+                "col_gain": 120,
+                "levels_gained": 1,
+                "items": {"bright_crystal_shard": 2},
+                "equipment_drops": [
+                    {"status": "added", "item_uid": 10, "item_name": "鋼鐵長劍", "rarity": "rare", "slot": "weapon", "tier": 1}
+                ],
+            },
+        }
+        secret_res = {
+            "floor": 1,
+            "miasma_stacks": 3,
+            "col_gain": 200,
+            "exp_gain": 90,
+            "items": {"bright_crystal_shard": 1},
+            "equipment_drops": [{"item_name": "瘴氣短刀", "rarity": "rare", "slot": "weapon", "tier": 1}],
+            "message": "🌫️ 秘境探索成功，瘴氣堆疊 3 層！",
+        }
+
         embeds = [
             build_error_embed("錯誤", "測試錯誤訊息"),
             build_start_embed(st),
@@ -174,6 +203,8 @@ def test_all_embed_builders_produce_valid_discord_embeds(tmp_path: Path) -> None
             build_help_embed(),
             build_tower_embed(finfo),
             build_combat_embed({"message": "戰鬥開始"}),
+            build_combat_embed(combat_res_with_drops, floor_info=finfo),
+            build_secret_realm_embed(secret_res),
             build_argo_intel_embed(argo),
             build_roguelike_embed(rl),
             build_party_lobby_embed(pty),
@@ -181,8 +212,20 @@ def test_all_embed_builders_produce_valid_discord_embeds(tmp_path: Path) -> None
             build_world_boss_embed(wb),
             build_duel_embed(duel),
             build_workshop_embed("鍛造", {"message": "鍛造成功", "enhance_level": 5}),
+            build_workshop_embed(
+                prof,
+                prof["equipment"],
+                prof["inventory"],
+                selected_item=prof["equipment"][0] if prof["equipment"] else None,
+                notice="🔨 歡迎來到莉茲貝特工坊",
+                protection_on=True,
+            ),
             build_cooking_embed({"message": "料理完成", "stew_id": "1"}),
-            build_shop_embed({"message": "商店購物", "col_remaining": 400}),
+            build_shop_embed(
+                {"message": "商店購物", "col_remaining": 400, "tickets_remaining": 1},
+                category_label="🧪 藥水與 SAO 水晶",
+                catalog_lines=["• 回復藥水 — 80 柯爾"],
+            ),
             build_market_embed(mkt),
             build_guild_embed(gld),
             build_quests_embed(qst),
@@ -201,15 +244,30 @@ def test_all_discord_ui_views_instantiate_and_obey_limits(tmp_path: Path) -> Non
     async def _build_all() -> list[discord.ui.View]:
         return [
             ProfileView(eng, "3001"),
+            BagEquipView(eng, "3001"),
             TowerFloorView(eng, "3001", 1),
+            PostCombatView(eng, "3001", combat_mode="field", floor=1, outcome="victory"),
+            PostCombatView(eng, "3001", combat_mode="field", floor=1, outcome="victory", boss_gate_unlocked=True),
+            PostCombatView(eng, "3001", combat_mode="boss", floor=1, outcome="victory", unlocked_next_floor=2),
+            PostCombatView(eng, "3001", combat_mode="boss", floor=100, outcome="victory", unlocked_next_floor=100),
+            PostCombatView(eng, "3001", combat_mode="field", floor=1, outcome="defeat", hp_ratio=0.01),
+            PostCombatView(eng, "3001", combat_mode="field", floor=1, outcome="defeat", is_hardcore_dead=True),
+            PostCombatView(eng, "3001", combat_mode="roguelike", floor=1, outcome="victory", has_active_roguelike=True),
+            SecretRealmView(eng, "3001"),
             ChestView(eng, "3001"),
             SoloCombatView(eng, "3001"),
             RoguelikeView(eng, "3001"),
             PartyLobbyView(eng, "pty_demo"),
             CoopRaidView(eng, "raid_demo"),
+            PostCoopRaidView(eng, "pty_demo", floor=1, victory=True),
+            PostCoopRaidView(eng, "pty_demo", floor=100, victory=True),
             WorldBossView(eng),
             DuelView(eng, "duel_demo"),
-            ShopView(eng, "3001"),
+            WorkshopView(eng, "3001"),
+            ShopView(eng, "3001", category="potions_crystals"),
+            ShopView(eng, "3001", category="enhance_stones"),
+            ShopView(eng, "3001", category="socket_crystals"),
+            ShopView(eng, "3001", category="crates_tickets"),
             LeaderboardView(eng),
             DailyQuestView(eng, "3001"),
         ]
@@ -218,11 +276,21 @@ def test_all_discord_ui_views_instantiate_and_obey_limits(tmp_path: Path) -> Non
         views = asyncio.run(_build_all())
         for vw in views:
             assert len(vw.children) <= 25
+            row_widths: dict[int, int] = {}
             for child in vw.children:
                 row = getattr(child, "row", None)
                 assert row is None or (0 <= row <= 4)
+                r = 0 if row is None else int(row)
+                width = 5 if isinstance(child, discord.ui.Select) else 1
+                row_widths[r] = row_widths.get(r, 0) + width
+                assert row_widths[r] <= 5, f"Row {r} exceeded Discord width 5 on {type(vw).__name__}"
                 if hasattr(child, "options"):
                     assert 1 <= len(child.options) <= 25
+                    for opt in child.options:
+                        assert 1 <= len(opt.label) <= 100
+                        assert 1 <= len(opt.value) <= 100
+                        if opt.description:
+                            assert len(opt.description) <= 100
     finally:
         db.close()
 
@@ -286,7 +354,7 @@ def test_windows_autostart_scripts_format_and_encoding() -> None:
         assert b"\n" not in raw.replace(b"\r\n", b""), f"{name} contains bare LF"
 
     update_text = (repo_root / "update_bot.bat").read_text(encoding="utf-8")
-    assert "Lun8211/RPG" in update_text
+    assert "Lun8211/Discord-SAO-RPG" in update_text
     assert ".env" in update_text
     assert "load_and_validate_all" in update_text
 

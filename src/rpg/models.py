@@ -100,6 +100,8 @@ LEGACY_TO_SAO_RARITY: dict[str, str] = {
     "legendary": "legendary",
     "mythic": "named",
 }
+MAX_ENHANCE_LEVEL: int = 15
+MAX_TEMPER_LEVEL: int = 5
 
 
 class ZoneType(StrEnum):
@@ -261,6 +263,8 @@ class EquipmentItem:
     escrow_state: str = ""  # "" | "market" | "guild_warehouse"
     base_sp: int = 0
     base_spd: int = 0
+    temper_level: int = 0  # 0..5 Awakening / Tempering stars
+    socket_crystal_id: str = ""  # Optional socketed Combat Crystal
 
     def enhance_multiplier(self) -> float:
         # +10% per level, plus bonus milestones at +5 (+10%), +10 (+20%), +15 (+35%)
@@ -273,29 +277,32 @@ class EquipmentItem:
             mult += 0.35
         return mult
 
+    def temper_multiplier(self) -> float:
+        return 1.0 + 0.12 * max(0, min(5, int(self.temper_level)))
+
     @property
     def uid(self) -> int:
         return self.id
 
     @property
     def hp(self) -> int:
-        return round(self.base_hp * self.enhance_multiplier())
+        return round(self.base_hp * self.enhance_multiplier() * self.temper_multiplier())
 
     @property
     def mp(self) -> int:
-        return round(self.base_mp * self.enhance_multiplier())
+        return round(self.base_mp * self.enhance_multiplier() * self.temper_multiplier())
 
     @property
     def sp(self) -> int:
-        return round((self.base_sp or self.base_mp) * self.enhance_multiplier())
+        return round((self.base_sp or self.base_mp) * self.enhance_multiplier() * self.temper_multiplier())
 
     @property
     def atk(self) -> int:
-        return round(self.base_atk * self.enhance_multiplier())
+        return round(self.base_atk * self.enhance_multiplier() * self.temper_multiplier())
 
     @property
     def def_(self) -> int:
-        return round(self.base_def * self.enhance_multiplier())
+        return round(self.base_def * self.enhance_multiplier() * self.temper_multiplier())
 
     @property
     def defense(self) -> int:
@@ -327,6 +334,8 @@ class EquipmentItem:
                 affix_score += val * 450
             else:
                 affix_score += val * 300
+        temper_bonus = max(0, int(self.temper_level)) * 120
+        socket_bonus = 180 if self.socket_crystal_id else 0
         return int(
             self.atk * 5
             + self.def_ * 4
@@ -334,6 +343,8 @@ class EquipmentItem:
             + self.sp * 1.2
             + self.spd * 2.0
             + affix_score
+            + temper_bonus
+            + socket_bonus
         )
 
 

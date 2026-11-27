@@ -19,6 +19,7 @@ from src.rpg.models import (
     GameError,
     GameMode,
     PlayerProfile,
+    Rarity,
     RoguelikeRun,
     ZoneType,
 )
@@ -31,6 +32,8 @@ from src.rpg.systems.boss_engine import (
 )
 from src.rpg.systems.stats import compute_player_stats
 from src.rpg.systems.tower import (
+    SOCKET_CRYSTAL_IDS,
+    enhance_crystal_for_tier,
     generate_equipment_item,
     generate_named_equipment,
     grant_or_queue_equipment,
@@ -479,7 +482,12 @@ def apply_debuff(
 
 
 _BOSS_RESPAWN_COOLDOWN_SEC = 180
-_LAST_SOLO_BOSS_CLEAR: dict[tuple[int, str, int], int] = {}
+_LAST_SOLO_BOSS_CLEAR: dict[tuple[str, str, int], int] = {}
+_ROAD_MOB_DROP_PITY: dict[tuple[str, str], int] = {}
+
+
+def _db_key(db: RPGDatabase) -> str:
+    return str(getattr(db, "db_path", id(db)))
 
 
 def start_floor_boss(
@@ -524,7 +532,7 @@ def start_floor_boss(
 
     # Enforce floor boss respawn cooldown for repeat solo normal/first_kill clears
     if nightmare_floor is None and not bypass_cooldown and mode in (BossMode.NORMAL, BossMode.FIRST_KILL):
-        last_clear = _LAST_SOLO_BOSS_CLEAR.get((id(db), user_id, target_floor))
+        last_clear = _LAST_SOLO_BOSS_CLEAR.get((_db_key(db), user_id, target_floor))
         if last_clear is not None:
             elapsed = ts - last_clear
             if 0 <= elapsed < _BOSS_RESPAWN_COOLDOWN_SEC:
@@ -699,11 +707,18 @@ def settle_solo_victory(
     now_ts: int,
     active_runs: dict[str, RoguelikeRun] | None = None,
 ) -> dict[str, Any]:
-    """Settle EXP (>=1), Col, materials/meats, Named LA drops, First-Kill, Yui logs & quests on victory."""
+    """Settle EXP (>=1), Col, materials/meats, multi-channel equipment drops, Named LA drops, First-Kill, Yui logs & quests."""
     floor = session.floor
     fcfg = resolve_floor_config(floor, content)
+    tier = int(fcfg["tier"])
     stats = compute_full_player_stats(db, content, player, floor=floor, now_ts=now_ts)
-    rgen = random.Random(now_ts + floor + session.turn)
+    rgen = random.Random(
+        now_ts
+        + floor * 17
+        + session.turn * 31
+        + zlib.crc32(str(player.user_id).encode("utf-8")) % 997
+        + player.survival_streak * 13
+    )
 
     is_boss = session.boss_state is not None
     exp_mult = 1.0 + stats.exp_bonus + (player.miasma_exp_stacks * 0.15 if player.zone == ZoneType.SECRET_REALM else 0.0)
@@ -752,9 +767,12 @@ def settle_solo_victory(
     yui_unlocked: str | None = None
     today_key = time.strftime("%Y-%m-%d", time.gmtime(now_ts))
     week_key = time.strftime("%Y-W%W", time.gmtime(now_ts))
+    crys_id = enhance_crystal_for_tier(tier)
+    boss_gate_unlocked = bool(db.get_floor_exploration(player.user_id, floor).get("boss_gate_unlocked", False))
 
     if is_boss and session.boss_state is not None:
         boss = session.boss_state
+        was_personal_first = floor > player.highest_cleared_floor
         player.in_boss_battle = False
         player.zone = ZoneType.TOWN
         player.boss_kills_participated += 1
@@ -772,7 +790,7 @@ def settle_solo_victory(
             today_key=today_key,
         )
         if session.mode == "boss":
-            _LAST_SOLO_BOSS_CLEAR[(id(db), player.user_id, floor)] = now_ts
+            _LAST_SOLO_BOSS_CLEAR[(_db_key(db), player.user_id, floor)] = now_ts
         player.highest_cleared_floor = max(player.highest_cleared_floor, floor)
 
         # Atomic server First-Kill Hall of Fame claim
@@ -788,12 +806,19 @@ def settle_solo_victory(
             cleared_at=now_ts,
         )
 
-        # Guaranteed boss crests
+        # Guaranteed boss crests + enhance crystals + forge scraps
         for mat in fcfg["boss"].get("guaranteed_materials", []):
             mid = str(mat["item_id"])
             qty = rgen.randint(int(mat.get("min", 1)), int(mat.get("max", 1)))
             db.add_item(player.user_id, mid, qty)
             items_gained[mid] = items_gained.get(mid, 0) + qty
+        if crys_id in content.items_crystals:
+            cqty = rgen.randint(2, 3)
+            db.add_item(player.user_id, crys_id, cqty)
+            items_gained[crys_id] = items_gained.get(crys_id, 0) + cqty
+        if "forge_scrap" in content.items_crystals:
+            db.add_item(player.user_id, "forge_scrap", 2)
+            items_gained["forge_scrap"] = items_gained.get("forge_scrap", 0) + 2
 
         # Last Attack (LA) Named Bonus drop (bypasses filter; overflows to pending mailbox if bag full!)
         if boss.la_bonus_item_id and boss.la_bonus_item_id in content.weapons_equipment.get("named_items", {}):
@@ -806,12 +831,23 @@ def settle_solo_victory(
             equipment_drops.append(la_reward)
         else:
             boss_gear = generate_equipment_item(
-                player.user_id, floor, content, rarity="legendary", weapon_style=player.weapon_style, now_ts=now_ts, rng=rgen
+                player.user_id, floor, content, rarity=Rarity.LEGENDARY, weapon_style=player.weapon_style, now_ts=now_ts, rng=rgen
             )
             la_reward = grant_or_queue_equipment(
                 db, player, boss_gear, source=f"第{floor}層頭目尾刀獎勵(LA)", now_ts=now_ts, apply_filter=False
             )
             equipment_drops.append(la_reward)
+
+        # Personal First-Clear Set (`珍品`) bonus gear!
+        if was_personal_first:
+            fc_gear = generate_equipment_item(
+                player.user_id, floor, content, rarity=Rarity.SET, weapon_style=player.weapon_style, now_ts=now_ts, rng=rgen
+            )
+            equipment_drops.append(
+                grant_or_queue_equipment(
+                    db, player, fc_gear, source=f"第{floor}層首通珍品獎勵", now_ts=now_ts, apply_filter=False
+                )
+            )
 
         # Unlock Yui lore archives up to cleared floor
         for log_id, lspec in content.quests_events.get("yui_logs", {}).items():
@@ -823,23 +859,36 @@ def settle_solo_victory(
         if floor in ach_map:
             db.unlock_achievement(player.user_id, ach_map[floor], now_ts)
 
+        db.increment_quest(player.user_id, "daily", today_key, "dq_boss_1", 1, delta=1)
         db.increment_quest(player.user_id, "weekly", week_key, "wq_boss_10", 10, delta=1)
     else:
-        # Road mob / elite / field boss drops
+        # Road mob / elite / field boss / roguelike drops
         mspec = content.monsters.get(session.target_id, {})
         meat_id = mspec.get("meat_drop_id")
         if meat_id and meat_id in content.items_crystals:
             db.add_item(player.user_id, str(meat_id), 1)
             items_gained[str(meat_id)] = items_gained.get(str(meat_id), 0) + 1
+        ore_id = mspec.get("ore_drop_id")
+        if ore_id and ore_id in content.items_crystals:
+            if session.mode in ("elite", "field_boss"):
+                oqty = 2 if session.mode == "field_boss" else 1
+                db.add_item(player.user_id, str(ore_id), oqty)
+                items_gained[str(ore_id)] = items_gained.get(str(ore_id), 0) + oqty
+            elif rgen.random() < min(0.85, 0.35 + stats.drop_bonus * 0.5):
+                db.add_item(player.user_id, str(ore_id), 1)
+                items_gained[str(ore_id)] = items_gained.get(str(ore_id), 0) + 1
         for drop in mspec.get("drops", []):
-            if rgen.random() <= float(drop.get("chance", 0.3)):
+            chance = min(1.0, float(drop.get("chance", 0.3)) + stats.drop_bonus * 0.35)
+            if rgen.random() <= chance:
                 iid = str(drop["item_id"])
-                qty = rgen.randint(int(drop.get("min", 1)), int(drop.get("max", 1)))
-                db.add_item(player.user_id, iid, qty)
-                items_gained[iid] = items_gained.get(iid, 0) + qty
+                if iid in content.items_crystals:
+                    qty = rgen.randint(int(drop.get("min", 1)), int(drop.get("max", 1)))
+                    db.add_item(player.user_id, iid, qty)
+                    items_gained[iid] = items_gained.get(iid, 0) + qty
 
         if session.mode == "field_boss":
             exp_state = db.get_floor_exploration(player.user_id, floor)
+            boss_gate_unlocked = True
             db.save_floor_exploration(
                 player.user_id,
                 floor,
@@ -849,20 +898,96 @@ def settle_solo_victory(
                 pending_chest=exp_state.get("pending_chest"),
                 now_ts=now_ts,
             )
+            fb_roll = rgen.random()
+            fb_rarity = Rarity.LEGENDARY if fb_roll < 0.20 else (Rarity.SET if fb_roll < 0.55 else Rarity.RARE)
             gear = generate_equipment_item(
-                player.user_id, floor, content, rarity="rare", weapon_style=player.weapon_style, now_ts=now_ts, rng=rgen
+                player.user_id, floor, content, rarity=fb_rarity, weapon_style=player.weapon_style, now_ts=now_ts, rng=rgen
             )
             equipment_drops.append(
                 grant_or_queue_equipment(db, player, gear, source=f"第{floor}層野外頭目", now_ts=now_ts, apply_filter=True)
             )
-        elif session.mode == "roguelike" and active_runs and player.user_id in active_runs:
-            run = active_runs[player.user_id]
-            run.hp = max(1, session.player_hp)
-            run.sp = max(0, session.player_sp)
+            if crys_id in content.items_crystals:
+                db.add_item(player.user_id, crys_id, 2)
+                items_gained[crys_id] = items_gained.get(crys_id, 0) + 2
+        elif session.mode == "roguelike":
+            if active_runs and player.user_id in active_runs:
+                run = active_runs[player.user_id]
+                run.hp = max(1, session.player_hp)
+                run.sp = max(0, session.player_sp)
+            if session.difficulty == "warden":
+                w_roll = rgen.random()
+                w_rarity = Rarity.LEGENDARY if w_roll < 0.25 else (Rarity.SET if w_roll < 0.60 else Rarity.RARE)
+                w_gear = generate_equipment_item(
+                    player.user_id, floor, content, rarity=w_rarity, weapon_style=player.weapon_style, now_ts=now_ts, rng=rgen
+                )
+                equipment_drops.append(
+                    grant_or_queue_equipment(db, player, w_gear, source="黑鐵宮迷宮守衛者", now_ts=now_ts, apply_filter=True)
+                )
+                if crys_id in content.items_crystals:
+                    db.add_item(player.user_id, crys_id, 2)
+                    items_gained[crys_id] = items_gained.get(crys_id, 0) + 2
+                db.unlock_achievement(player.user_id, "sao_ach_roguelike_boss", now_ts)
+            else:
+                if "forge_scrap" in content.items_crystals:
+                    db.add_item(player.user_id, "forge_scrap", 1)
+                    items_gained["forge_scrap"] = items_gained.get("forge_scrap", 0) + 1
+                if rgen.random() < min(0.85, 0.35 + stats.drop_bonus):
+                    rl_rarity = Rarity.RARE if rgen.random() < 0.40 else Rarity.FINE
+                    rl_gear = generate_equipment_item(
+                        player.user_id, floor, content, rarity=rl_rarity, weapon_style=player.weapon_style, now_ts=now_ts, rng=rgen
+                    )
+                    equipment_drops.append(
+                        grant_or_queue_equipment(db, player, rl_gear, source="黑鐵宮迷宮戰鬥", now_ts=now_ts, apply_filter=True)
+                    )
+        elif session.mode == "elite":
+            if crys_id in content.items_crystals:
+                db.add_item(player.user_id, crys_id, 1)
+                items_gained[crys_id] = items_gained.get(crys_id, 0) + 1
+            if rgen.random() < min(0.95, 0.75 + stats.drop_bonus):
+                e_roll = rgen.random()
+                e_rarity = Rarity.SET if e_roll < 0.20 else (Rarity.RARE if e_roll < 0.65 else Rarity.FINE)
+                e_gear = generate_equipment_item(
+                    player.user_id, floor, content, rarity=e_rarity, weapon_style=player.weapon_style, now_ts=now_ts, rng=rgen
+                )
+                equipment_drops.append(
+                    grant_or_queue_equipment(db, player, e_gear, source=f"第{floor}層菁英魔物", now_ts=now_ts, apply_filter=True)
+                )
+            if rgen.random() < 0.25:
+                sock_id = rgen.choice(SOCKET_CRYSTAL_IDS)
+                if sock_id in content.items_crystals:
+                    db.add_item(player.user_id, sock_id, 1)
+                    items_gained[sock_id] = items_gained.get(sock_id, 0) + 1
+        else:
+            # Normal road mob: 28%+ equipment drop with 4-kill pity + occasional scrap/crystal!
+            pity_key = (_db_key(db), player.user_id)
+            pity_cnt = _ROAD_MOB_DROP_PITY.get(pity_key, 0) + 1
+            drop_chance = min(0.85, 0.28 + stats.drop_bonus)
+            if pity_cnt >= 4 or rgen.random() < drop_chance:
+                _ROAD_MOB_DROP_PITY[pity_key] = 0
+                m_roll = rgen.random()
+                m_rarity = Rarity.RARE if m_roll < 0.17 else (Rarity.FINE if m_roll < 0.65 else Rarity.PLAIN)
+                m_gear = generate_equipment_item(
+                    player.user_id, floor, content, rarity=m_rarity, weapon_style=player.weapon_style, now_ts=now_ts, rng=rgen
+                )
+                equipment_drops.append(
+                    grant_or_queue_equipment(db, player, m_gear, source=f"第{floor}層野外魔物", now_ts=now_ts, apply_filter=True)
+                )
+            else:
+                _ROAD_MOB_DROP_PITY[pity_key] = pity_cnt
+            if rgen.random() < min(0.60, 0.22 + stats.drop_bonus * 0.5):
+                bonus_mat = crys_id if rgen.random() < 0.55 else "forge_scrap"
+                if bonus_mat in content.items_crystals:
+                    db.add_item(player.user_id, bonus_mat, 1)
+                    items_gained[bonus_mat] = items_gained.get(bonus_mat, 0) + 1
 
-    # Update tier bounty
-    tier = fcfg["tier"]
-    db.increment_quest(player.user_id, "bounty", f"tier_{tier}", f"bounty_t{tier}", 10, delta=1)
+    # Update tier bounty using actual JSON bounty target
+    bounty_id = f"bounty_t{tier}"
+    bounty_spec = next(
+        (b for b in content.quests_events.get("bounties", []) if str(b.get("id")) == bounty_id),
+        None,
+    )
+    bounty_target = int(bounty_spec.get("target", 10)) if isinstance(bounty_spec, dict) else 10
+    db.increment_quest(player.user_id, "bounty", f"tier_{tier}", bounty_id, bounty_target, delta=1)
 
     new_stats = compute_full_player_stats(db, content, player, floor=floor, now_ts=now_ts)
     player.combat_power = new_stats.combat_power
@@ -881,6 +1006,7 @@ def settle_solo_victory(
         "la_reward": la_reward,
         "yui_unlocked": yui_unlocked,
         "unlocked_next_floor": min(100, floor + 1) if is_boss else None,
+        "boss_gate_unlocked": boss_gate_unlocked,
     }
     session.rewards_summary = summary
     return summary
@@ -1027,6 +1153,9 @@ def combat_action(
             )
         session.finished = True
         session.retreated = True
+        if session.mode == "roguelike" and active_runs and user_id in active_runs:
+            run = active_runs.pop(user_id)
+            run.finished = True
         player.in_boss_battle = False
         player.zone = ZoneType.TOWN
         player.miasma_stacks = 0
@@ -1041,9 +1170,15 @@ def combat_action(
             "finished": True,
             "retreated": True,
             "victory": False,
+            "defeat": False,
+            "mode": session.mode,
+            "floor": session.floor,
             "in_combat": False,
             "damage_dealt": 0,
             "damage": 0,
+            "rewards": None,
+            "defeat_info": None,
+            "boss_state": session.boss_state,
             "logs": [msg],
             "combat": session,
             "message": msg,
@@ -1057,6 +1192,9 @@ def combat_action(
         )
         turn_logs.extend(use_logs)
         if retreated:
+            if session.mode == "roguelike" and active_runs and user_id in active_runs:
+                run = active_runs.pop(user_id)
+                run.finished = True
             active_combats.pop(user_id, None)
             player.updated_at = ts
             db.save_player(player)
@@ -1066,9 +1204,15 @@ def combat_action(
                 "finished": True,
                 "retreated": True,
                 "victory": False,
+                "defeat": False,
+                "mode": session.mode,
+                "floor": session.floor,
                 "in_combat": False,
                 "damage_dealt": 0,
                 "damage": 0,
+                "rewards": None,
+                "defeat_info": None,
+                "boss_state": session.boss_state,
                 "logs": turn_logs,
                 "combat": session,
                 "message": turn_logs[-1],
@@ -1255,10 +1399,14 @@ def combat_action(
             "finished": True,
             "victory": True,
             "defeat": False,
+            "retreated": False,
+            "mode": session.mode,
+            "floor": session.floor,
             "in_combat": False,
             "damage_dealt": dealt_dmg,
             "damage": dealt_dmg,
             "rewards": summary,
+            "defeat_info": None,
             "boss_state": session.boss_state,
             "combat": session,
             "logs": turn_logs,
@@ -1313,14 +1461,18 @@ def combat_action(
                             "finished": True,
                             "victory": True,
                             "defeat": False,
+                            "retreated": False,
+                            "mode": session.mode,
+                            "floor": session.floor,
                             "in_combat": False,
                             "damage_dealt": dealt_dmg,
                             "damage": dealt_dmg,
                             "rewards": summary,
+                            "defeat_info": None,
                             "boss_state": session.boss_state,
                             "combat": session,
                             "logs": turn_logs,
-                            "message": f"🏆 彈反終結【{session.enemy_name}】！",
+                            "message": f"🏆 彈反終結【{session.enemy_name}】！獲得 {summary['exp_gain']} EXP 與 {summary['col_gain']} 柯爾！",
                         }
                 if bturn.get("inflict_debuff") and not is_parrying:
                     dmsg = apply_debuff(session.player_debuffs, str(bturn["inflict_debuff"]), turns=3, dmg=max(5, round(edmg * 0.15)))
@@ -1378,9 +1530,13 @@ def combat_action(
             "finished": True,
             "victory": False,
             "defeat": True,
+            "retreated": False,
+            "mode": session.mode,
+            "floor": session.floor,
             "in_combat": False,
             "damage_dealt": dealt_dmg,
             "damage": dealt_dmg,
+            "rewards": None,
             "defeat_info": defeat_info,
             "boss_state": session.boss_state,
             "combat": session,
@@ -1398,6 +1554,9 @@ def combat_action(
         "finished": False,
         "victory": False,
         "defeat": False,
+        "retreated": False,
+        "mode": session.mode,
+        "floor": session.floor,
         "in_combat": True,
         "damage_dealt": dealt_dmg,
         "damage": dealt_dmg,
@@ -1517,6 +1676,7 @@ def _run_auto_battle(
         if last_res.get("finished"):
             break
 
+    final_msg = str(last_res.get("message") or (all_logs[-1] if all_logs else "🤖 自動戰鬥回合完成。"))
     return {
         "ok": True,
         "auto_battle": True,
@@ -1527,9 +1687,13 @@ def _run_auto_battle(
         "victory": bool(last_res.get("victory", False)),
         "defeat": bool(last_res.get("defeat", False)),
         "retreated": bool(last_res.get("retreated", False)),
+        "mode": session.mode,
+        "floor": session.floor,
         "in_combat": not bool(last_res.get("finished", False)),
         "rewards": last_res.get("rewards"),
+        "defeat_info": last_res.get("defeat_info"),
+        "boss_state": last_res.get("boss_state", session.boss_state),
         "logs": all_logs,
         "combat": session,
-        "message": all_logs[-1] if all_logs else "🤖 自動戰鬥回合完成。",
+        "message": final_msg,
     }
