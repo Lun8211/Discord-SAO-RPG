@@ -354,7 +354,7 @@ def test_windows_autostart_scripts_format_and_encoding() -> None:
         assert b"\n" not in raw.replace(b"\r\n", b""), f"{name} contains bare LF"
 
     update_text = (repo_root / "update_bot.bat").read_text(encoding="utf-8")
-    assert "Lun8211/RPG" in update_text
+    assert "Lun8211/Discord-SAO-RPG" in update_text
     assert ".env" in update_text
     assert "load_and_validate_all" in update_text
 
